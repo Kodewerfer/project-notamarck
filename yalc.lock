@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "react-magic-draft-md": {
+      "signature": "85f70010d5491ec091d4d0501c374adc",
+      "file": true
+    }
+  }
+}
