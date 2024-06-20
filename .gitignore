@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+#dist
 dist-ssr
 dist-electron
 release
@@ -26,4 +26,4 @@ release
 *.sw?
 
 # NPM package mocking
-.yalc
+#.yalc
