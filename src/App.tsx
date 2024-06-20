@@ -24,7 +24,7 @@ Normal text test three
 
 `;
 
-export default function Test_App() {
+export default function App() {
     const EditorRef = useRef<TEditorForwardRef>(null);
     
     async function appClick() {
