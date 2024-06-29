@@ -79,7 +79,6 @@ app.whenReady().then(_ => {
         ipcMain.handle(IPC.trigger, IPC.handler);
     })
     
-    // no usage for now
     // IPCListenerMappings.forEach(IPC => {
     //     ipcMain.on(IPC.trigger, IPC.handler);
     // })

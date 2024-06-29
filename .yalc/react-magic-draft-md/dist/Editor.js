@@ -40,10 +40,10 @@ const AutoCompletePairsMap = new Map([
     ["{", "}"]
 ]);
 function EditorActual({ SourceData }, ref) {
-    const [sourceMD, setSourceMD] = useState(() => {
-        SourceData = SourceData || "";
-        return SourceData;
-    });
+    // const [sourceMD, setSourceMD] = useState<string>(() => {
+    //     SourceData = SourceData || "";
+    //     return SourceData;
+    // });
     const EditorElementRef = useRef(null);
     const EditorSourceStringRef = useRef('');
     const EditorSourceDOCRef = useRef(null);
@@ -821,8 +821,9 @@ function EditorActual({ SourceData }, ref) {
     useEffect(() => {
         ;
         (() => __awaiter(this, void 0, void 0, function* () {
+            const MDData = SourceData || '';
             // convert MD to HTML
-            const convertedHTML = String(yield MD2HTML(sourceMD));
+            const convertedHTML = String(yield MD2HTML(MDData));
             let CleanedHTML = HTMLCleanUP(convertedHTML);
             // Save a copy of HTML
             const HTMLParser = new DOMParser();
@@ -832,7 +833,7 @@ function EditorActual({ SourceData }, ref) {
             // load editor component
             setEditorComponent(ConfigAndConvertToReact(String(CleanedHTML)));
         }))();
-    }, [sourceMD]);
+    }, [SourceData]);
     // Masking and unmasking to hide flicker
     useLayoutEffect(() => {
         if (!EditorElementRef.current || !EditorMaskRef.current)

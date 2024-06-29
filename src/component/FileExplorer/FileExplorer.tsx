@@ -3,6 +3,7 @@ import * as pathBrowserify from 'path-browserify';
 import "./FileExplorer.css";
 import {IPCActions} from "../../../electron/IPC/IPC-Actions.ts";
 import {TListedFile} from "../../../electron/IPC/ipcMain-return";
+// Icons
 import {ArchiveBoxIcon} from "@heroicons/react/24/outline";
 
 const {ipcRenderer} = window;
@@ -30,7 +31,7 @@ export function FileExplorer() {
             // setAllFiles(JSON.stringify(files));
             setAllFiles(files);
         })();
-    }, [path, getFiles]);
+    }, [path]);
     
     const onBack = () => setPath(pathBrowserify.dirname(path));
     const onOpen = (pathName: string) => setPath(pathBrowserify.join(path, pathName));

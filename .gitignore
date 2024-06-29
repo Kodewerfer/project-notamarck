@@ -27,3 +27,6 @@ release
 
 # NPM package mocking
 #.yalc
+
+#Generated file-based router
+routeTree.gen.ts
