@@ -1,0 +1,37 @@
+import {useRef} from "react";
+import "./MarkdownEditor.css";
+import Editor, {TEditorForwardRef} from "react-magic-draft-md";
+import {IPCActions} from "electron-src/IPC/IPC-Actions.ts";
+
+
+const {ipcRenderer} = window;
+
+export default function MarkdownEditor({MDSource}: { MDSource: string }) {
+    const EditorRef = useRef<TEditorForwardRef>(null);
+    
+    async function appClick() {
+        console.log("NOTAMARCK click");
+        if (EditorRef.current) {
+            console.log(await EditorRef.current.ExtractMD());
+        }
+    }
+    
+    async function showDialog() {
+        console.log("showing dialog");
+        const DIRPath = await ipcRenderer.invoke(IPCActions.DIALOG.SHOW_SELECTION_DIR);
+        //Invalid
+        if (!DIRPath || DIRPath.length > 1) return;
+        // Only one folder should be allowed to choose at a time
+        console.log(DIRPath[0]);
+        
+    }
+    
+    return (
+        <>
+            <button className={"bg-amber-600"} onClick={appClick}>
+                NOTAMARCK EXTRACT
+            </button>
+            <Editor SourceData={MDSource} ref={EditorRef}/>
+        </>
+    );
+}

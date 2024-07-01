@@ -43,6 +43,33 @@ export function HandleListFiles(_Event: IpcMainInvokeEvent, targetPath: string) 
 }
 
 /**
+ *
+ */
+
+const {LIST_CURRENT_PATH_MD} = IPCActions.FILES
+
+export type TMDFile = ReturnType<typeof HandleListMD>[0];
+
+export function HandleListMD(_Event: IpcMainInvokeEvent, targetPath: string) {
+    const MDFiles =
+        fs.readdirSync(targetPath)
+            .filter(file => {
+                const fileStats = fs.statSync(path.join(targetPath, file));
+                return (!fileStats.isDirectory() && file.endsWith(".md"));
+            })
+            .map(file => {
+                const fileStats = fs.statSync(path.join(targetPath, file));
+                return {
+                    name: file,
+                    path: path.join(targetPath, file),
+                    size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null
+                }
+            })
+    
+    return MDFiles
+}
+
+/**
  * Show dialog for path selection
  */
 const {SHOW_SELECTION_DIR} = IPCActions.DIALOG;
@@ -72,6 +99,7 @@ export function HandleReadMDFile(_Event: IpcMainInvokeEvent, targetPath: string)
 export const IPCHandlerMappings = [
     {trigger: GET_APP_PATH, handler: HandleGetAppPath},
     {trigger: LIST_CURRENT_PATH, handler: HandleListFiles},
+    {trigger: LIST_CURRENT_PATH_MD, handler: HandleListMD},
     {trigger: READ_MD_PATH, handler: HandleReadMDFile},
     {trigger: SHOW_SELECTION_DIR, handler: HandleShowDialogDIR},
 ];

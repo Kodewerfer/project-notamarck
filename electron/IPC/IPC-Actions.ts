@@ -8,6 +8,7 @@ export const IPCActions = {
     },
     FILES: {
         LIST_CURRENT_PATH: "FILES:LIST_CURRENT_PATH",
+        LIST_CURRENT_PATH_MD: "FILES:LIST_CURRENT_PATH_MD",
         READ_MD_PATH: "FILES:READ_MD_PATH"
     }
 }
