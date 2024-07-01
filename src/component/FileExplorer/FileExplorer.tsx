@@ -1,8 +1,8 @@
 import {useEffect, useState} from "react";
 import * as pathBrowserify from 'path-browserify';
 import "./FileExplorer.css";
-import {IPCActions} from "../../../electron/IPC/IPC-Actions.ts";
-import {TListedFile} from "../../../electron/IPC/ipcMain-return";
+import {IPCActions} from "electron-src/IPC/IPC-Actions.ts";
+import {TListedFile} from "electron-src/IPC/IPC-Handlers.ts";
 // Icons
 import {ArchiveBoxIcon} from "@heroicons/react/24/outline";
 

@@ -17,7 +17,7 @@ export default function App() {
             const AppPath = await ipcRenderer.invoke(IPCActions.APP.GET_APP_PATH);
             let MDContent = '';
             try {
-                MDContent = await ipcRenderer.invoke(IPCActions.FILES.READ_MD_PATH, pathBrowserify.join(AppPath, "test.md"));
+                // MDContent = await ipcRenderer.invoke(IPCActions.FILES.READ_MD_PATH, pathBrowserify.join(AppPath, "test.md"));
             } catch (e) {
                 console.error(e);
             }
