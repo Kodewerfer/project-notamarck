@@ -21,7 +21,21 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "electron-src/*": [
+        "./electron/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ],
+      "routes/*": [
+        "./src/routes/*"
+      ],
+      "component/*": [
+        "./src/component/*"
+      ]
+    }
   },
   "include": [
     "src",
