@@ -1,13 +1,13 @@
-import {createFileRoute} from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
-    component: EmptyEditor,
-})
+  component: EmptyEditor,
+});
 
 function EmptyEditor() {
-    return (
-        <>
-            <div> EMPTY</div>
-        </>
-    )
+  return (
+    <>
+      <div> EMPTY</div>
+    </>
+  );
 }
