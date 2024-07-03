@@ -39,69 +39,39 @@ function RootComponent() {
 
   return (
     <>
-      <div
-        className={'h-screen w-screen bg-gray-50 antialiased dark:bg-gray-900'}
-      >
+      <div className="h-screen w-screen bg-gray-50 antialiased dark:bg-gray-900">
         {/*Sidebar*/}
-        <aside
-          className={
-            'fixed left-0 top-0 z-50 flex h-screen w-96 border-r border-gray-200 dark:border-none dark:bg-slate-800'
-          }
-        >
+        <aside className="fixed left-0 top-0 z-50 flex h-screen w-96 border-r border-gray-200 dark:border-none dark:bg-slate-800">
           {/*side buttons*/}
-          <ul className={'relative flex h-screen w-14 flex-col align-middle'}>
-            <li
-              className={
-                'is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50'
-              }
-            >
+          <ul className="relative flex h-screen w-14 flex-col align-middle">
+            <li className="is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
               {/* mind the group-[.is-active] */}
-              <ArchiveBoxIcon
-                className={
-                  'size-8 group-hover:size-10 group-[.is-active]:size-10'
-                }
-              />
+              <ArchiveBoxIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
             </li>
             {/*the "setting button"*/}
-            <li
-              className={
-                'group absolute bottom-0 left-0 flex w-full justify-center py-4 font-semibold dark:text-blue-50'
-              }
-            >
+            <li className="group absolute bottom-0 left-0 flex w-full justify-center py-4 font-semibold dark:text-blue-50">
               <Cog6ToothIcon className={'size-8 group-hover:size-10'} />
             </li>
           </ul>
 
           {/*file list*/}
-          <div
-            className={'grow bg-slate-100 dark:bg-slate-700 dark:text-blue-50'}
-          >
-            <section
-              className={
-                'flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600'
-              }
-            >
-              <FolderIcon className={'size-4 self-center'} />
-              <span className={'grow pl-1.5'}>Folder name</span>
+          <div className="grow bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
+            <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
+              <FolderIcon className="size-4 self-center" />
+              <span className="grow pl-1.5">Folder name</span>
             </section>
-            <ul className={'w-full'}>
+            <ul className="w-full">
               {MDFiles.map(item => {
                 return (
                   <li
-                    className={
-                      'is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500'
-                    }
+                    className="is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500"
                     key={item.path}
                   >
                     {/* mind the group-[.is-editing] */}
                     {/* Arrow only shows if the item is being edited */}
-                    <ArrowRightIcon
-                      className={
-                        'hidden size-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex'
-                      }
-                    />
+                    <ArrowRightIcon className="hidden size-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex" />
                     <Link
-                      className={'block grow pl-1.5'}
+                      className="block grow pl-1.5"
                       to="/edit/$filepath"
                       params={{
                         filepath: item.path,
@@ -117,7 +87,7 @@ function RootComponent() {
         </aside>
 
         {/*Main editor area*/}
-        <main className={'ml-96 flex h-screen flex-col dark:bg-slate-200'}>
+        <main className="ml-96 flex h-screen flex-col dark:bg-slate-200">
           {/*top nav may expand while searching */}
           <nav
             className={
