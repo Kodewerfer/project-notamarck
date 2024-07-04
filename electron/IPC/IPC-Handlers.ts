@@ -21,10 +21,7 @@ const { LIST_CURRENT_PATH } = IPCActions.FILES;
 
 export type TListedFile = ReturnType<typeof HandleListFiles>[0];
 
-export function HandleListFiles(
-  _Event: IpcMainInvokeEvent,
-  targetPath: string,
-) {
+export function HandleListFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
   const files = fs
     .readdirSync(targetPath)
     .map(file => {
@@ -88,13 +85,9 @@ export function HandleShowDialogDIR(_Event: IpcMainInvokeEvent) {
  */
 const { READ_MD_PATH } = IPCActions.FILES;
 
-export function HandleReadMDFile(
-  _Event: IpcMainInvokeEvent,
-  targetPath: string,
-) {
+export function HandleReadMDFile(_Event: IpcMainInvokeEvent, targetPath: string) {
   // TODO:should be using stream ideally, but too much problem with IPC
-  if (!targetPath.endsWith('.md'))
-    throw new Error(`${targetPath} file is not MD`);
+  if (!targetPath.endsWith('.md')) throw new Error(`${targetPath} file is not MD`);
 
   try {
     return fs.readFileSync(targetPath, { encoding: 'utf8' });
