@@ -115,7 +115,7 @@ function RootComponent() {
         </main>
       </div>
       {/*TODO: delete*/}
-      {/*<TanStackRouterDevtools />*/}
+      <TanStackRouterDevtools />
     </>
   );
 }

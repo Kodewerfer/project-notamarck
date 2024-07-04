@@ -42,13 +42,7 @@ export function TabFrame({ TabsData }: { TabsData?: TTabItems[] }) {
     <div className="flex flex-col bg-slate-600">
       {/*the tab row*/}
       <nav className="flex overflow-hidden bg-slate-400">
-        <Reorder.Group
-          as="ul"
-          axis="x"
-          onReorder={setTabs}
-          className="flex flex-nowrap text-nowrap"
-          values={tabs}
-        >
+        <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={tabs}>
           <AnimatePresence initial={false}>
             {tabs.map((item: TTabItems) => (
               <Tab
@@ -136,9 +130,7 @@ export const Tab = ({
           }}
           initial={false}
           animate={{
-            backgroundColor: isSelected
-              ? CloseBtnBGColor[0]
-              : CloseBtnBGColor[1],
+            backgroundColor: isSelected ? CloseBtnBGColor[0] : CloseBtnBGColor[1],
           }}
           className="size-4"
         >
@@ -153,12 +145,14 @@ export const Tab = ({
  * Helpers
  */
 
+// close a tab that is not active, return modified arr
 function removeItem<T>([...arr]: T[], item: T) {
   const index = arr.indexOf(item);
   index > -1 && arr.splice(index, 1);
   return arr;
 }
 
+// close the tab that is currently on, return next valid tab
 function closestItem<T>(arr: T[], item: T) {
   const index = arr.indexOf(item);
   if (index === -1) {
