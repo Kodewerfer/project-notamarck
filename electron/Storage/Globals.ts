@@ -16,17 +16,20 @@ export function FindInOpenedFiles(FileInfo: TOpenedFiles) {
   return _Opened_Files.some((arrItem: TOpenedFiles) => arrItem.fullPath === FileInfo.fullPath);
 }
 
-export function AddToOpenedFiles(arr = [..._Opened_Files], FileInfo: TOpenedFiles) {
+export function AddToOpenedFiles(FileInfo: TOpenedFiles) {
+  const arr = [..._Opened_Files];
   // already have the element
   if (arr.some((arrItem: TOpenedFiles) => arrItem.fullPath === FileInfo.fullPath)) {
-    return _Opened_Files.length;
+    return;
   }
 
   // NOTE: shallow copy
-  return _Opened_Files.push({ ...FileInfo });
+  _Opened_Files.push({ ...FileInfo });
+  return;
 }
 
-export function RemoveOpenedFile(arr = [..._Opened_Files], removingItem: TOpenedFiles): ReadonlyArray<TOpenedFiles> {
+export function RemoveOpenedFile(removingItem: TOpenedFiles): ReadonlyArray<TOpenedFiles> {
+  const arr = [..._Opened_Files];
   let index = -1;
 
   arr.some((arrItem: TOpenedFiles, arrIndex) => {

@@ -3,14 +3,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { FormatFileSize } from '../Helper.ts';
 import { IPCActions } from './IPC-Actions.ts';
-import { app, dialog } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
+import { AddToOpenedFiles, GetOpenedFiles, RemoveOpenedFile, TOpenedFiles } from '../Storage/Globals.ts';
 
 /**
  * Output the path where the app is located.
  */
 const { GET_APP_PATH } = IPCActions.APP;
 
-export function HandleGetAppPath() {
+export function GetAppPath() {
   return app.getAppPath();
 }
 
@@ -19,9 +20,9 @@ export function HandleGetAppPath() {
  */
 const { LIST_CURRENT_PATH } = IPCActions.FILES;
 
-export type TListedFile = ReturnType<typeof HandleListFiles>[0];
+export type TListedFile = ReturnType<typeof ListAllFiles>[0];
 
-export function HandleListFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
+export function ListAllFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
   const files = fs
     .readdirSync(targetPath)
     .map(file => {
@@ -47,9 +48,9 @@ export function HandleListFiles(_Event: IpcMainInvokeEvent, targetPath: string) 
  */
 const { LIST_CURRENT_PATH_MD } = IPCActions.FILES;
 
-export type TMDFile = ReturnType<typeof HandleListMD>[0];
+export type TMDFile = ReturnType<typeof ListAllMD>[0];
 
-export function HandleListMD(_Event: IpcMainInvokeEvent, targetPath: string) {
+export function ListAllMD(_Event: IpcMainInvokeEvent, targetPath: string) {
   const MDFiles = fs
     .readdirSync(targetPath)
     .filter(file => {
@@ -73,7 +74,7 @@ export function HandleListMD(_Event: IpcMainInvokeEvent, targetPath: string) {
  */
 const { SHOW_SELECTION_DIR } = IPCActions.DIALOG;
 
-export function HandleShowDialogDIR(_Event: IpcMainInvokeEvent) {
+export function ShowDialogDIR(_Event: IpcMainInvokeEvent) {
   const dialogReturn = dialog.showOpenDialogSync({
     properties: ['openDirectory'],
   });
@@ -81,26 +82,64 @@ export function HandleShowDialogDIR(_Event: IpcMainInvokeEvent) {
 }
 
 /**
- * Read a MD file from path
+ * Read a MD file from path, add to opened file and push to renderer
  */
 const { READ_MD_PATH } = IPCActions.FILES;
+const { OPENED_FILES_CHANGED } = IPCActions.DATA.PUSH;
 
-export function HandleReadMDFile(_Event: IpcMainInvokeEvent, targetPath: string) {
-  // TODO:should be using stream ideally, but too much problem with IPC
+export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
   if (!targetPath.endsWith('.md')) throw new Error(`${targetPath} file is not MD`);
 
   try {
-    return fs.readFileSync(targetPath, { encoding: 'utf8' });
+    let MDFile = fs.readFileSync(targetPath, { encoding: 'utf8' });
+
+    AddToOpenedFiles({
+      fullPath: targetPath,
+      filename: path.basename(targetPath),
+      content: MDFile,
+    });
+
+    // push to the current window
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    const OpenedFilesData = GetOpenedFiles();
+    focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+    return MDFile;
   } catch (e) {
     throw e;
   }
 }
 
+const { GET_ALL_OPENED_FILES } = IPCActions.DATA;
+
+export function GetAllOpenedFiles(_Event: IpcMainInvokeEvent) {
+  return GetOpenedFiles();
+}
+
+const { CLOSE_OPENED_FILES } = IPCActions.DATA;
+
+export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TOpenedFiles | TOpenedFiles[]) {
+  if (!FilesItems) return;
+
+  if (!Array.isArray(FilesItems)) {
+    FilesItems = [FilesItems];
+  }
+
+  FilesItems.forEach(item => {
+    RemoveOpenedFile(item);
+  });
+
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const OpenedFilesData = GetOpenedFiles();
+  focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+}
+
 // Bind to ipcMain.handle, two-way communications
 export const IPCHandlerMappings = [
-  { trigger: GET_APP_PATH, handler: HandleGetAppPath },
-  { trigger: LIST_CURRENT_PATH, handler: HandleListFiles },
-  { trigger: LIST_CURRENT_PATH_MD, handler: HandleListMD },
-  { trigger: READ_MD_PATH, handler: HandleReadMDFile },
-  { trigger: SHOW_SELECTION_DIR, handler: HandleShowDialogDIR },
+  { trigger: GET_APP_PATH, handler: GetAppPath },
+  { trigger: LIST_CURRENT_PATH, handler: ListAllFiles },
+  { trigger: LIST_CURRENT_PATH_MD, handler: ListAllMD },
+  { trigger: READ_MD_PATH, handler: ReadMDAndPushOpenedFiles },
+  { trigger: GET_ALL_OPENED_FILES, handler: GetAllOpenedFiles },
+  { trigger: CLOSE_OPENED_FILES, handler: CloseOpenedFile },
+  { trigger: SHOW_SELECTION_DIR, handler: ShowDialogDIR },
 ];

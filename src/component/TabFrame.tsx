@@ -1,27 +1,47 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/16/solid';
+import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 
 // Identifying info a tab holds
-type TTabItems = {
+export type TTabItems = {
   filename: string;
+  fullPath: string;
   title?: string;
   content?: string;
 };
 
-const testingtabs: TTabItems[] = [
-  { filename: 'file1' },
-  { filename: 'file2' },
-  { filename: 'file3' },
-  { filename: 'file4', content: '112233445566' },
-];
-
-export function TabFrame({ TabsData }: { TabsData?: TTabItems[] }) {
-  const [tabs, setTabs] = useState(testingtabs);
+const { ipcRenderer } = window;
+export default function TabFrame({ OpenedFiles }: { OpenedFiles?: TTabItems[] }) {
+  const [tabs, setTabs] = useState(OpenedFiles || []);
   const [selectedTab, setSelectedTab] = useState(tabs[0]);
 
+  // Check if the new data contains the same elements then concat
+  useEffect(() => {
+    if (!OpenedFiles || !Array.isArray(OpenedFiles)) return;
+
+    const tabsMap = new Map(tabs.map(tabItem => [tabItem.fullPath, tabItem]));
+
+    const difference = OpenedFiles.filter(fileItem => !tabsMap.get(fileItem.fullPath));
+
+    if (difference.length === 0) {
+      console.log('Tab Frame: No New File Opened');
+      return;
+    }
+
+    console.log('Tab Frame: New Tab -', difference);
+
+    setTabs([...tabs].concat(difference));
+  }, [OpenedFiles]);
+
+  useEffect(() => {
+    if (!selectedTab) setSelectedTab(tabs[0]);
+  }, [tabs]);
+
   const remove = (item: TTabItems) => {
+    // Notify backend
+    ipcRenderer.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
     if (item === selectedTab) {
       setSelectedTab(closestItem(tabs, item));
     }
@@ -74,7 +94,7 @@ export function TabFrame({ TabsData }: { TabsData?: TTabItems[] }) {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.15 }}
           >
-            {selectedTab.content ? selectedTab.content : ''}
+            {selectedTab && selectedTab.content ? selectedTab.content : ''}
           </motion.div>
         </AnimatePresence>
       </section>
