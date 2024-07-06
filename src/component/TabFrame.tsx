@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
+import { useLayoutEffect } from '@tanstack/react-router';
 
 // Identifying info a tab holds
 export type TTabItems = {
@@ -12,41 +13,48 @@ export type TTabItems = {
   content?: string;
 };
 
-const { ipcRenderer } = window;
-export default function TabFrame({ OpenedFiles }: { OpenedFiles?: TTabItems[] }) {
-  const [tabs, setTabs] = useState(OpenedFiles || []);
-  const [selectedTab, setSelectedTab] = useState(tabs[0]);
+const { IPCRenderSide } = window;
+export default function TabFrame({ InitialTabsData }: { InitialTabsData?: TTabItems[] }) {
+  const [Tabs, setTabs] = useState(InitialTabsData || []); //prop OpenedFiles is only used to init
+  const [SelectedTab, setSelectedTab] = useState(Tabs[0]);
 
-  // Check if the new data contains the same elements then concat
+  // Listen to main process update on opened files
+  useLayoutEffect(() => {
+    const EventCleanup = IPCRenderSide.on(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, (_, payload: TTabItems[]) => {
+      console.log('server data:', payload);
+
+      if (!payload || !Array.isArray(payload)) return;
+
+      const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
+      const Added = payload.filter(fileItem => !TabsMap.has(fileItem.fullPath));
+
+      const payloadPathMap = new Map(payload.map(fileItem => [fileItem.fullPath, fileItem]));
+      const FilteredTabs = Tabs.filter(tabItem => payloadPathMap.has(tabItem.fullPath));
+
+      if (Added.length) {
+        console.log('Tab Frame: New Tab -', Added);
+      }
+
+      setTabs(FilteredTabs.concat(Added));
+    });
+
+    return () => {
+      EventCleanup();
+    };
+  });
+
   useEffect(() => {
-    if (!OpenedFiles || !Array.isArray(OpenedFiles)) return;
-
-    const tabsMap = new Map(tabs.map(tabItem => [tabItem.fullPath, tabItem]));
-
-    const difference = OpenedFiles.filter(fileItem => !tabsMap.get(fileItem.fullPath));
-
-    if (difference.length === 0) {
-      console.log('Tab Frame: No New File Opened');
-      return;
-    }
-
-    console.log('Tab Frame: New Tab -', difference);
-
-    setTabs([...tabs].concat(difference));
-  }, [OpenedFiles]);
-
-  useEffect(() => {
-    if (!selectedTab) setSelectedTab(tabs[0]);
-  }, [tabs]);
+    if (!SelectedTab) setSelectedTab(Tabs[0]);
+  }, [Tabs]);
 
   const remove = (item: TTabItems) => {
     // Notify backend
-    ipcRenderer.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
-    if (item === selectedTab) {
-      setSelectedTab(closestItem(tabs, item));
+    if (item === SelectedTab) {
+      setSelectedTab(closestItem(Tabs, item));
     }
 
-    setTabs(removeItem(tabs, item));
+    IPCRenderSide.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
+    setTabs(removeItem(Tabs, item));
   };
 
   // const add = () => {
@@ -62,13 +70,13 @@ export default function TabFrame({ OpenedFiles }: { OpenedFiles?: TTabItems[] })
     <div className="flex flex-col bg-slate-600">
       {/*the tab row*/}
       <nav className="flex overflow-hidden bg-slate-400">
-        <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={tabs}>
+        <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
-            {tabs.map((item: TTabItems) => (
+            {Tabs.map((item: TTabItems) => (
               <Tab
                 key={item.filename}
                 item={item}
-                isSelected={selectedTab === item}
+                isSelected={SelectedTab === item}
                 onClick={() => setSelectedTab(item)}
                 onRemove={() => remove(item)}
               />
@@ -88,13 +96,13 @@ export default function TabFrame({ OpenedFiles }: { OpenedFiles?: TTabItems[] })
       <section>
         <AnimatePresence mode="wait">
           <motion.div
-            key={selectedTab ? selectedTab.filename : 'empty'}
+            key={SelectedTab ? SelectedTab.filename : 'empty'}
             animate={{ opacity: 1, y: 0 }}
             initial={{ opacity: 0, y: 20 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.15 }}
           >
-            {selectedTab && selectedTab.content ? selectedTab.content : ''}
+            {SelectedTab && SelectedTab.content ? SelectedTab.content : ''}
           </motion.div>
         </AnimatePresence>
       </section>
@@ -166,8 +174,8 @@ export const Tab = ({
  */
 
 // close a tab that is not active, return modified arr
-function removeItem<T>([...arr]: T[], item: T) {
-  const index = arr.indexOf(item);
+function removeItem<T>([...arr]: T[], removingItem: T) {
+  let index = arr.indexOf(removingItem);
   index > -1 && arr.splice(index, 1);
   return arr;
 }
