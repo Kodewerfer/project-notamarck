@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
-import { TabFrame } from 'component/TabFrame.tsx';
+import { TExposedAPIType } from "electron-src/preload.ts";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -12,6 +12,12 @@ const router = createRouter({ routeTree });
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
+  }
+}
+// Type safety for IPC renderer
+declare global {
+  interface Window {
+    IPCRenderSide: TExposedAPIType;
   }
 }
 
