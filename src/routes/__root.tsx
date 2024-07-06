@@ -15,14 +15,14 @@ import {
 } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
 
-const { ipcRenderer } = window;
+const { IPCRenderSide } = window;
 
 export const Route = createRootRoute({
   loader: async () => {
     let MdFiles = [];
     try {
-      const AppPath = await ipcRenderer.invoke(IPCActions.APP.GET_APP_PATH);
-      MdFiles = await ipcRenderer.invoke(
+      const AppPath = await IPCRenderSide.invoke(IPCActions.APP.GET_APP_PATH);
+      MdFiles = await IPCRenderSide.invoke(
         IPCActions.FILES.LIST_CURRENT_PATH_MD,
         pathBrowserify.join(AppPath, '/testfolder'),
       );

@@ -4,11 +4,11 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import TabFrame, { TTabItems } from 'component/TabFrame.tsx';
 import { useEffect, useState } from 'react';
 
-const { ipcRenderer } = window;
+const { IPCRenderSide } = window;
 export const Route = createFileRoute('/edit/$filepath')({
   loader: async ({ params: { filepath } }) => {
-    await ipcRenderer.invoke(IPCActions.FILES.READ_MD_PATH, filepath);
-    return (await ipcRenderer.invoke(IPCActions.DATA.GET_ALL_OPENED_FILES)) ?? [];
+    await IPCRenderSide.invoke(IPCActions.FILES.READ_MD_PATH, filepath);
+    return (await IPCRenderSide.invoke(IPCActions.DATA.GET_ALL_OPENED_FILES)) ?? [];
   },
   component: TabFrameWrapper,
 });
