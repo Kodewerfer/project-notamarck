@@ -53,8 +53,8 @@ export default function TabFrame({ InitialTabsData }: { InitialTabsData?: TTabIt
       setSelectedTab(closestItem(Tabs, item));
     }
 
-    IPCRenderSide.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
     setTabs(removeItem(Tabs, item));
+    IPCRenderSide.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
   };
 
   // const add = () => {

@@ -14,7 +14,7 @@ const { IPCRenderSide } = window;
 function TabFrameWrapper() {
   return (
     <>
-      <TabFrame OpenedFiles={Route.useLoaderData()} />
+      <TabFrame InitialTabsData={Route.useLoaderData()} />
     </>
   );
 }
