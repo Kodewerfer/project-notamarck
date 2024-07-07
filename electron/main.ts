@@ -1,11 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { IPCHandlerMappings } from './IPC/IPC-Handlers.ts';
-import { IPCListenerMappings } from 'electron-src/IPC/IPC-Listeners.ts';
+import { IPCListenerMappings } from './IPC/IPC-Listeners.ts';
 
-const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // The built directory structure
@@ -75,9 +73,9 @@ app.whenReady().then(_ => {
     ipcMain.handle(IPC.trigger, IPC.handler);
   });
 
-  // IPCListenerMappings.forEach(IPC => {
-  //     ipcMain.on(IPC.trigger, IPC.handler);
-  // })
+  IPCListenerMappings.forEach(IPC => {
+    ipcMain.on(IPC.trigger, IPC.listener);
+  });
 
   // create window
   createWindow();

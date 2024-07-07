@@ -8,6 +8,7 @@ export const IPCActions = {
   },
   DATA: {
     GET_ALL_OPENED_FILES: 'DATA:GET_ALL_OPENED_FILES',
+    PUSH_ALL_OPENED_FILES: 'DATA:PUSH_ALL_OPENED_FILES',
     CLOSE_OPENED_FILES: 'DATA:CLOSE_OPENED_FILES',
     PUSH: {
       OPENED_FILES_CHANGED: 'DATA:PUSH:PUSH_OPENED_FILES_CHANGED', // main to rendered, similar to server side pushing
