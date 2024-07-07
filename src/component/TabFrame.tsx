@@ -14,9 +14,17 @@ export type TTabItems = {
 };
 
 const { IPCRenderSide } = window;
-export default function TabFrame({ InitialTabsData }: { InitialTabsData?: TTabItems[] }) {
-  const [Tabs, setTabs] = useState(InitialTabsData || []); //prop OpenedFiles is only used to init
+export default function TabFrame() {
+  const [Tabs, setTabs] = useState<TTabItems[]>([]);
   const [SelectedTab, setSelectedTab] = useState(Tabs[0]);
+
+  // init component
+  useLayoutEffect(() => {
+    (async () => {
+      const AllOpenedFiles: TTabItems[] = await IPCRenderSide.invoke(IPCActions.DATA.GET_ALL_OPENED_FILES);
+      if (Array.isArray(AllOpenedFiles) && Tabs.length === 0) setTabs(AllOpenedFiles);
+    })();
+  }, []);
 
   // Listen to main process update on opened files
   useLayoutEffect(() => {
