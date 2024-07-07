@@ -9,7 +9,7 @@ function EmptyEditor() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate({ to: '/edit/' });
+    navigate({ to: '/edit' });
   }, []);
 
   return (
