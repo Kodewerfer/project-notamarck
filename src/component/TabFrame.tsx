@@ -4,6 +4,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useLayoutEffect } from '@tanstack/react-router';
+import MarkdownEditor from 'component/MarkdownEditor.tsx';
 
 // Identifying info a tab holds
 export type TTabItems = {
@@ -110,7 +111,7 @@ export default function TabFrame() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.15 }}
           >
-            {SelectedTab && SelectedTab.content ? SelectedTab.content : ''}
+            {SelectedTab && SelectedTab.content ? <MarkdownEditor MDSource={SelectedTab.content} /> : ''}
           </motion.div>
         </AnimatePresence>
       </section>
