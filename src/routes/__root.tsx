@@ -7,12 +7,7 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import * as pathBrowserify from 'path-browserify';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
-import {
-  ArchiveBoxIcon,
-  Cog6ToothIcon,
-  FolderIcon,
-  MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
 
 const { IPCRenderSide } = window;
@@ -89,11 +84,7 @@ function RootComponent() {
         {/*Main editor area*/}
         <main className="ml-96 flex h-screen flex-col dark:bg-slate-200">
           {/*top nav may expand while searching */}
-          <nav
-            className={
-              'z-40 flex w-full border-b border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
-            }
-          >
+          <nav className={'z-40 flex w-full border-b border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'}>
             <MagnifyingGlassIcon className={'size-6 self-center'} />
             <input
               type={'text'}
@@ -105,11 +96,7 @@ function RootComponent() {
           </nav>
 
           {/*the main display area*/}
-          <div
-            className={
-              'overflow-auto scroll-smooth px-4 py-2.5 focus:scroll-auto'
-            }
-          >
+          <div className={'overflow-auto scroll-smooth px-4 py-2.5 focus:scroll-auto'}>
             <Outlet />
           </div>
         </main>

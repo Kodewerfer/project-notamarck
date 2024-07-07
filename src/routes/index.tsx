@@ -9,12 +9,12 @@ function EmptyEditor() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate({ to: '/edit' });
+    navigate({ to: '/edit/' });
   }, []);
 
   return (
     <>
-      <div> Index </div>
+      <div> Index</div>
     </>
   );
 }
