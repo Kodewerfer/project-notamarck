@@ -56,6 +56,11 @@ function RootComponent() {
               <span className="grow pl-1.5">Folder name</span>
             </section>
             <ul className="w-full">
+              <li className="is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500">
+                <Link className="block grow pl-1.5" to="/edit">
+                  Test-Back to Index
+                </Link>
+              </li>
               {MDFiles.map(item => {
                 return (
                   <li
@@ -84,7 +89,11 @@ function RootComponent() {
         {/*Main editor area*/}
         <main className="ml-96 flex h-screen flex-col dark:bg-slate-200">
           {/*top nav may expand while searching */}
-          <nav className={'z-40 flex w-full border-b border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'}>
+          <nav
+            className={
+              'light:border-b z-40 flex w-full border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
+            }
+          >
             <MagnifyingGlassIcon className={'size-6 self-center'} />
             <input
               type={'text'}
@@ -96,7 +105,7 @@ function RootComponent() {
           </nav>
 
           {/*the main display area*/}
-          <div className={'overflow-auto scroll-smooth px-4 py-2.5 focus:scroll-auto'}>
+          <div className={'grow overflow-auto scroll-smooth focus:scroll-auto dark:bg-slate-600 dark:text-blue-50'}>
             <Outlet />
           </div>
         </main>

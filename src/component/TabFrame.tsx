@@ -76,9 +76,9 @@ export default function TabFrame() {
   // };
 
   return (
-    <div className="flex flex-col bg-slate-600">
+    <>
       {/*the tab row*/}
-      <nav className="flex overflow-hidden bg-slate-400">
+      <nav className="flex overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400">
         <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
             {Tabs.map((item: TTabItems) => (
@@ -102,20 +102,21 @@ export default function TabFrame() {
         </motion.button>
       </nav>
       {/* content for the tab */}
-      <section>
+      <section className={'px-2 pl-4 pt-2'}>
         <AnimatePresence mode="wait">
           <motion.div
+            className={'animate-wrapper'} //marking the usage, no real purpose
             key={SelectedTab ? SelectedTab.filename : 'empty'}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0, left: 0 }}
             initial={{ opacity: 0, y: 20 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.15 }}
           >
             {SelectedTab && SelectedTab.content ? <MarkdownEditor MDSource={SelectedTab.content} /> : ''}
           </motion.div>
         </AnimatePresence>
       </section>
-    </div>
+    </>
   );
 }
 
@@ -138,9 +139,9 @@ export const Tab = ({
   onClick,
   onRemove,
   isSelected,
-  TabsBGC = ['#f3f3f3', '#fff'],
+  TabsBGC = ['#fff', '#f3f3f3'],
   TabsDraggingColor = '#e3e3e3',
-  CloseBtnBGColor = ['#e3e3e3', '#fff'],
+  CloseBtnBGColor = ['#fff', '#e3e3e3'],
 }: TTabProps) => {
   return (
     <Reorder.Item
@@ -149,7 +150,7 @@ export const Tab = ({
       initial={{ opacity: 0, y: 30 }}
       animate={{
         opacity: 1,
-        backgroundColor: isSelected ? TabsBGC[0] : TabsBGC[1],
+        backgroundColor: isSelected ? TabsBGC[1] : TabsBGC[0],
         y: 0,
         transition: { duration: 0.15 },
       }}
@@ -167,7 +168,7 @@ export const Tab = ({
           }}
           initial={false}
           animate={{
-            backgroundColor: isSelected ? CloseBtnBGColor[0] : CloseBtnBGColor[1],
+            backgroundColor: isSelected ? CloseBtnBGColor[1] : CloseBtnBGColor[0],
           }}
           className="size-4"
         >
