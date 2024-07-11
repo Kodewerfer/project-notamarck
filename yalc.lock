@@ -1,8 +1,8 @@
 {
   "version": "v1",
   "packages": {
-    "react-magic-draft-md": {
-      "signature": "f555f3e17b9b7385bf18a1f36faf2813",
+    "react-magic-draft": {
+      "signature": "4a78f1e4db59aab243787dbf69f5be38",
       "file": true
     }
   }

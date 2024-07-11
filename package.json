@@ -15,7 +15,7 @@
     "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-magic-draft-md": "file:.yalc/react-magic-draft-md"
+    "react-magic-draft": "file:.yalc/react-magic-draft"
   },
   "devDependencies": {
     "@electron/remote": "^2.1.2",

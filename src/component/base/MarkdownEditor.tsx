@@ -1,6 +1,6 @@
 import {useRef} from "react";
 import "./MarkdownEditor.css";
-import Editor, {TEditorForwardRef} from "react-magic-draft-md";
+import Editor, {TEditorForwardRef} from "react-magic-draft";
 import {IPCActions} from "electron-src/IPC/IPC-Actions.ts";
 
 

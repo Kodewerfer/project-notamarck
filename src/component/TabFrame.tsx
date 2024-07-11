@@ -4,7 +4,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useLayoutEffect } from '@tanstack/react-router';
-import MarkdownEditor from 'component/MarkdownEditor.tsx';
+import MarkdownEditor from 'component/base/MarkdownEditor.tsx';
 
 // Identifying info a tab holds
 export type TTabItems = {
