@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useLayoutEffect } from '@tanstack/react-router';
-import MarkdownEditor from 'component/base/MarkdownEditor.tsx';
+import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
+import { TChangedFilesPayload } from 'electron-src/IPC/IPC-Listeners.ts';
 
 // Identifying info a tab holds
 export type TTabItems = {
@@ -19,6 +20,8 @@ export default function TabFrame() {
   const [Tabs, setTabs] = useState<TTabItems[]>([]);
   const [SelectedTab, setSelectedTab] = useState(Tabs[0]);
 
+  const MDEditorRef = useRef<TEditorComponentRef>();
+
   // init component
   useLayoutEffect(() => {
     (async () => {
@@ -29,26 +32,45 @@ export default function TabFrame() {
 
   // Listen to main process update on opened files
   useLayoutEffect(() => {
-    const EventCleanup = IPCRenderSide.on(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, (_, payload: TTabItems[]) => {
-      console.log('server data:', payload);
+    const OpenedFilesChangesCleanup = IPCRenderSide.on(
+      IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
+      (_, payload: TTabItems[]) => {
+        console.log('server data:', payload);
 
-      if (!payload || !Array.isArray(payload)) return;
+        if (!payload || !Array.isArray(payload)) return;
 
-      const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
-      const Added = payload.filter(fileItem => !TabsMap.has(fileItem.fullPath));
+        const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
+        const Added = payload.filter(fileItem => !TabsMap.has(fileItem.fullPath));
 
-      const payloadPathMap = new Map(payload.map(fileItem => [fileItem.fullPath, fileItem]));
-      const FilteredTabs = Tabs.filter(tabItem => payloadPathMap.has(tabItem.fullPath));
+        const payloadPathMap = new Map(payload.map(fileItem => [fileItem.fullPath, fileItem]));
+        const FilteredTabs = Tabs.filter(tabItem => payloadPathMap.has(tabItem.fullPath));
 
-      if (Added.length) {
-        console.log('Tab Frame: New Tab -', Added);
-      }
+        if (Added.length) {
+          console.log('Tab Frame: New Tab -', Added);
+        }
 
-      setTabs(FilteredTabs.concat(Added));
-    });
+        setTabs(FilteredTabs.concat(Added));
+      },
+    );
+
+    const FileContentCleanUP = IPCRenderSide.on(
+      IPCActions.FILES.PUSH.FILE_CONTENT_CHANGED,
+      (_, payload: TChangedFilesPayload[]) => {
+        const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
+        payload.forEach(item => {
+          if (TabsMap.get(item.TargetFilePath)) {
+            TabsMap.set(item.TargetFilePath, item.NewFile);
+          }
+        });
+        const TabsArrayFromArray = Array.from(TabsMap, ([_key, value]) => value);
+
+        setTabs(TabsArrayFromArray);
+      },
+    );
 
     return () => {
-      EventCleanup();
+      OpenedFilesChangesCleanup();
+      FileContentCleanUP();
     };
   });
 
@@ -56,7 +78,22 @@ export default function TabFrame() {
     if (!SelectedTab) setSelectedTab(Tabs[0]);
   }, [Tabs]);
 
-  const remove = (item: TTabItems) => {
+  const onSelectTab = async (item: TTabItems) => {
+    // if (item === SelectedTab) {
+    //   console.log('same tab');
+    //   return;
+    // }
+
+    if (MDEditorRef.current)
+      IPCRenderSide.send(
+        IPCActions.FILES.CHANGE_FILE_CONTENT,
+        SelectedTab.fullPath,
+        await MDEditorRef.current.ExtractMD(),
+      );
+    setSelectedTab(item);
+  };
+
+  const onCloseTab = (item: TTabItems) => {
     // Notify backend
     if (item === SelectedTab) {
       setSelectedTab(closestItem(Tabs, item));
@@ -66,7 +103,7 @@ export default function TabFrame() {
     IPCRenderSide.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
   };
 
-  // const add = () => {
+  // const onAddTab = () => {
   //   const nextItem = generateNextTab(tabs)
   //
   //   if (nextItem) {
@@ -86,15 +123,15 @@ export default function TabFrame() {
                 key={item.filename}
                 item={item}
                 isSelected={SelectedTab === item}
-                onClick={() => setSelectedTab(item)}
-                onRemove={() => remove(item)}
+                onClick={() => onSelectTab(item)}
+                onRemove={() => onCloseTab(item)}
               />
             ))}
           </AnimatePresence>
         </Reorder.Group>
         <motion.button
           className="mx-2 size-6 self-center"
-          // onClick={add}
+          // onClick={onAddTab}
           disabled={false}
           whileTap={{ scale: 0.9 }}
         >
@@ -112,7 +149,11 @@ export default function TabFrame() {
             exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.15 }}
           >
-            {SelectedTab && SelectedTab.content ? <MarkdownEditor MDSource={SelectedTab.content} /> : ''}
+            {SelectedTab && SelectedTab.content ? (
+              <MarkdownEditor ref={MDEditorRef} MDSource={SelectedTab.content} />
+            ) : (
+              ''
+            )}
           </motion.div>
         </AnimatePresence>
       </section>

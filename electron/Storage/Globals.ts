@@ -12,7 +12,17 @@ export function GetOpenedFiles(): ReadonlyArray<TOpenedFiles> {
   return [..._Opened_Files];
 }
 
-export function FindInOpenedFiles(FileInfo: TOpenedFiles) {
+export function FindInOpenedFilesByFullPath(FilePath: string) {
+  return _Opened_Files.filter((arrItem: TOpenedFiles) => arrItem.fullPath === FilePath);
+}
+
+export function UpdateOpenedFile(FilePath: string, NewFileInfo: TOpenedFiles) {
+  const findIndex = _Opened_Files.findIndex((arrItem: TOpenedFiles) => arrItem.fullPath === FilePath);
+  if (findIndex === -1) return;
+  _Opened_Files[findIndex] = { ...NewFileInfo };
+}
+
+export function ChecksInOpenedFiles(FileInfo: TOpenedFiles) {
   return _Opened_Files.some((arrItem: TOpenedFiles) => arrItem.fullPath === FileInfo.fullPath);
 }
 
