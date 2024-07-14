@@ -1,4 +1,4 @@
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { ForwardedRef, forwardRef, useImperativeHandle, useRef } from 'react';
 import './MarkdownEditor.css';
 import Editor, { TEditorForwardRef } from 'react-magic-draft';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
@@ -28,6 +28,7 @@ const MarkdownEditor = forwardRef(({ MDSource }: { MDSource: string }, ref: Forw
     }
   }
 
+  // TODO: remove later
   async function showDialog() {
     console.log('showing dialog');
     const DIRPath = await ipcRenderer.invoke(IPCActions.DIALOG.SHOW_SELECTION_DIR);
