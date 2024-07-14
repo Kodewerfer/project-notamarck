@@ -3,15 +3,15 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
-import { TExposedAPIType } from "electron-src/preload.ts";
+import { TExposedAPIType } from 'electron-src/preload.ts';
 
 // Create a new router instance
-const router = createRouter({ routeTree });
+export const MainRouter = createRouter({ routeTree });
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {
   interface Register {
-    router: typeof router;
+    router: typeof MainRouter;
   }
 }
 // Type safety for IPC renderer
@@ -20,10 +20,9 @@ declare global {
     IPCRenderSide: TExposedAPIType;
   }
 }
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router}/>
+    <RouterProvider router={MainRouter} />
     {/*<FileExplorer/>*/}
     {/*<TabFrame />*/}
   </React.StrictMode>,
