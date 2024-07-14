@@ -1,6 +1,13 @@
 // Bind to ipMain.on, one-way communications
 import { IPCActions } from './IPC-Actions.ts';
-import { FindInOpenedFilesByFullPath, GetOpenedFiles, TOpenedFiles, UpdateOpenedFile } from '../Storage/Globals.ts';
+import {
+  ChangeActiveFile,
+  FindInOpenedFilesByFullPath,
+  GetActiveFile,
+  GetOpenedFiles,
+  TOpenedFiles,
+  UpdateOpenedFile,
+} from '../Storage/Globals.ts';
 import { BrowserWindow } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 
@@ -36,7 +43,7 @@ export type TChangedFilesPayload = {
   NewFile: TOpenedFiles;
 };
 
-function OnFileContentChanged(_event: IpcMainEvent, FileFullPath: string, FileContent: string) {
+function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, FileContent: string) {
   const targetFileResults = FindInOpenedFilesByFullPath(FileFullPath);
   if (!targetFileResults.length) return;
   let targetFileCache = targetFileResults[0]; //only change the first one it there're multiple(very unlikely)
@@ -55,11 +62,23 @@ function OnFileContentChanged(_event: IpcMainEvent, FileFullPath: string, FileCo
   return;
 }
 
+// Receiving
+const { CHANGE_ACTIVE_FILE } = IPCActions.FILES;
+// Pushing
+const { ACTIVE_FILE_CHANGED } = IPCActions.FILES.PUSH;
+
+export function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TOpenedFiles) {
+  ChangeActiveFile(NewTargetFile);
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  focusedWindow?.webContents.send(ACTIVE_FILE_CHANGED, GetActiveFile());
+}
+
 // Bind to ipcMain.handle, one-way communications
 export const IPCListenerMappings = [
   {
     trigger: PUSH_ALL_OPENED_FILES,
     listener: PushOpenedFiles,
   },
-  { trigger: CHANGE_FILE_CONTENT, listener: OnFileContentChanged },
+  { trigger: CHANGE_FILE_CONTENT, listener: UpdateFileContentAndPush },
+  { trigger: CHANGE_ACTIVE_FILE, listener: ChangeActiveFileAndPush },
 ];

@@ -91,19 +91,19 @@ export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath:
   if (!targetPath.endsWith('.md')) throw new Error(`${targetPath} file is not MD`);
 
   try {
-    let MDFile = fs.readFileSync(targetPath, { encoding: 'utf8' });
-
-    AddToOpenedFiles({
+    let MDFileContent = fs.readFileSync(targetPath, { encoding: 'utf8' });
+    const MDFileInfo = {
       fullPath: targetPath,
       filename: path.basename(targetPath),
-      content: MDFile,
-    });
+      content: MDFileContent,
+    };
+    AddToOpenedFiles(MDFileInfo);
 
     // push to the current window
     const focusedWindow = BrowserWindow.getFocusedWindow();
     const OpenedFilesData = GetOpenedFiles();
     focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
-    return MDFile;
+    return MDFileInfo;
   } catch (e) {
     throw e;
   }

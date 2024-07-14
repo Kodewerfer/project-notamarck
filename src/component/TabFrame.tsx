@@ -6,6 +6,7 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useLayoutEffect } from '@tanstack/react-router';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
 import { TChangedFilesPayload } from 'electron-src/IPC/IPC-Listeners.ts';
+import { TOpenedFiles } from 'electron-src/Storage/Globals.ts';
 
 // Identifying info a tab holds
 export type TTabItems = {
@@ -20,7 +21,17 @@ export default function TabFrame() {
   const [Tabs, setTabs] = useState<TTabItems[]>([]);
   const [SelectedTab, setSelectedTab] = useState(Tabs[0]);
 
-  const MDEditorRef = useRef<TEditorComponentRef>();
+  const MDEditorRef = useRef<TEditorComponentRef | null>(null);
+
+  // extra editor's content then send it to main process, mainly used when SelectedTab changed
+  async function SendCurrentTabContentToMain() {
+    if (MDEditorRef.current)
+      IPCRenderSide.send(
+        IPCActions.FILES.CHANGE_FILE_CONTENT,
+        SelectedTab.fullPath,
+        await MDEditorRef.current.ExtractMD(),
+      );
+  }
 
   // init component
   useLayoutEffect(() => {
@@ -30,12 +41,18 @@ export default function TabFrame() {
     })();
   }, []);
 
-  // Listen to main process update on opened files
+  // ini the selected tab if non-exist
+  useEffect(() => {
+    if (!SelectedTab) setSelectedTab(Tabs[0]);
+  }, [Tabs]);
+
+  // Critical: Bind to main process' push events, sync tab's data to main
   useLayoutEffect(() => {
+    // whenever a new file is opened/closed on main
     const OpenedFilesChangesCleanup = IPCRenderSide.on(
       IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
       (_, payload: TTabItems[]) => {
-        console.log('server data:', payload);
+        // console.log('server data:', payload);
 
         if (!payload || !Array.isArray(payload)) return;
 
@@ -53,6 +70,7 @@ export default function TabFrame() {
       },
     );
 
+    // whenever a file's content has been changed on main(could be pushed by this component)
     const FileContentCleanUP = IPCRenderSide.on(
       IPCActions.FILES.PUSH.FILE_CONTENT_CHANGED,
       (_, payload: TChangedFilesPayload[]) => {
@@ -68,15 +86,27 @@ export default function TabFrame() {
       },
     );
 
+    // whenever a file is set to be activated on main, could be the result of opening a file, new or not
+    const FileActivationCleanup = IPCRenderSide.on(
+      IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
+      (_, payload: TOpenedFiles | null) => {
+        if (!payload) {
+          console.error('Tabs Frame: ACTIVE_FILE_CHANGED pushed null result.');
+          return;
+        }
+        const tabIndex = Tabs.findIndex(item => item.fullPath === payload.fullPath);
+        if (tabIndex === -1) return;
+        SendCurrentTabContentToMain();
+        setSelectedTab(Tabs[tabIndex]);
+      },
+    );
+
     return () => {
       OpenedFilesChangesCleanup();
       FileContentCleanUP();
+      FileActivationCleanup();
     };
   });
-
-  useEffect(() => {
-    if (!SelectedTab) setSelectedTab(Tabs[0]);
-  }, [Tabs]);
 
   const onSelectTab = async (item: TTabItems) => {
     // if (item === SelectedTab) {
@@ -84,12 +114,7 @@ export default function TabFrame() {
     //   return;
     // }
 
-    if (MDEditorRef.current)
-      IPCRenderSide.send(
-        IPCActions.FILES.CHANGE_FILE_CONTENT,
-        SelectedTab.fullPath,
-        await MDEditorRef.current.ExtractMD(),
-      );
+    await SendCurrentTabContentToMain();
     setSelectedTab(item);
   };
 

@@ -54,3 +54,15 @@ export function RemoveOpenedFile(removingItem: TOpenedFiles): ReadonlyArray<TOpe
   _Opened_Files = arr;
   return arr;
 }
+
+// the file the editor is editing or last edited
+let _Active_File: TOpenedFiles | null = null;
+
+export function GetActiveFile(): Readonly<TOpenedFiles> | null {
+  return _Active_File ? Object.assign({}, _Active_File) : null;
+}
+
+export function ChangeActiveFile(NewTargetFile: TOpenedFiles) {
+  if (!NewTargetFile || !NewTargetFile.fullPath) return;
+  _Active_File = Object.assign({}, NewTargetFile);
+}
