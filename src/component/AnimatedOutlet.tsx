@@ -40,7 +40,7 @@ function OutletWithAnimation(
 
   return (
     <motion.div
-      className={'animated-outlet h-screen w-screen overflow-hidden'}
+      className={'animated-outlet relative h-screen w-screen overflow-hidden'}
       ref={forwardedRef}
       {...additionalProps}
       {...currentAnimationSettings.current}
