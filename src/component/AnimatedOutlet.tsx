@@ -1,35 +1,57 @@
-import { forwardRef, useContext, useRef } from 'react';
-import { getRouterContext, Outlet } from '@tanstack/react-router';
+import { ForwardedRef, forwardRef, useContext, useRef } from 'react';
+import { getRouterContext, Outlet, useMatches } from '@tanstack/react-router';
 import { useIsPresent } from 'framer-motion';
 import { motion } from 'framer-motion';
 import { cloneDeep } from 'lodash';
 
-const AnimatedOutlet = forwardRef<HTMLDivElement>((_, ref) => {
+export type TOutletWithAnimationProps = {
+  AnimationProps?: Object;
+};
+
+function OutletWithAnimation(
+  { AnimationProps, ...additionalProps }: TOutletWithAnimationProps,
+  forwardedRef: ForwardedRef<HTMLDivElement>,
+) {
   const RouterContext = getRouterContext();
+  const CurrentRoutingContext = useContext(RouterContext); //@tanstack logic
+  let ContextForRendering = CurrentRoutingContext;
 
-  const routerContext = useContext(RouterContext);
+  const activeRouteMatches = useMatches();
+  const previousRouteMatches = useRef(activeRouteMatches);
 
-  const renderedContext = useRef(routerContext);
+  const bElementOnScreen = useIsPresent();
 
-  const isPresent = useIsPresent();
+  const currentAnimationSettings = useRef<Object>({});
 
-  if (isPresent) {
-    renderedContext.current = cloneDeep(routerContext);
+  if (AnimationProps && typeof AnimationProps === 'object') currentAnimationSettings.current = AnimationProps;
+
+  if (bElementOnScreen) {
+    previousRouteMatches.current = cloneDeep(activeRouteMatches);
+  } else {
+    ContextForRendering = cloneDeep(CurrentRoutingContext);
+    ContextForRendering.__store.state.matches = [
+      ...activeRouteMatches.map((newMatch, index) => ({
+        ...(previousRouteMatches.current[index] || newMatch),
+        id: newMatch.id,
+      })),
+      ...previousRouteMatches.current.slice(activeRouteMatches.length),
+    ];
   }
 
   return (
     <motion.div
-      ref={ref}
-      animate={{ opacity: 1, y: 0, left: 0 }}
-      initial={{ opacity: 0, y: 20 }}
-      exit={{ opacity: 0, y: 40 }}
-      transition={{ duration: 0.15 }}
+      className={'animated-outlet h-screen w-screen overflow-hidden'}
+      ref={forwardedRef}
+      {...additionalProps}
+      {...currentAnimationSettings.current}
     >
-      <RouterContext.Provider value={renderedContext.current}>
+      <RouterContext.Provider value={ContextForRendering}>
         <Outlet />
       </RouterContext.Provider>
     </motion.div>
   );
-});
+}
+
+const AnimatedOutlet = forwardRef(OutletWithAnimation);
 
 export default AnimatedOutlet;
