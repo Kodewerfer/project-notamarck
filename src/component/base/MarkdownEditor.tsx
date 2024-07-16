@@ -1,9 +1,6 @@
 import { ForwardedRef, forwardRef, useImperativeHandle, useRef } from 'react';
 import './MarkdownEditor.css';
 import Editor, { TEditorForwardRef } from 'react-magic-draft';
-import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-
-const { ipcRenderer } = window;
 
 export type TEditorComponentRef = {
   ExtractMD: () => Promise<string>;
@@ -26,16 +23,6 @@ const MarkdownEditor = forwardRef(({ MDSource }: { MDSource: string }, ref: Forw
     if (EditorRef.current) {
       console.log(await EditorRef.current.ExtractMD());
     }
-  }
-
-  // TODO: remove later
-  async function showDialog() {
-    console.log('showing dialog');
-    const DIRPath = await ipcRenderer.invoke(IPCActions.DIALOG.SHOW_SELECTION_DIR);
-    //Invalid
-    if (!DIRPath || DIRPath.length > 1) return;
-    // Only one folder should be allowed to choose at a time
-    console.log(DIRPath[0]);
   }
 
   return (
