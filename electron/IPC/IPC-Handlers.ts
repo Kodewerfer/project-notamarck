@@ -4,7 +4,18 @@ import * as path from 'node:path';
 import { FormatFileSize } from '../Helper.ts';
 import { IPCActions } from './IPC-Actions.ts';
 import { app, BrowserWindow, dialog } from 'electron';
-import { AddToOpenedFiles, GetOpenedFiles, RemoveOpenedFile, TOpenedFiles } from '../Storage/Globals.ts';
+import {
+  AddToOpenedFiles,
+  AddToRecentWorkspace,
+  ChangeWorkspace,
+  GetOpenedFiles,
+  GetRecentWorkspace,
+  GetCurrentWorkspace,
+  RemoveAllOpenFiles,
+  RemoveOpenedFile,
+  TOpenedFiles,
+  SyncWorkspaceAndRecents,
+} from '../Storage/Globals.ts';
 
 /**
  * Output the path where the app is located.
@@ -131,6 +142,66 @@ export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TOpenedF
   const focusedWindow = BrowserWindow.getFocusedWindow();
   const OpenedFilesData = GetOpenedFiles();
   focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+  //   todo:save file
+}
+
+// internal function, save the file before closing
+function CloseAllOpenedFilesAndSave() {
+  //   todo:
+  RemoveAllOpenFiles();
+}
+
+/**
+ * Get and set work space
+ */
+const { GET_WORK_SPACE } = IPCActions.APP;
+
+export function ReturnCurrentWorkspace() {
+  return GetCurrentWorkspace();
+}
+
+const { GET_RECENT_WORK_SPACES } = IPCActions.APP;
+
+export function ReturnRecentWorkspaces() {
+  return GetRecentWorkspace();
+}
+
+// Receiving channel
+const { SET_WORK_SPACE } = IPCActions.APP;
+// Push channels
+const { WORK_SPACE_CHANGED } = IPCActions.APP.PUSH;
+const { RECENT_WORK_SPACES_CHANGED } = IPCActions.APP.PUSH;
+
+export function ValidateAndChangeWorkspace(_Event: IpcMainInvokeEvent, NewDirPath: string) {
+  try {
+    path.resolve(NewDirPath);
+  } catch (e) {
+    throw new Error(`Invalid directory path: ${NewDirPath}`);
+  }
+  try {
+    fs.existsSync(path.resolve(NewDirPath));
+  } catch (e) {
+    throw new Error(`Dir does not exist: ${NewDirPath}`);
+  }
+
+  // save and close files from current folder
+  CloseAllOpenedFilesAndSave();
+
+  // change workspace and add old to recent
+  const oldDIrPath = ChangeWorkspace(NewDirPath);
+  if (oldDIrPath === null) return; // new path is the same as the last one
+
+  console.log('Setting workspace to :', NewDirPath);
+  // push to renderer
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  focusedWindow?.webContents.send(WORK_SPACE_CHANGED, GetCurrentWorkspace());
+
+  // add to recent workspace
+  if (oldDIrPath.trim() !== '') {
+    AddToRecentWorkspace(oldDIrPath);
+    SyncWorkspaceAndRecents();
+    focusedWindow?.webContents.send(RECENT_WORK_SPACES_CHANGED, GetRecentWorkspace());
+  }
 }
 
 // Bind to ipcMain.handle, two-way communications
@@ -142,4 +213,7 @@ export const IPCHandlerMappings = [
   { trigger: GET_ALL_OPENED_FILES, handler: GetAllOpenedFiles },
   { trigger: CLOSE_OPENED_FILES, handler: CloseOpenedFile },
   { trigger: SHOW_SELECTION_DIR, handler: ShowDialogDIR },
+  { trigger: GET_WORK_SPACE, handler: ReturnCurrentWorkspace },
+  { trigger: GET_RECENT_WORK_SPACES, handler: ReturnRecentWorkspaces },
+  { trigger: SET_WORK_SPACE, handler: ValidateAndChangeWorkspace },
 ];
