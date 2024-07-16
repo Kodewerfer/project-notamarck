@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import * as pathBrowserify from 'path-browserify';
+import path from 'path-browserify';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
 import { LayoutGroup, motion } from 'framer-motion';
@@ -127,10 +127,12 @@ async function ListMdInFolder(folderPath = '/testfolder', parentFolderPath?: str
   try {
     if (parentFolderPath === undefined) parentFolderPath = await IPCRenderSide.invoke(IPCActions.APP.GET_APP_PATH);
     if (!parentFolderPath) return;
-    MdFiles = await IPCRenderSide.invoke(
-      IPCActions.FILES.LIST_CURRENT_PATH_MD,
-      pathBrowserify.join(parentFolderPath, folderPath),
-    );
+
+    let targetFolder = path.join(parentFolderPath, folderPath);
+    const cachedPath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
+    if (cachedPath) targetFolder = cachedPath;
+
+    MdFiles = await IPCRenderSide.invoke(IPCActions.FILES.LIST_CURRENT_PATH_MD, targetFolder);
   } catch (e) {
     console.error(e);
   }
