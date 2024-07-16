@@ -49,7 +49,7 @@ export default function TabFrame() {
   // Critical: Bind to main process' push events, sync tab's data to main
   useLayoutEffect(() => {
     // whenever a new file is opened/closed on main
-    const OpenedFilesChangesCleanup = IPCRenderSide.on(
+    const unbindOpenedFileChange = IPCRenderSide.on(
       IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
       (_, payload: TTabItems[]) => {
         // console.log('server data:', payload);
@@ -71,7 +71,7 @@ export default function TabFrame() {
     );
 
     // whenever a file's content has been changed on main(could be pushed by this component)
-    const FileContentCleanUP = IPCRenderSide.on(
+    const unbindFileContentChange = IPCRenderSide.on(
       IPCActions.FILES.PUSH.FILE_CONTENT_CHANGED,
       (_, payload: TChangedFilesPayload[]) => {
         const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
@@ -87,7 +87,7 @@ export default function TabFrame() {
     );
 
     // whenever a file is set to be activated on main, could be the result of opening a file, new or not
-    const FileActivationCleanup = IPCRenderSide.on(
+    const unbindFileActivationChange = IPCRenderSide.on(
       IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
       (_, payload: TOpenedFiles | null) => {
         if (!payload) {
@@ -102,9 +102,9 @@ export default function TabFrame() {
     );
 
     return () => {
-      OpenedFilesChangesCleanup();
-      FileContentCleanUP();
-      FileActivationCleanup();
+      unbindOpenedFileChange();
+      unbindFileContentChange();
+      unbindFileActivationChange();
     };
   });
 
