@@ -15,6 +15,7 @@ import {
   RemoveOpenedFile,
   TOpenedFiles,
   SyncWorkspaceAndRecents,
+  GetActiveFile,
 } from '../Storage/Globals.ts';
 
 /**
@@ -120,12 +121,18 @@ export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath:
   }
 }
 
+/**
+ * Return all opened files to renderer
+ */
 const { GET_ALL_OPENED_FILES } = IPCActions.DATA;
 
 export function GetAllOpenedFiles(_Event: IpcMainInvokeEvent) {
   return GetOpenedFiles();
 }
 
+/**
+ * Close an opened file
+ */
 const { CLOSE_OPENED_FILES } = IPCActions.DATA;
 
 export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TOpenedFiles | TOpenedFiles[]) {
@@ -139,16 +146,60 @@ export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TOpenedF
     RemoveOpenedFile(item);
   });
 
+  // TODO: do the saving in the renderer
+
   const focusedWindow = BrowserWindow.getFocusedWindow();
   const OpenedFilesData = GetOpenedFiles();
   focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
-  //   todo:save file
 }
 
-// internal function, save the file before closing
-function CloseAllOpenedFilesAndSave() {
-  //   todo:
-  RemoveAllOpenFiles();
+/**
+ * Save the current active file, return true or false, can throw
+ */
+const { SAVE_ACTIVE_FILE } = IPCActions.FILES;
+
+export function SaveCurrentActiveFile() {
+  const ActiveFile = GetActiveFile();
+  if (!ActiveFile) return new Error(`Failed to write: No active file`);
+  if (!ActiveFile.content) return new Error(`Failed to write: Active File no content`);
+  try {
+    fs.writeFileSync(ActiveFile.fullPath, ActiveFile.content, { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Failed to write: ${ActiveFile.fullPath}`);
+  }
+}
+
+/**
+ * Save all opened files,return true or false, can throw
+ */
+const { SAVE_ALL_FILES } = IPCActions.FILES;
+
+export function SaveAllOpenedFiles() {
+  let ErrorsInWriting: string[] = [];
+  GetOpenedFiles().forEach(item => {
+    if (!item.fullPath || !item.content) return;
+    try {
+      fs.writeFileSync(item.fullPath, item.content, { encoding: 'utf8' });
+    } catch (e) {
+      ErrorsInWriting.push(item.fullPath);
+    }
+  });
+  if (ErrorsInWriting.length) throw new Error(`Failed to write files: ${ErrorsInWriting}`);
+}
+
+/**
+ * Save a file to disk, don't need to be in the opened files, return true or false, can throw
+ */
+const { SAVE_TARGET_FILE } = IPCActions.FILES;
+
+export function SaveTargetFile(_Event: IpcMainInvokeEvent, targetFile: TOpenedFiles) {
+  if (!targetFile.fullPath || targetFile.fullPath === '' || !targetFile.content)
+    throw new Error(`Failed to write: ${targetFile} has no full-path or content`);
+  try {
+    fs.writeFileSync(targetFile.fullPath, targetFile.content, { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Failed to write: ${targetFile.fullPath}`);
+  }
 }
 
 /**
@@ -160,12 +211,18 @@ export function ReturnCurrentWorkspace() {
   return GetCurrentWorkspace();
 }
 
+/**
+ * Return currently active folder
+ */
 const { GET_RECENT_WORK_SPACES } = IPCActions.APP;
 
 export function ReturnRecentWorkspaces() {
   return GetRecentWorkspace();
 }
 
+/**
+ * Change the active folder, save all files from the previous folder
+ */
 // Receiving channel
 const { SET_WORK_SPACE } = IPCActions.APP;
 // Push channels
@@ -184,8 +241,10 @@ export function ValidateAndChangeWorkspace(_Event: IpcMainInvokeEvent, NewDirPat
     throw new Error(`Dir does not exist: ${NewDirPath}`);
   }
 
-  // save and close files from current folder
-  CloseAllOpenedFilesAndSave();
+  // TODO: do the saving in the renderer
+
+  // close all opened files in the last folder
+  RemoveAllOpenFiles();
 
   // change workspace and add old to recent
   const oldDIrPath = ChangeWorkspace(NewDirPath);
@@ -204,7 +263,9 @@ export function ValidateAndChangeWorkspace(_Event: IpcMainInvokeEvent, NewDirPat
   }
 }
 
-// Bind to ipcMain.handle, two-way communications
+/**
+ * Bind to ipcMain.handle, two-way communications
+ */
 export const IPCHandlerMappings = [
   { trigger: GET_APP_PATH, handler: GetAppPath },
   { trigger: LIST_CURRENT_PATH, handler: ListAllFiles },
@@ -216,4 +277,7 @@ export const IPCHandlerMappings = [
   { trigger: GET_WORK_SPACE, handler: ReturnCurrentWorkspace },
   { trigger: GET_RECENT_WORK_SPACES, handler: ReturnRecentWorkspaces },
   { trigger: SET_WORK_SPACE, handler: ValidateAndChangeWorkspace },
+  { trigger: SAVE_ACTIVE_FILE, handler: SaveCurrentActiveFile },
+  { trigger: SAVE_ALL_FILES, handler: SaveAllOpenedFiles },
+  { trigger: SAVE_TARGET_FILE, handler: SaveTargetFile },
 ];
