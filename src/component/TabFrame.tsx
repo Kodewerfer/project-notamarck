@@ -6,15 +6,10 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useLayoutEffect } from '@tanstack/react-router';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
 import { TChangedFilesPayload } from 'electron-src/IPC/IPC-Listeners.ts';
-import { TOpenedFiles } from 'electron-src/Storage/Globals.ts';
+import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
 
 // Identifying info a tab holds
-export type TTabItems = {
-  filename: string;
-  fullPath: string;
-  title?: string;
-  content?: string;
-};
+export type TTabItems = TFileInMemory;
 
 const { IPCRenderSide } = window;
 export default function TabFrame() {
@@ -52,8 +47,6 @@ export default function TabFrame() {
     const unbindOpenedFileChange = IPCRenderSide.on(
       IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
       (_, payload: TTabItems[]) => {
-        // console.log('server data:', payload);
-
         if (!payload || !Array.isArray(payload)) return;
 
         const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
@@ -89,7 +82,7 @@ export default function TabFrame() {
     // whenever a file is set to be activated on main, could be the result of opening a file, new or not
     const unbindFileActivationChange = IPCRenderSide.on(
       IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
-      (_, payload: TOpenedFiles | null) => {
+      (_, payload: TFileInMemory | null) => {
         if (!payload) {
           console.error('Tabs Frame: ACTIVE_FILE_CHANGED pushed null result.');
           return;
@@ -109,22 +102,27 @@ export default function TabFrame() {
   });
 
   const onSelectTab = async (item: TTabItems) => {
-    // if (item === SelectedTab) {
-    //   console.log('same tab');
-    //   return;
-    // }
-
     await SendCurrentTabContentToMain();
     setSelectedTab(item);
   };
 
-  const onCloseTab = (item: TTabItems) => {
+  const onCloseTab = async (item: TTabItems) => {
     // Notify backend
     if (item === SelectedTab) {
+      await SendCurrentTabContentToMain();
       setSelectedTab(closestItem(Tabs, item));
     }
 
     setTabs(removeItem(Tabs, item));
+    console.log(Tabs);
+    // save the file's content then close it in memory
+    IPCRenderSide.invoke(IPCActions.FILES.SAVE_TARGET_FILE, item.fullPath).catch((e: Error) => {
+      IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+        type: 'error',
+        message: `Error saving file`,
+        detail: `${e}`,
+      });
+    });
     IPCRenderSide.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
   };
 
@@ -140,12 +138,14 @@ export default function TabFrame() {
   return (
     <>
       {/*the tab row*/}
-      <nav className="flex overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400">
+      <nav
+        className={`flex overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
+      >
         <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
             {Tabs.map((item: TTabItems) => (
               <Tab
-                key={item.filename}
+                key={item.fullPath}
                 item={item}
                 isSelected={SelectedTab === item}
                 onClick={() => onSelectTab(item)}
@@ -154,17 +154,9 @@ export default function TabFrame() {
             ))}
           </AnimatePresence>
         </Reorder.Group>
-        <motion.button
-          className="mx-2 size-6 self-center"
-          // onClick={onAddTab}
-          disabled={false}
-          whileTap={{ scale: 0.9 }}
-        >
-          <PlusIcon />
-        </motion.button>
       </nav>
       {/* content for the tab */}
-      <section className={'px-2 pl-4 pt-2'}>
+      <section className={`px-2 pl-4 pt-2 ${Tabs.length === 0 && 'hidden'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             className={'animate-wrapper'} //marking the usage, no real purpose
