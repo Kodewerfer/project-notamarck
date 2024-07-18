@@ -44,26 +44,66 @@ function Settings() {
     };
   }, []);
 
+  async function PromptToGoBack() {
+    const buttonPressed = await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+      type: 'question',
+      message: `Back to workspace now? `,
+      buttons: ['yes', 'no'],
+    });
+    if (buttonPressed === 0) router.history.back();
+  }
+
   async function ClickedOnRecentFolders(targetFolder: string) {
     try {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, targetFolder);
     } catch (e) {
       console.error(e);
+      await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+        type: 'error',
+        message: `Error switching workspace`,
+        detail: `${e}`,
+      });
+      return;
     }
     setCurrentFolderPath(await GetWorkspace());
+    await PromptToGoBack();
   }
 
   async function ShowFolderSelectionDialog() {
     const DIRPath = await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_SELECTION_DIR);
     //Invalid
     if (!DIRPath || DIRPath.length > 1) return;
+
+    // Save and close files from the current workspace
+    try {
+      await IPCRenderSide.invoke(IPCActions.FILES.SAVE_ALL_OPENED_FILES);
+    } catch (e) {
+      const buttonPressed = await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+        type: 'error',
+        message: `Error saving files from previous, continue switching workspace?`,
+        detail: `${e}`,
+        buttons: ['yes', 'no'],
+      });
+      if (buttonPressed === 1) return;
+      console.error(e);
+    }
+
+    await IPCRenderSide.invoke(IPCActions.DATA.CLOSE_ALL_OPENED_FILES);
+
     // Only one folder should be allowed to choose at a time
     try {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, DIRPath[0]);
     } catch (e) {
       console.error(e);
+      await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+        type: 'error',
+        message: `Error switching workspace`,
+        detail: `${e}`,
+      });
+      return;
     }
     setCurrentFolderPath(await GetWorkspace());
+    await PromptToGoBack();
   }
 
   return (

@@ -5,7 +5,7 @@ import {
   FindInOpenedFilesByFullPath,
   GetActiveFile,
   GetOpenedFiles,
-  TOpenedFiles,
+  TFileInMemory,
   UpdateOpenedFile,
 } from '../Storage/Globals.ts';
 import { BrowserWindow } from 'electron';
@@ -40,7 +40,7 @@ const { FILE_CONTENT_CHANGED } = IPCActions.FILES.PUSH;
 
 export type TChangedFilesPayload = {
   TargetFilePath: string;
-  NewFile: TOpenedFiles;
+  NewFile: TFileInMemory;
 };
 
 function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, FileContent: string) {
@@ -67,7 +67,7 @@ const { CHANGE_ACTIVE_FILE } = IPCActions.FILES;
 // Pushing
 const { ACTIVE_FILE_CHANGED } = IPCActions.FILES.PUSH;
 
-export function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TOpenedFiles) {
+export function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMemory) {
   ChangeActiveFile(NewTargetFile);
   const focusedWindow = BrowserWindow.getFocusedWindow();
   focusedWindow?.webContents.send(ACTIVE_FILE_CHANGED, GetActiveFile());

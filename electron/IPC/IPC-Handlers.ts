@@ -8,15 +8,17 @@ import {
   AddToOpenedFiles,
   AddToRecentWorkspace,
   ChangeWorkspace,
+  FindInOpenedFilesByFullPath,
+  GetActiveFile,
+  GetCurrentWorkspace,
   GetOpenedFiles,
   GetRecentWorkspace,
-  GetCurrentWorkspace,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
-  TOpenedFiles,
   SyncWorkspaceAndRecents,
-  GetActiveFile,
+  TFileInMemory,
 } from '../Storage/Globals.ts';
+import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
 
 /**
  * Output the path where the app is located.
@@ -93,6 +95,12 @@ export function ShowDialogDIR(_Event: IpcMainInvokeEvent) {
   return dialogReturn;
 }
 
+const { SHOW_MESSAGE_DIALOG } = IPCActions.DIALOG;
+
+export function ShowDialogMessage(_Event: IpcMainInvokeEvent, Message: MessageBoxSyncOptions) {
+  return dialog.showMessageBoxSync({ ...Message });
+}
+
 /**
  * Read a MD file from path, add to opened file and push to renderer
  */
@@ -131,11 +139,11 @@ export function GetAllOpenedFiles(_Event: IpcMainInvokeEvent) {
 }
 
 /**
- * Close an opened file
+ * Close an opened file or an array
  */
 const { CLOSE_OPENED_FILES } = IPCActions.DATA;
 
-export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TOpenedFiles | TOpenedFiles[]) {
+export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TFileInMemory | TFileInMemory[]) {
   if (!FilesItems) return;
 
   if (!Array.isArray(FilesItems)) {
@@ -148,6 +156,19 @@ export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TOpenedF
 
   // TODO: do the saving in the renderer
 
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const OpenedFilesData = GetOpenedFiles();
+  focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+}
+
+/**
+ * Close All opened files
+ */
+const { CLOSE_ALL_OPENED_FILES } = IPCActions.DATA;
+
+export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
+  // close all opened files in the last folder
+  RemoveAllOpenFiles();
   const focusedWindow = BrowserWindow.getFocusedWindow();
   const OpenedFilesData = GetOpenedFiles();
   focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
@@ -172,7 +193,7 @@ export function SaveCurrentActiveFile() {
 /**
  * Save all opened files,return true or false, can throw
  */
-const { SAVE_ALL_FILES } = IPCActions.FILES;
+const { SAVE_ALL_OPENED_FILES } = IPCActions.FILES;
 
 export function SaveAllOpenedFiles() {
   let ErrorsInWriting: string[] = [];
@@ -188,11 +209,22 @@ export function SaveAllOpenedFiles() {
 }
 
 /**
- * Save a file to disk, don't need to be in the opened files, return true or false, can throw
+ * Save a file to disk,  return true or false, can throw
  */
 const { SAVE_TARGET_FILE } = IPCActions.FILES;
 
-export function SaveTargetFile(_Event: IpcMainInvokeEvent, targetFile: TOpenedFiles) {
+export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileFullPath: string) {
+  if (!targetFileFullPath || String(targetFileFullPath) !== targetFileFullPath)
+    throw new Error(`Failed to write: Invalid target file full path`);
+
+  let resultFiles = FindInOpenedFilesByFullPath(targetFileFullPath);
+
+  if (!resultFiles || !resultFiles.length)
+    throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
+
+  const targetFile = resultFiles[0];
+  if (!targetFile) throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
+
   if (!targetFile.fullPath || targetFile.fullPath === '' || !targetFile.content)
     throw new Error(`Failed to write: ${targetFile} has no full-path or content`);
   try {
@@ -200,6 +232,7 @@ export function SaveTargetFile(_Event: IpcMainInvokeEvent, targetFile: TOpenedFi
   } catch (e) {
     throw new Error(`Failed to write: ${targetFile.fullPath}`);
   }
+  console.log('File Saved:', targetFile.fullPath);
 }
 
 /**
@@ -242,10 +275,6 @@ export function ValidateAndChangeWorkspace(_Event: IpcMainInvokeEvent, NewDirPat
   }
 
   // TODO: do the saving in the renderer
-
-  // close all opened files in the last folder
-  RemoveAllOpenFiles();
-
   // change workspace and add old to recent
   const oldDIrPath = ChangeWorkspace(NewDirPath);
   if (oldDIrPath === null) return; // new path is the same as the last one
@@ -278,6 +307,8 @@ export const IPCHandlerMappings = [
   { trigger: GET_RECENT_WORK_SPACES, handler: ReturnRecentWorkspaces },
   { trigger: SET_WORK_SPACE, handler: ValidateAndChangeWorkspace },
   { trigger: SAVE_ACTIVE_FILE, handler: SaveCurrentActiveFile },
-  { trigger: SAVE_ALL_FILES, handler: SaveAllOpenedFiles },
-  { trigger: SAVE_TARGET_FILE, handler: SaveTargetFile },
+  { trigger: SAVE_ALL_OPENED_FILES, handler: SaveAllOpenedFiles },
+  { trigger: SAVE_TARGET_FILE, handler: SaveTargetFileBaseOnPath },
+  { trigger: CLOSE_ALL_OPENED_FILES, handler: CloseAllOpenedFiles },
+  { trigger: SHOW_MESSAGE_DIALOG, handler: ShowDialogMessage },
 ];

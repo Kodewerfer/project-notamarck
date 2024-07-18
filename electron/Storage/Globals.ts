@@ -1,6 +1,6 @@
 import path from 'path-browserify';
 
-export type TOpenedFiles = {
+export type TFileInMemory = {
   filename: string;
   fullPath: string;
   title?: string;
@@ -10,30 +10,30 @@ export type TOpenedFiles = {
 /**
  * Array, matches the order of tabs in tabframe component
  */
-let _Opened_Files: TOpenedFiles[] = [];
+let _Opened_Files: TFileInMemory[] = [];
 
-export function GetOpenedFiles(): ReadonlyArray<TOpenedFiles> {
+export function GetOpenedFiles(): ReadonlyArray<TFileInMemory> {
   return [..._Opened_Files];
 }
 
 export function FindInOpenedFilesByFullPath(FilePath: string) {
-  return _Opened_Files.filter((arrItem: TOpenedFiles) => arrItem.fullPath === FilePath);
+  return _Opened_Files.filter((arrItem: TFileInMemory) => arrItem.fullPath === FilePath);
 }
 
-export function UpdateOpenedFile(FilePath: string, NewFileInfo: TOpenedFiles) {
-  const findIndex = _Opened_Files.findIndex((arrItem: TOpenedFiles) => arrItem.fullPath === FilePath);
+export function UpdateOpenedFile(FilePath: string, NewFileInfo: TFileInMemory) {
+  const findIndex = _Opened_Files.findIndex((arrItem: TFileInMemory) => arrItem.fullPath === FilePath);
   if (findIndex === -1) return;
   _Opened_Files[findIndex] = { ...NewFileInfo };
 }
 
-export function ChecksInOpenedFiles(FileInfo: TOpenedFiles) {
-  return _Opened_Files.some((arrItem: TOpenedFiles) => arrItem.fullPath === FileInfo.fullPath);
+export function ChecksInOpenedFiles(FileInfo: TFileInMemory) {
+  return _Opened_Files.some((arrItem: TFileInMemory) => arrItem.fullPath === FileInfo.fullPath);
 }
 
-export function AddToOpenedFiles(FileInfo: TOpenedFiles) {
+export function AddToOpenedFiles(FileInfo: TFileInMemory) {
   const arr = [..._Opened_Files];
   // already have the element
-  if (arr.some((arrItem: TOpenedFiles) => arrItem.fullPath === FileInfo.fullPath)) {
+  if (arr.some((arrItem: TFileInMemory) => arrItem.fullPath === FileInfo.fullPath)) {
     return;
   }
 
@@ -46,11 +46,11 @@ export function RemoveAllOpenFiles() {
   _Opened_Files = [];
 }
 
-export function RemoveOpenedFile(removingItem: TOpenedFiles): ReadonlyArray<TOpenedFiles> {
+export function RemoveOpenedFile(removingItem: TFileInMemory): ReadonlyArray<TFileInMemory> {
   const arr = [..._Opened_Files];
   let index = -1;
 
-  arr.some((arrItem: TOpenedFiles, arrIndex) => {
+  arr.some((arrItem: TFileInMemory, arrIndex) => {
     if (arrItem.fullPath === removingItem.fullPath) {
       index = arrIndex;
       return true;
@@ -66,13 +66,13 @@ export function RemoveOpenedFile(removingItem: TOpenedFiles): ReadonlyArray<TOpe
 /**
  * the file the editor is editing or last edited
  */
-let _Active_File: TOpenedFiles | null = null;
+let _Active_File: TFileInMemory | null = null;
 
-export function GetActiveFile(): Readonly<TOpenedFiles> | null {
+export function GetActiveFile(): Readonly<TFileInMemory> | null {
   return _Active_File ? Object.assign({}, _Active_File) : null;
 }
 
-export function ChangeActiveFile(NewTargetFile: TOpenedFiles) {
+export function ChangeActiveFile(NewTargetFile: TFileInMemory) {
   if (!NewTargetFile || !NewTargetFile.fullPath) return;
   _Active_File = Object.assign({}, NewTargetFile);
 }
