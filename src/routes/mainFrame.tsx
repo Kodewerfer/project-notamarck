@@ -116,8 +116,6 @@ function MainFrame() {
           </motion.main>
         </LayoutGroup>
       </motion.div>
-      {/*TODO: delete*/}
-      {/*<TanStackRouterDevtools />*/}
     </>
   );
 }
