@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { PlusIcon } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useLayoutEffect } from '@tanstack/react-router';
@@ -167,11 +166,7 @@ export default function TabFrame() {
             exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.15 }}
           >
-            {SelectedTab && SelectedTab.content ? (
-              <MarkdownEditor ref={MDEditorRef} MDSource={SelectedTab.content} />
-            ) : (
-              ''
-            )}
+            {SelectedTab ? <MarkdownEditor ref={MDEditorRef} MDSource={SelectedTab.content || ''} /> : ''}
           </motion.div>
         </AnimatePresence>
       </section>
