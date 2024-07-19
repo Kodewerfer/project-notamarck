@@ -104,7 +104,7 @@ export function ShowDialogMessage(_Event: IpcMainInvokeEvent, Message: MessageBo
 /**
  * Read a MD file from path, add to opened file and push to renderer
  */
-const { READ_MD_PATH } = IPCActions.FILES;
+const { READ_MD_FROM_PATH } = IPCActions.FILES;
 const { OPENED_FILES_CHANGED } = IPCActions.DATA.PUSH;
 
 export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
@@ -127,6 +127,32 @@ export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath:
   } catch (e) {
     throw e;
   }
+}
+
+/**
+ * Create a new empty file at target location
+ */
+const { CREATE_NEW_FILE } = IPCActions.FILES;
+// pushing channel
+const { MD_LIST_CHANGED } = IPCActions.FILES.SIGNAL;
+
+export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, FileContent?: string) {
+  try {
+    path.resolve(FileFullName);
+  } catch (e) {
+    throw new Error(`${FileFullName} is not valid`);
+  }
+  if (fs.existsSync(FileFullName)) throw new Error(`${FileFullName} already exists`);
+
+  try {
+    fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Error writing to file ${FileFullName}, ${e}`);
+  }
+
+  // push to the current window as a signal
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  focusedWindow?.webContents.send(MD_LIST_CHANGED);
 }
 
 /**
@@ -225,10 +251,10 @@ export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileF
   const targetFile = resultFiles[0];
   if (!targetFile) throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
 
-  if (!targetFile.fullPath || targetFile.fullPath === '' || !targetFile.content)
+  if (!targetFile.fullPath || targetFile.fullPath === '')
     throw new Error(`Failed to write: ${targetFile} has no full-path or content`);
   try {
-    fs.writeFileSync(targetFile.fullPath, targetFile.content, { encoding: 'utf8' });
+    fs.writeFileSync(targetFile.fullPath, targetFile.content ?? '', { encoding: 'utf8' });
   } catch (e) {
     throw new Error(`Failed to write: ${targetFile.fullPath}`);
   }
@@ -268,11 +294,8 @@ export function ValidateAndChangeWorkspace(_Event: IpcMainInvokeEvent, NewDirPat
   } catch (e) {
     throw new Error(`Invalid directory path: ${NewDirPath}`);
   }
-  try {
-    fs.existsSync(path.resolve(NewDirPath));
-  } catch (e) {
-    throw new Error(`Dir does not exist: ${NewDirPath}`);
-  }
+
+  if (!fs.existsSync(path.resolve(NewDirPath))) throw new Error(`Dir does not exist: ${NewDirPath}`);
 
   // TODO: do the saving in the renderer
   // change workspace and add old to recent
@@ -299,7 +322,7 @@ export const IPCHandlerMappings = [
   { trigger: GET_APP_PATH, handler: GetAppPath },
   { trigger: LIST_CURRENT_PATH, handler: ListAllFiles },
   { trigger: LIST_CURRENT_PATH_MD, handler: ListAllMD },
-  { trigger: READ_MD_PATH, handler: ReadMDAndPushOpenedFiles },
+  { trigger: READ_MD_FROM_PATH, handler: ReadMDAndPushOpenedFiles },
   { trigger: GET_ALL_OPENED_FILES, handler: GetAllOpenedFiles },
   { trigger: CLOSE_OPENED_FILES, handler: CloseOpenedFile },
   { trigger: SHOW_SELECTION_DIR, handler: ShowDialogDIR },
@@ -311,4 +334,5 @@ export const IPCHandlerMappings = [
   { trigger: SAVE_TARGET_FILE, handler: SaveTargetFileBaseOnPath },
   { trigger: CLOSE_ALL_OPENED_FILES, handler: CloseAllOpenedFiles },
   { trigger: SHOW_MESSAGE_DIALOG, handler: ShowDialogMessage },
+  { trigger: CREATE_NEW_FILE, handler: CreateNewFile },
 ];
