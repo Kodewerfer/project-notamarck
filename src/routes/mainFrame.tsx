@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Link, Outlet, useLayoutEffect } from '@tanstack/react-router';
 
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import path from 'path-browserify';
@@ -8,6 +8,7 @@ import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { LayoutGroup, motion } from 'framer-motion';
 import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
+import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
 
 const { IPCRenderSide } = window;
 
@@ -20,6 +21,7 @@ export const Route = createFileRoute('/mainFrame')({
 
 function MainFrame() {
   const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData());
+  const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory>();
 
   useEffect(() => {
     if (MDFiles) return;
@@ -28,6 +30,25 @@ function MainFrame() {
       const MDData = await ListMdInFolder();
       setMDFiles(MDData);
     })();
+  }, []);
+
+  // bind events
+  useLayoutEffect(() => {
+    // whenever a file is set to be activated on main, could be the result of opening a file, new or not
+    const unbindFileActivationChange = IPCRenderSide.on(
+      IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
+      (_, payload: TFileInMemory | null) => {
+        if (!payload) {
+          console.error('Tabs Frame: ACTIVE_FILE_CHANGED pushed null result.');
+          return;
+        }
+        setCurrentEditingFile(payload);
+      },
+    );
+
+    return () => {
+      unbindFileActivationChange();
+    };
   }, []);
 
   return (
@@ -68,7 +89,7 @@ function MainFrame() {
                 MDFiles.map(item => {
                   return (
                     <li
-                      className="is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500"
+                      className={`${currentEditingFile?.fullPath === item.path ? 'is-editing' : ''} group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
                       key={item.path}
                     >
                       {/* mind the group-[.is-editing] */}

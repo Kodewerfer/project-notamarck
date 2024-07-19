@@ -103,6 +103,7 @@ export default function TabFrame() {
 
   const onSelectTab = async (item: TTabItems) => {
     await SendCurrentTabContentToMain();
+    IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, item);
     setSelectedTab(item);
   };
 
@@ -147,7 +148,7 @@ export default function TabFrame() {
               <Tab
                 key={item.fullPath}
                 item={item}
-                isSelected={SelectedTab === item}
+                isSelected={SelectedTab && SelectedTab.fullPath === item.fullPath}
                 onClick={() => onSelectTab(item)}
                 onRemove={() => onCloseTab(item)}
               />
