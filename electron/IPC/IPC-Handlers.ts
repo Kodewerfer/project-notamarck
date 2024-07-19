@@ -20,268 +20,32 @@ import {
 } from '../Storage/Globals.ts';
 import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
 
-/**
- * Output the path where the app is located.
- */
+/************
+ * - APP -
+ ************/
+
+// Output the path where the app is located.
 const { GET_APP_PATH } = IPCActions.APP;
 
 export function GetAppPath() {
   return app.getAppPath();
 }
 
-/**
- * List all files or directories in the given path
- */
-const { LIST_CURRENT_PATH } = IPCActions.FILES;
-
-export type TListedFile = ReturnType<typeof ListAllFiles>[0];
-
-export function ListAllFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
-  const files = fs
-    .readdirSync(targetPath)
-    .map(file => {
-      const fileStats = fs.statSync(path.join(targetPath, file));
-      return {
-        name: file,
-        size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null,
-        directory: fileStats.isDirectory(),
-      };
-    })
-    .sort((a, b) => {
-      if (a.directory === b.directory) {
-        return a.name.localeCompare(b.name);
-      }
-      return a.directory ? -1 : 1;
-    });
-
-  return files;
-}
-
-/**
- * List all MD files from a path
- */
-const { LIST_CURRENT_PATH_MD } = IPCActions.FILES;
-
-export type TMDFile = ReturnType<typeof ListAllMD>[0];
-
-export function ListAllMD(_Event: IpcMainInvokeEvent, targetPath: string) {
-  const MDFiles = fs
-    .readdirSync(targetPath)
-    .filter(file => {
-      const fileStats = fs.statSync(path.join(targetPath, file));
-      return !fileStats.isDirectory() && file.endsWith('.md');
-    })
-    .map(file => {
-      const fileStats = fs.statSync(path.join(targetPath, file));
-      return {
-        name: file,
-        path: path.join(targetPath, file),
-        size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null,
-      };
-    });
-
-  return MDFiles;
-}
-
-/**
- * Show dialog for path selection
- */
-const { SHOW_SELECTION_DIR } = IPCActions.DIALOG;
-
-export function ShowDialogDIR(_Event: IpcMainInvokeEvent) {
-  const dialogReturn = dialog.showOpenDialogSync({
-    properties: ['openDirectory'],
-  });
-  return dialogReturn;
-}
-
-const { SHOW_MESSAGE_DIALOG } = IPCActions.DIALOG;
-
-export function ShowDialogMessage(_Event: IpcMainInvokeEvent, Message: MessageBoxSyncOptions) {
-  return dialog.showMessageBoxSync({ ...Message });
-}
-
-/**
- * Read a MD file from path, add to opened file and push to renderer
- */
-const { READ_MD_FROM_PATH } = IPCActions.FILES;
-const { OPENED_FILES_CHANGED } = IPCActions.DATA.PUSH;
-
-export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
-  if (!targetPath.endsWith('.md')) throw new Error(`${targetPath} file is not MD`);
-
-  try {
-    let MDFileContent = fs.readFileSync(targetPath, { encoding: 'utf8' });
-    const MDFileInfo = {
-      fullPath: targetPath,
-      filename: path.basename(targetPath),
-      content: MDFileContent,
-    };
-    AddToOpenedFiles(MDFileInfo);
-
-    // push to the current window
-    const focusedWindow = BrowserWindow.getFocusedWindow();
-    const OpenedFilesData = GetOpenedFiles();
-    focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
-    return MDFileInfo;
-  } catch (e) {
-    throw e;
-  }
-}
-
-/**
- * Create a new empty file at target location
- */
-const { CREATE_NEW_FILE } = IPCActions.FILES;
-// pushing channel
-const { MD_LIST_CHANGED } = IPCActions.FILES.SIGNAL;
-
-export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, FileContent?: string) {
-  try {
-    path.resolve(FileFullName);
-  } catch (e) {
-    throw new Error(`${FileFullName} is not valid`);
-  }
-  if (fs.existsSync(FileFullName)) throw new Error(`${FileFullName} already exists`);
-
-  try {
-    fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
-  } catch (e) {
-    throw new Error(`Error writing to file ${FileFullName}, ${e}`);
-  }
-
-  // push to the current window as a signal
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(MD_LIST_CHANGED);
-}
-
-/**
- * Return all opened files to renderer
- */
-const { GET_ALL_OPENED_FILES } = IPCActions.DATA;
-
-export function GetAllOpenedFiles(_Event: IpcMainInvokeEvent) {
-  return GetOpenedFiles();
-}
-
-/**
- * Close an opened file or an array
- */
-const { CLOSE_OPENED_FILES } = IPCActions.DATA;
-
-export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TFileInMemory | TFileInMemory[]) {
-  if (!FilesItems) return;
-
-  if (!Array.isArray(FilesItems)) {
-    FilesItems = [FilesItems];
-  }
-
-  FilesItems.forEach(item => {
-    RemoveOpenedFile(item);
-  });
-
-  // TODO: do the saving in the renderer
-
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  const OpenedFilesData = GetOpenedFiles();
-  focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
-}
-
-/**
- * Close All opened files
- */
-const { CLOSE_ALL_OPENED_FILES } = IPCActions.DATA;
-
-export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
-  // close all opened files in the last folder
-  RemoveAllOpenFiles();
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  const OpenedFilesData = GetOpenedFiles();
-  focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
-}
-
-/**
- * Save the current active file, return true or false, can throw
- */
-const { SAVE_ACTIVE_FILE } = IPCActions.FILES;
-
-export function SaveCurrentActiveFile() {
-  const ActiveFile = GetActiveFile();
-  if (!ActiveFile) return new Error(`Failed to write: No active file`);
-  if (!ActiveFile.content) return new Error(`Failed to write: Active File no content`);
-  try {
-    fs.writeFileSync(ActiveFile.fullPath, ActiveFile.content, { encoding: 'utf8' });
-  } catch (e) {
-    throw new Error(`Failed to write: ${ActiveFile.fullPath}`);
-  }
-}
-
-/**
- * Save all opened files,return true or false, can throw
- */
-const { SAVE_ALL_OPENED_FILES } = IPCActions.FILES;
-
-export function SaveAllOpenedFiles() {
-  let ErrorsInWriting: string[] = [];
-  GetOpenedFiles().forEach(item => {
-    if (!item.fullPath || !item.content) return;
-    try {
-      fs.writeFileSync(item.fullPath, item.content, { encoding: 'utf8' });
-    } catch (e) {
-      ErrorsInWriting.push(item.fullPath);
-    }
-  });
-  if (ErrorsInWriting.length) throw new Error(`Failed to write files: ${ErrorsInWriting}`);
-}
-
-/**
- * Save a file to disk,  return true or false, can throw
- */
-const { SAVE_TARGET_FILE } = IPCActions.FILES;
-
-export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileFullPath: string) {
-  if (!targetFileFullPath || String(targetFileFullPath) !== targetFileFullPath)
-    throw new Error(`Failed to write: Invalid target file full path`);
-
-  let resultFiles = FindInOpenedFilesByFullPath(targetFileFullPath);
-
-  if (!resultFiles || !resultFiles.length)
-    throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
-
-  const targetFile = resultFiles[0];
-  if (!targetFile) throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
-
-  if (!targetFile.fullPath || targetFile.fullPath === '')
-    throw new Error(`Failed to write: ${targetFile} has no full-path or content`);
-  try {
-    fs.writeFileSync(targetFile.fullPath, targetFile.content ?? '', { encoding: 'utf8' });
-  } catch (e) {
-    throw new Error(`Failed to write: ${targetFile.fullPath}`);
-  }
-  console.log('File Saved:', targetFile.fullPath);
-}
-
-/**
- * Get and set work space
- */
+// Get and set work space
 const { GET_WORK_SPACE } = IPCActions.APP;
 
 export function ReturnCurrentWorkspace() {
   return GetCurrentWorkspace();
 }
 
-/**
- * Return currently active folder
- */
+// Return currently active folder
 const { GET_RECENT_WORK_SPACES } = IPCActions.APP;
 
 export function ReturnRecentWorkspaces() {
   return GetRecentWorkspace();
 }
 
-/**
- * Change the active folder, save all files from the previous folder
- */
+// Change the active folder, save all files from the previous folder
 // Receiving channel
 const { SET_WORK_SPACE } = IPCActions.APP;
 // Push channels
@@ -313,6 +77,226 @@ export function ValidateAndChangeWorkspace(_Event: IpcMainInvokeEvent, NewDirPat
     SyncWorkspaceAndRecents();
     focusedWindow?.webContents.send(RECENT_WORK_SPACES_CHANGED, GetRecentWorkspace());
   }
+}
+
+/************
+ * - DIALOG -
+ ***********/
+
+// Show dialog for path selection
+const { SHOW_SELECTION_DIR } = IPCActions.DIALOG;
+
+export function ShowDialogDIR(_Event: IpcMainInvokeEvent) {
+  const dialogReturn = dialog.showOpenDialogSync({
+    properties: ['openDirectory'],
+  });
+  return dialogReturn;
+}
+
+const { SHOW_MESSAGE_DIALOG } = IPCActions.DIALOG;
+
+export function ShowDialogMessage(_Event: IpcMainInvokeEvent, Message: MessageBoxSyncOptions) {
+  return dialog.showMessageBoxSync({ ...Message });
+}
+
+/************
+ * - DATA -
+ ************/
+
+// Close an opened file or an array
+const { GET_ALL_OPENED_FILES } = IPCActions.DATA;
+
+export function GetAllOpenedFiles(_Event: IpcMainInvokeEvent) {
+  return GetOpenedFiles();
+}
+
+// Close an opened file or an array
+const { CLOSE_OPENED_FILES } = IPCActions.DATA;
+
+export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TFileInMemory | TFileInMemory[]) {
+  if (!FilesItems) return;
+
+  if (!Array.isArray(FilesItems)) {
+    FilesItems = [FilesItems];
+  }
+
+  FilesItems.forEach(item => {
+    RemoveOpenedFile(item);
+  });
+
+  // TODO: do the saving in the renderer
+
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const OpenedFilesData = GetOpenedFiles();
+  focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+}
+
+// Close All opened files
+const { CLOSE_ALL_OPENED_FILES } = IPCActions.DATA;
+
+export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
+  // close all opened files in the last folder
+  RemoveAllOpenFiles();
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const OpenedFilesData = GetOpenedFiles();
+  focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+}
+
+/************
+ * - FILES -
+ ************/
+
+// List all files or directories in the given path
+const { LIST_CURRENT_PATH } = IPCActions.FILES;
+export type TListedFile = ReturnType<typeof ListAllFiles>[0];
+
+export function ListAllFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
+  const files = fs
+    .readdirSync(targetPath)
+    .map(file => {
+      const fileStats = fs.statSync(path.join(targetPath, file));
+      return {
+        name: file,
+        size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null,
+        directory: fileStats.isDirectory(),
+      };
+    })
+    .sort((a, b) => {
+      if (a.directory === b.directory) {
+        return a.name.localeCompare(b.name);
+      }
+      return a.directory ? -1 : 1;
+    });
+
+  return files;
+}
+
+// List all MD files from a path
+const { LIST_CURRENT_PATH_MD } = IPCActions.FILES;
+export type TMDFile = ReturnType<typeof ListAllMD>[0];
+
+export function ListAllMD(_Event: IpcMainInvokeEvent, targetPath: string) {
+  const MDFiles = fs
+    .readdirSync(targetPath)
+    .filter(file => {
+      const fileStats = fs.statSync(path.join(targetPath, file));
+      return !fileStats.isDirectory() && file.endsWith('.md');
+    })
+    .map(file => {
+      const fileStats = fs.statSync(path.join(targetPath, file));
+      return {
+        name: file,
+        path: path.join(targetPath, file),
+        size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null,
+      };
+    });
+
+  return MDFiles;
+}
+
+// Read a MD file from path, add to opened file and push to renderer
+const { READ_MD_FROM_PATH } = IPCActions.FILES;
+const { OPENED_FILES_CHANGED } = IPCActions.DATA.PUSH;
+
+export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
+  if (!targetPath.endsWith('.md')) throw new Error(`${targetPath} file is not MD`);
+
+  try {
+    let MDFileContent = fs.readFileSync(targetPath, { encoding: 'utf8' });
+    const MDFileInfo = {
+      fullPath: targetPath,
+      filename: path.basename(targetPath),
+      content: MDFileContent,
+    };
+    AddToOpenedFiles(MDFileInfo);
+
+    // push to the current window
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    const OpenedFilesData = GetOpenedFiles();
+    focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+    return MDFileInfo;
+  } catch (e) {
+    throw e;
+  }
+}
+
+// Create a new empty file at target location
+const { CREATE_NEW_FILE } = IPCActions.FILES;
+// pushing channel
+const { MD_LIST_CHANGED } = IPCActions.FILES.SIGNAL;
+
+export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, FileContent?: string) {
+  try {
+    path.resolve(FileFullName);
+  } catch (e) {
+    throw new Error(`${FileFullName} is not valid`);
+  }
+  if (fs.existsSync(FileFullName)) throw new Error(`${FileFullName} already exists`);
+
+  try {
+    fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Error writing to file ${FileFullName}, ${e}`);
+  }
+
+  // push to the current window as a signal
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  focusedWindow?.webContents.send(MD_LIST_CHANGED);
+}
+
+// Save the current active file, return true or false, can throw
+const { SAVE_ACTIVE_FILE } = IPCActions.FILES;
+
+export function SaveCurrentActiveFile() {
+  const ActiveFile = GetActiveFile();
+  if (!ActiveFile) return new Error(`Failed to write: No active file`);
+  if (!ActiveFile.content) return new Error(`Failed to write: Active File no content`);
+  try {
+    fs.writeFileSync(ActiveFile.fullPath, ActiveFile.content, { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Failed to write: ${ActiveFile.fullPath}`);
+  }
+}
+
+// Save all opened files,return true or false, can throw
+const { SAVE_ALL_OPENED_FILES } = IPCActions.FILES;
+
+export function SaveAllOpenedFiles() {
+  let ErrorsInWriting: string[] = [];
+  GetOpenedFiles().forEach(item => {
+    if (!item.fullPath || !item.content) return;
+    try {
+      fs.writeFileSync(item.fullPath, item.content, { encoding: 'utf8' });
+    } catch (e) {
+      ErrorsInWriting.push(item.fullPath);
+    }
+  });
+  if (ErrorsInWriting.length) throw new Error(`Failed to write files: ${ErrorsInWriting}`);
+}
+
+// Save a file to disk,  return true or false, can throw
+const { SAVE_TARGET_FILE } = IPCActions.FILES;
+
+export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileFullPath: string) {
+  if (!targetFileFullPath || String(targetFileFullPath) !== targetFileFullPath)
+    throw new Error(`Failed to write: Invalid target file full path`);
+
+  let resultFiles = FindInOpenedFilesByFullPath(targetFileFullPath);
+
+  if (!resultFiles || !resultFiles.length)
+    throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
+
+  const targetFile = resultFiles[0];
+  if (!targetFile) throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
+
+  if (!targetFile.fullPath || targetFile.fullPath === '')
+    throw new Error(`Failed to write: ${targetFile} has no full-path or content`);
+  try {
+    fs.writeFileSync(targetFile.fullPath, targetFile.content ?? '', { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Failed to write: ${targetFile.fullPath}`);
+  }
+  console.log('File Saved:', targetFile.fullPath);
 }
 
 /**
