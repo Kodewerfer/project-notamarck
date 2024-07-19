@@ -5,8 +5,8 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import path from 'path-browserify';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
-import { LayoutGroup, motion } from 'framer-motion';
-import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
 import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
 
@@ -20,7 +20,8 @@ export const Route = createFileRoute('/mainFrame')({
 });
 
 function MainFrame() {
-  const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData());
+  const loaderData = Route.useLoaderData();
+  const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(loaderData);
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory>();
 
   useEffect(() => {
@@ -34,7 +35,7 @@ function MainFrame() {
 
   // bind events
   useLayoutEffect(() => {
-    // whenever a file is set to be activated on main, could be the result of opening a file, new or not
+    // when active file changes, toggle the "active" mark on item accordingly
     const unbindFileActivationChange = IPCRenderSide.on(
       IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
       (_, payload: TFileInMemory | null) => {
@@ -46,10 +47,29 @@ function MainFrame() {
       },
     );
 
+    const unbindMDListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED, async _ => {
+      const MDData = await ListMdInFolder();
+      setMDFiles(MDData);
+    });
+
     return () => {
       unbindFileActivationChange();
+      unbindMDListingChange();
     };
   }, []);
+
+  async function CreateNewFile() {
+    let Testworkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
+    try {
+      await IPCRenderSide.invoke(IPCActions.FILES.CREATE_NEW_FILE, `${Testworkspace}/111.md`);
+    } catch (e) {
+      await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+        type: 'error',
+        message: `Error creating new file`,
+        detail: `${e}`,
+      });
+    }
+  }
 
   return (
     <>
@@ -78,6 +98,15 @@ function MainFrame() {
             <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
               <FolderIcon className="size-4 self-center" />
               <span className="grow pl-1.5">Folder name</span>
+            </section>
+            {/*Add new file*/}
+            <section
+              className={
+                'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
+              }
+              onClick={() => CreateNewFile()}
+            >
+              <PlusIcon className={'size-6'} />
             </section>
             <ul className="w-full">
               <li className="is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500">
