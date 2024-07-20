@@ -289,7 +289,7 @@ export function SaveAllOpenedFiles() {
 }
 
 // Save a file to disk,  return true or false, can throw
-const { SAVE_TARGET_FILE } = IPCActions.FILES;
+const { SAVE_TARGET_OPENED_FILE } = IPCActions.FILES;
 
 export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileFullPath: string) {
   if (!targetFileFullPath || String(targetFileFullPath) !== targetFileFullPath)
@@ -329,7 +329,7 @@ export const IPCHandlerMappings = [
   { trigger: SET_WORK_SPACE, handler: ValidateAndChangeWorkspace },
   { trigger: SAVE_ACTIVE_FILE, handler: SaveCurrentActiveFile },
   { trigger: SAVE_ALL_OPENED_FILES, handler: SaveAllOpenedFiles },
-  { trigger: SAVE_TARGET_FILE, handler: SaveTargetFileBaseOnPath },
+  { trigger: SAVE_TARGET_OPENED_FILE, handler: SaveTargetFileBaseOnPath },
   { trigger: CLOSE_ALL_OPENED_FILES, handler: CloseAllOpenedFiles },
   { trigger: SHOW_MESSAGE_DIALOG, handler: ShowDialogMessage },
   { trigger: CREATE_NEW_FILE, handler: CreateNewFile },

@@ -29,7 +29,7 @@ export default function TabFrame() {
   async function SendCurrentTabContentToMain() {
     if (MDEditorRef.current && SelectedTab)
       IPCRenderSide.send(
-        IPCActions.FILES.CHANGE_FILE_CONTENT,
+        IPCActions.FILES.UPDATE_OPENED_FILE_CONTENT,
         SelectedTab.fullPath,
         await MDEditorRef.current.ExtractMD(),
       );
@@ -150,7 +150,7 @@ export default function TabFrame() {
 
     setTabs(removeItem(Tabs, item));
     // save the file's content then close it in memory
-    IPCRenderSide.invoke(IPCActions.FILES.SAVE_TARGET_FILE, item.fullPath).catch((e: Error) => {
+    IPCRenderSide.invoke(IPCActions.FILES.SAVE_TARGET_OPENED_FILE, item.fullPath).catch((e: Error) => {
       IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
         message: `Error saving file`,

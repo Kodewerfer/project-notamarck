@@ -34,7 +34,7 @@ function PushOpenedFiles() {
  */
 
 //receiving channel
-const { CHANGE_FILE_CONTENT } = IPCActions.FILES;
+const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.FILES;
 // Push channel
 const { FILE_CONTENT_CHANGED } = IPCActions.FILES.PUSH;
 
@@ -79,6 +79,6 @@ export const IPCListenerMappings = [
     trigger: PUSH_ALL_OPENED_FILES,
     listener: PushOpenedFiles,
   },
-  { trigger: CHANGE_FILE_CONTENT, listener: UpdateFileContentAndPush },
+  { trigger: UPDATE_OPENED_FILE_CONTENT, listener: UpdateFileContentAndPush },
   { trigger: CHANGE_ACTIVE_FILE, listener: ChangeActiveFileAndPush },
 ];
