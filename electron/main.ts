@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { IPCHandlerMappings } from './IPC/IPC-Handlers.ts';
 import { IPCListenerMappings } from './IPC/IPC-Listeners.ts';
+import { GetCurrentWorkspace } from './Storage/Globals.ts';
+import * as fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -77,6 +79,20 @@ app.whenReady().then(_ => {
     ipcMain.on(IPC.trigger, IPC.listener);
   });
 
+  InitDefaultFolder();
+
   // create window
   createWindow();
 });
+
+function InitDefaultFolder() {
+  const currentWorkspace = GetCurrentWorkspace();
+  if (!fs.existsSync(currentWorkspace)) {
+    console.log('Defualt fallback workspace does not exist, creating one');
+    try {
+      fs.mkdirSync(currentWorkspace);
+    } catch (e) {
+      console.log('error creating default workspace directory,', e);
+    }
+  }
+}
