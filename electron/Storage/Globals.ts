@@ -1,4 +1,5 @@
 import path from 'path-browserify';
+import { app } from 'electron';
 
 export type TFileInMemory = {
   filename: string;
@@ -84,7 +85,7 @@ export function ChangeActiveFile(NewTargetFile: TFileInMemory) {
 /**
  * the working directory
  */
-let _Current_Workspace: string = '';
+let _Current_Workspace: string = `${app.getAppPath()}\\workspace`; //default to app path
 
 let _Recent_Workspaces: string[] = [];
 
