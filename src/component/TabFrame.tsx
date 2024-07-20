@@ -95,7 +95,15 @@ export default function TabFrame() {
         const tabIndex = Tabs.findIndex(item => item.fullPath === payload.fullPath);
         if (tabIndex === -1) return;
         SendCurrentTabContentToMain();
-        setSelectedTab(Tabs[tabIndex]);
+        (async () => {
+          if (SelectedTab)
+            await IPCRenderSide.invoke(
+              IPCActions.DATA.UPDATE_SELECTION_STATUS_CACHE,
+              SelectedTab.fullPath,
+              MDEditorRef.current?.ExtractSelection(),
+            );
+          setSelectedTab(Tabs[tabIndex]);
+        })();
       },
     );
 
@@ -156,6 +164,12 @@ export default function TabFrame() {
     );
     console.log(cachedSelection);
     MDEditorRef.current?.SetSelection(cachedSelection);
+
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = selection.getRangeAt(0);
+    const { top } = range.getBoundingClientRect();
+    window.scrollTo({ top, behavior: 'instant' });
   };
   // unused for now
   const onSubEditorUnmounted = async () => {};
