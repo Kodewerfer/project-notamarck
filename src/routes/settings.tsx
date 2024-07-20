@@ -5,6 +5,7 @@ import { XMarkIcon } from '@heroicons/react/16/solid';
 import { FolderOpenIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { FolderIcon } from '@heroicons/react/24/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
+import { getLastPartOfPath } from 'component/util/helper.ts';
 
 export const Route = createFileRoute('/settings')({
   component: Settings,
@@ -211,11 +212,4 @@ function Settings() {
 
 async function GetWorkspace() {
   return await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
-}
-
-// pathbroserfy.basename() does not work, maybe path/posix related
-function getLastPartOfPath(fullPath: string) {
-  let tempPath = fullPath.replace(/\\/g, '/');
-  let pathParts = tempPath.split('/');
-  return pathParts[pathParts.length - 1];
 }
