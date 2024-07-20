@@ -19,6 +19,8 @@ export const IPCActions = {
     PUSH_ALL_OPENED_FILES: 'DATA:PUSH_ALL_OPENED_FILES', //like the previous one but push to all listening component in the renderer
     CLOSE_OPENED_FILES: 'DATA:CLOSE_OPENED_FILES',
     CLOSE_ALL_OPENED_FILES: 'DATA:CLOSE_ALL_OPENED_FILES',
+    GET_SELECTION_STATUS_CACHE: 'DATA:GET_SELECTION_STATUS_CACHE',
+    UPDATE_SELECTION_STATUS_CACHE: 'DATA:UPDATE_SELECTION_STATUS_CACHE',
     PUSH: {
       OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, similar to server side pushing
     },

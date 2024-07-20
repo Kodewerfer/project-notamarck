@@ -7,19 +7,22 @@ import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEdit
 import { TChangedFilesPayload } from 'electron-src/IPC/IPC-Listeners.ts';
 import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
 
-// Identifying info a tab holds
-export type TTabItems = TFileInMemory;
+// Identifying info a tab holds, in addition to fs related props, add selection cache
+export type TTabItems = TFileInMemory & {
+  selectionCache?: Object | null;
+};
 
 const { IPCRenderSide } = window;
 export default function TabFrame() {
   const [Tabs, setTabs] = useState<TTabItems[]>([]);
-  const [SelectedTab, setSelectedTab] = useState(Tabs[0]);
+  // NOTE: active tab/SelectedTab is not fetched from main, when the frame init and tabs has data, SelectedTab will be the first in order and send to main
+  const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null);
 
   const MDEditorRef = useRef<TEditorComponentRef | null>(null);
 
-  // extra editor's content then send it to main process, mainly used when SelectedTab changed
+  // extract editor's content then send it to main process, mainly used when SelectedTab changed
   async function SendCurrentTabContentToMain() {
-    if (MDEditorRef.current)
+    if (MDEditorRef.current && SelectedTab)
       IPCRenderSide.send(
         IPCActions.FILES.CHANGE_FILE_CONTENT,
         SelectedTab.fullPath,
@@ -37,7 +40,10 @@ export default function TabFrame() {
 
   // ini the selected tab if non-exist
   useEffect(() => {
-    if (!SelectedTab) setSelectedTab(Tabs[0]);
+    if (!SelectedTab) {
+      setSelectedTab(Tabs[0]);
+      IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, Tabs[0]);
+    }
   }, [Tabs]);
 
   // Critical: Bind to main process' push events, sync tab's data to main
@@ -82,10 +88,10 @@ export default function TabFrame() {
     const unbindFileActivationChange = IPCRenderSide.on(
       IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
       (_, payload: TFileInMemory | null) => {
-        if (!payload) {
-          console.error('Tabs Frame: ACTIVE_FILE_CHANGED pushed null result.');
-          return;
-        }
+        if (!payload) return setSelectedTab(null);
+
+        if (payload.fullPath === SelectedTab?.fullPath) return;
+
         const tabIndex = Tabs.findIndex(item => item.fullPath === payload.fullPath);
         if (tabIndex === -1) return;
         SendCurrentTabContentToMain();
@@ -102,19 +108,34 @@ export default function TabFrame() {
 
   const onSelectTab = async (item: TTabItems) => {
     await SendCurrentTabContentToMain();
-    IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, item);
+    if (SelectedTab && item !== SelectedTab)
+      // save the caret info from the currently selected tab
+      await IPCRenderSide.invoke(
+        IPCActions.DATA.UPDATE_SELECTION_STATUS_CACHE,
+        SelectedTab.fullPath,
+        MDEditorRef.current?.ExtractSelection(),
+      );
+
+    // NOTE:setting the SelectedTab is not exactly required because main process will put into it after the next line.
     setSelectedTab(item);
+    IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, item);
   };
 
   const onCloseTab = async (item: TTabItems) => {
     // Notify backend
     if (item === SelectedTab) {
       await SendCurrentTabContentToMain();
-      setSelectedTab(closestItem(Tabs, item));
+      await IPCRenderSide.invoke(
+        IPCActions.DATA.UPDATE_SELECTION_STATUS_CACHE,
+        SelectedTab.fullPath,
+        MDEditorRef.current?.ExtractSelection(),
+      );
+      const nextTab = closestItem(Tabs, item);
+      setSelectedTab(nextTab);
+      IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, nextTab);
     }
 
     setTabs(removeItem(Tabs, item));
-    console.log(Tabs);
     // save the file's content then close it in memory
     IPCRenderSide.invoke(IPCActions.FILES.SAVE_TARGET_FILE, item.fullPath).catch((e: Error) => {
       IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
@@ -125,6 +146,19 @@ export default function TabFrame() {
     });
     IPCRenderSide.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
   };
+
+  // When the editor mounts load the selection status from the cache.
+  const onSubEditorMounted = async () => {
+    if (!SelectedTab || !Tabs) return;
+    const cachedSelection = await IPCRenderSide.invoke(
+      IPCActions.DATA.GET_SELECTION_STATUS_CACHE,
+      SelectedTab.fullPath,
+    );
+    console.log(cachedSelection);
+    MDEditorRef.current?.SetSelection(cachedSelection);
+  };
+  // unused for now
+  const onSubEditorUnmounted = async () => {};
 
   // const onAddTab = () => {
   //   const nextItem = generateNextTab(tabs)
@@ -147,9 +181,9 @@ export default function TabFrame() {
               <Tab
                 key={item.fullPath}
                 item={item}
-                isSelected={SelectedTab && SelectedTab.fullPath === item.fullPath}
-                onClick={() => onSelectTab(item)}
-                onRemove={() => onCloseTab(item)}
+                isSelected={SelectedTab?.fullPath === item.fullPath}
+                onClick={async () => await onSelectTab(item)}
+                onRemove={async () => await onCloseTab(item)}
               />
             ))}
           </AnimatePresence>
@@ -166,7 +200,14 @@ export default function TabFrame() {
             exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.15 }}
           >
-            {SelectedTab ? <MarkdownEditor ref={MDEditorRef} MDSource={SelectedTab.content || ''} /> : ''}
+            {SelectedTab && (
+              <MarkdownEditor
+                onEditorMounted={onSubEditorMounted}
+                onEditorUnmounted={onSubEditorUnmounted}
+                ref={MDEditorRef}
+                MDSource={SelectedTab.content || ''}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </section>

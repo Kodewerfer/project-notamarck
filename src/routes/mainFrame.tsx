@@ -20,9 +20,9 @@ export const Route = createFileRoute('/mainFrame')({
 });
 
 function MainFrame() {
-  const loaderData = Route.useLoaderData();
-  const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(loaderData);
-  const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory>();
+  const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData());
+  // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
+  const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 
   useEffect(() => {
     if (MDFiles) return;
@@ -39,10 +39,6 @@ function MainFrame() {
     const unbindFileActivationChange = IPCRenderSide.on(
       IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
       (_, payload: TFileInMemory | null) => {
-        if (!payload) {
-          console.error('Tabs Frame: ACTIVE_FILE_CHANGED pushed null result.');
-          return;
-        }
         setCurrentEditingFile(payload);
       },
     );

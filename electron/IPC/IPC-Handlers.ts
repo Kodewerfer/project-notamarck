@@ -13,8 +13,10 @@ import {
   GetCurrentWorkspace,
   GetOpenedFiles,
   GetRecentWorkspace,
+  GetSelectionStatusCache,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
+  SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
   TFileInMemory,
 } from '../Storage/Globals.ts';
@@ -140,6 +142,18 @@ export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
   const focusedWindow = BrowserWindow.getFocusedWindow();
   const OpenedFilesData = GetOpenedFiles();
   focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+}
+
+const { GET_SELECTION_STATUS_CACHE } = IPCActions.DATA;
+
+export function ReturnSelectionStatusForPath(_Event: IpcMainInvokeEvent, fullPath: string) {
+  return GetSelectionStatusCache(fullPath);
+}
+
+const { UPDATE_SELECTION_STATUS_CACHE } = IPCActions.DATA;
+
+export function SetSelectionStatusForPath(_Event: IpcMainInvokeEvent, fullPath: string, status: Object) {
+  return SetSelectionStatusCache(fullPath, status);
 }
 
 /************
@@ -319,4 +333,6 @@ export const IPCHandlerMappings = [
   { trigger: CLOSE_ALL_OPENED_FILES, handler: CloseAllOpenedFiles },
   { trigger: SHOW_MESSAGE_DIALOG, handler: ShowDialogMessage },
   { trigger: CREATE_NEW_FILE, handler: CreateNewFile },
+  { trigger: GET_SELECTION_STATUS_CACHE, handler: ReturnSelectionStatusForPath },
+  { trigger: UPDATE_SELECTION_STATUS_CACHE, handler: SetSelectionStatusForPath },
 ];
