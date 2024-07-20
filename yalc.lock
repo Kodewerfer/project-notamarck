@@ -2,8 +2,8 @@
   "version": "v1",
   "packages": {
     "react-magic-draft": {
-      "signature": "4a78f1e4db59aab243787dbf69f5be38",
-      "file": true
+      "signature": "a0f9c42c53ac3a8c867a62a8b8f2bf24",
+      "link": true
     }
   }
 }
