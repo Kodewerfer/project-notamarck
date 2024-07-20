@@ -43,28 +43,27 @@ const MarkdownEditor = forwardRef(
             console.error('Not a valid SelectionStatus');
             return;
           }
-          if (EditorRef.current) EditorRef.current.SetCaretData(SelectionStatus as TSelectionStatus);
+
+          if (EditorRef.current) return EditorRef.current.SetCaretData(SelectionStatus as TSelectionStatus);
         },
       };
     });
 
     useEffect(() => {
-      // console.log('Editor mounted');
       (async () => {
         if (typeof onEditorMounted === 'function') await onEditorMounted();
       })();
       return () => {
-        // console.log('Editor unmounted');
         if (typeof onEditorUnmounted === 'function') onEditorUnmounted();
       };
     }, []);
 
-    // async function appClick() {
-    //   console.log('NOTAMARCK click');
-    //   if (EditorRef.current) {
-    //     console.log(await EditorRef.current.ExtractMD());
-    //   }
-    // }
+    async function appClick() {
+      // console.log('NOTAMARCK click');
+      // if (EditorRef.current) {
+      //   console.log(await EditorRef.current.ExtractMD());
+      // }
+    }
 
     return (
       <>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link, Outlet, useLayoutEffect } from '@tanstack/react-router';
 
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
 import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
+import MainFrameContext from '@/context/MainFrame.ts';
 
 const { IPCRenderSide } = window;
 
@@ -23,6 +24,8 @@ function MainFrame() {
   const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData());
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
+
+  const ScrollAreaRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (MDFiles) return;
@@ -141,7 +144,7 @@ function MainFrame() {
           {/*top nav may expand while searching */}
           <nav
             className={
-              'light:border-b z-40 flex w-full border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
+              'light:border-b h-18 z-40 flex w-full border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
             }
           >
             <MagnifyingGlassIcon className={'size-6 self-center'} />
@@ -156,11 +159,14 @@ function MainFrame() {
 
           {/*the main display area*/}
           <div
+            ref={ScrollAreaRef}
             className={
-              'mainframe-display grow overflow-auto scroll-smooth focus:scroll-auto dark:bg-slate-600 dark:text-blue-50'
+              'mainframe-display h-full overflow-auto scroll-smooth focus:scroll-auto dark:bg-slate-600 dark:text-blue-50'
             }
           >
-            <Outlet />
+            <MainFrameContext.Provider value={ScrollAreaRef}>
+              <Outlet />
+            </MainFrameContext.Provider>
           </div>
         </main>
       </div>

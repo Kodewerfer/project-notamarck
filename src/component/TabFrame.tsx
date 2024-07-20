@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
@@ -6,6 +6,7 @@ import { useLayoutEffect } from '@tanstack/react-router';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
 import { TChangedFilesPayload } from 'electron-src/IPC/IPC-Listeners.ts';
 import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
+import MainFrameContext from '@/context/MainFrame.ts';
 
 // Identifying info a tab holds, in addition to fs related props, add selection cache
 export type TTabItems = TFileInMemory & {
@@ -19,6 +20,10 @@ export default function TabFrame() {
   const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null);
 
   const MDEditorRef = useRef<TEditorComponentRef | null>(null);
+  const TabBarRef = useRef<HTMLElement | null>(null);
+
+  // Passed down from main frame context
+  const mainFrameScrollable = useContext(MainFrameContext);
 
   // extract editor's content then send it to main process, mainly used when SelectedTab changed
   async function SendCurrentTabContentToMain() {
@@ -162,32 +167,36 @@ export default function TabFrame() {
       IPCActions.DATA.GET_SELECTION_STATUS_CACHE,
       SelectedTab.fullPath,
     );
-    console.log(cachedSelection);
     MDEditorRef.current?.SetSelection(cachedSelection);
 
-    const selection = window.getSelection();
-    if (!selection) return;
-    const range = selection.getRangeAt(0);
-    const { top } = range.getBoundingClientRect();
-    window.scrollTo({ top, behavior: 'instant' });
+    // force the code to run at the end of the even loop
+    setTimeout(() => {
+      const selection = window.getSelection();
+      if (!selection) return;
+      const range = document.createRange();
+      try {
+        range.setStart(selection.anchorNode!, selection.anchorOffset);
+        range.setEnd(selection.focusNode!, selection.focusOffset);
+      } catch (e) {
+        console.warn('Reference anchor setup failed,', e);
+      }
+      const { top } = range.getBoundingClientRect();
+      if (mainFrameScrollable?.current) {
+        const divTop = mainFrameScrollable.current.getBoundingClientRect().top;
+        const tabBarHeight = (TabBarRef?.current && TabBarRef.current.scrollHeight) || 0;
+        mainFrameScrollable.current.scrollTop = top - divTop - tabBarHeight * 3;
+      }
+    }, 0);
   };
   // unused for now
   const onSubEditorUnmounted = async () => {};
-
-  // const onAddTab = () => {
-  //   const nextItem = generateNextTab(tabs)
-  //
-  //   if (nextItem) {
-  //     setTabs([...tabs, nextItem]);
-  //     setSelectedTab(nextItem);
-  //   }
-  // };
 
   return (
     <>
       {/*the tab row*/}
       <nav
-        className={`flex overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
+        ref={TabBarRef}
+        className={`sticky top-0 z-50 flex h-9 w-full overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
       >
         <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
@@ -204,10 +213,10 @@ export default function TabFrame() {
         </Reorder.Group>
       </nav>
       {/* content for the tab */}
-      <section className={`px-2 pl-4 pt-2 ${Tabs.length === 0 && 'hidden'}`}>
+      <section className={`px-2 pb-5 pl-4 pt-3 ${Tabs.length === 0 && 'hidden'}`}>
         <AnimatePresence mode="wait">
           <motion.div
-            className={'animate-wrapper'} //marking the usage, no real purpose
+            className={'animate-wrapper h-full'} //marking the usage, no real purpose
             key={SelectedTab ? SelectedTab.filename : 'empty'}
             animate={{ opacity: 1, y: 0, left: 0 }}
             initial={{ opacity: 0, y: 20 }}
