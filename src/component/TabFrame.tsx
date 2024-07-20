@@ -29,7 +29,7 @@ export default function TabFrame() {
   async function SendCurrentTabContentToMain() {
     if (MDEditorRef.current && SelectedTab)
       IPCRenderSide.send(
-        IPCActions.FILES.UPDATE_OPENED_FILE_CONTENT,
+        IPCActions.DATA.UPDATE_OPENED_FILE_CONTENT,
         SelectedTab.fullPath,
         await MDEditorRef.current.ExtractMD(),
       );
@@ -47,7 +47,7 @@ export default function TabFrame() {
   useEffect(() => {
     if (!SelectedTab) {
       setSelectedTab(Tabs[0]);
-      IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, Tabs[0]);
+      IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, Tabs[0]);
     }
   }, [Tabs]);
 
@@ -75,7 +75,7 @@ export default function TabFrame() {
 
     // whenever a file's content has been changed on main(could be pushed by this component)
     const unbindFileContentChange = IPCRenderSide.on(
-      IPCActions.FILES.PUSH.FILE_CONTENT_CHANGED,
+      IPCActions.DATA.PUSH.OPENED_FILE_CONTENT_CHANGED,
       (_, payload: TChangedFilesPayload[]) => {
         const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
         payload.forEach(item => {
@@ -91,7 +91,7 @@ export default function TabFrame() {
 
     // whenever a file is set to be activated on main, could be the result of opening a file, new or not
     const unbindFileActivationChange = IPCRenderSide.on(
-      IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
+      IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED,
       (_, payload: TFileInMemory | null) => {
         if (!payload) return setSelectedTab(null);
 
@@ -131,7 +131,7 @@ export default function TabFrame() {
 
     // NOTE:setting the SelectedTab is not exactly required because main process will put into it after the next line.
     setSelectedTab(item);
-    IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, item);
+    IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, item);
   };
 
   const onCloseTab = async (item: TTabItems) => {
@@ -145,19 +145,19 @@ export default function TabFrame() {
       );
       const nextTab = closestItem(Tabs, item);
       setSelectedTab(nextTab);
-      IPCRenderSide.send(IPCActions.FILES.CHANGE_ACTIVE_FILE, nextTab);
+      IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, nextTab);
     }
 
     setTabs(removeItem(Tabs, item));
     // save the file's content then close it in memory
-    IPCRenderSide.invoke(IPCActions.FILES.SAVE_TARGET_OPENED_FILE, item.fullPath).catch((e: Error) => {
+    IPCRenderSide.invoke(IPCActions.DATA.SAVE_TARGET_OPENED_FILE, item.fullPath).catch((e: Error) => {
       IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
         message: `Error saving file`,
         detail: `${e}`,
       });
     });
-    IPCRenderSide.invoke(IPCActions.DATA.CLOSE_OPENED_FILES, item);
+    IPCRenderSide.invoke(IPCActions.DATA.CLOSE_TARGET_OPENED_FILES, item);
   };
 
   // When the editor mounts load the selection status from the cache.

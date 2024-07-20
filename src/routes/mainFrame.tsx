@@ -43,7 +43,7 @@ function MainFrame() {
   useLayoutEffect(() => {
     // when active file changes, toggle the "active" mark on item accordingly
     const unbindFileActivationChange = IPCRenderSide.on(
-      IPCActions.FILES.PUSH.ACTIVE_FILE_CHANGED,
+      IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED,
       (_, payload: TFileInMemory | null) => {
         setCurrentEditingFile(payload);
       },

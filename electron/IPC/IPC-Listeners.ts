@@ -34,9 +34,9 @@ function PushOpenedFiles() {
  */
 
 //receiving channel
-const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.FILES;
+const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.DATA;
 // Push channel
-const { FILE_CONTENT_CHANGED } = IPCActions.FILES.PUSH;
+const { OPENED_FILE_CONTENT_CHANGED } = IPCActions.DATA.PUSH;
 
 export type TChangedFilesPayload = {
   TargetFilePath: string;
@@ -57,15 +57,15 @@ function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, Fi
     },
   ];
   const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(FILE_CONTENT_CHANGED, RendererPayload);
+  focusedWindow?.webContents.send(OPENED_FILE_CONTENT_CHANGED, RendererPayload);
 
   return;
 }
 
 // Receiving
-const { CHANGE_ACTIVE_FILE } = IPCActions.FILES;
+const { CHANGE_ACTIVE_FILE } = IPCActions.DATA;
 // Pushing
-const { ACTIVE_FILE_CHANGED } = IPCActions.FILES.PUSH;
+const { ACTIVE_FILE_CHANGED } = IPCActions.DATA.PUSH;
 
 function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMemory) {
   ChangeActiveFile(NewTargetFile);

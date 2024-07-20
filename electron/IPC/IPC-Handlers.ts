@@ -113,7 +113,7 @@ export function GetAllOpenedFiles(_Event: IpcMainInvokeEvent) {
 }
 
 // Close an opened file or an array
-const { CLOSE_OPENED_FILES } = IPCActions.DATA;
+const { CLOSE_TARGET_OPENED_FILES } = IPCActions.DATA;
 
 export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TFileInMemory | TFileInMemory[]) {
   if (!FilesItems) return;
@@ -154,6 +154,61 @@ const { UPDATE_SELECTION_STATUS_CACHE } = IPCActions.DATA;
 
 export function SetSelectionStatusForPath(_Event: IpcMainInvokeEvent, fullPath: string, status: Object) {
   return SetSelectionStatusCache(fullPath, status);
+}
+
+// Save the current active file, return true or false, can throw
+const { SAVE_ACTIVE_FILE } = IPCActions.DATA;
+
+export function SaveCurrentActiveFile() {
+  const ActiveFile = GetActiveFile();
+  if (!ActiveFile) return new Error(`Failed to write: No active file`);
+  if (!ActiveFile.content) return new Error(`Failed to write: Active File no content`);
+  try {
+    fs.writeFileSync(ActiveFile.fullPath, ActiveFile.content, { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Failed to write: ${ActiveFile.fullPath}`);
+  }
+}
+
+// Save all opened files,return true or false, can throw
+const { SAVE_ALL_OPENED_FILES } = IPCActions.DATA;
+
+export function SaveAllOpenedFiles() {
+  let ErrorsInWriting: string[] = [];
+  GetOpenedFiles().forEach(item => {
+    if (!item.fullPath || !item.content) return;
+    try {
+      fs.writeFileSync(item.fullPath, item.content, { encoding: 'utf8' });
+    } catch (e) {
+      ErrorsInWriting.push(item.fullPath);
+    }
+  });
+  if (ErrorsInWriting.length) throw new Error(`Failed to write files: ${ErrorsInWriting}`);
+}
+
+// Save a file to disk,  return true or false, can throw
+const { SAVE_TARGET_OPENED_FILE } = IPCActions.DATA;
+
+export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileFullPath: string) {
+  if (!targetFileFullPath || String(targetFileFullPath) !== targetFileFullPath)
+    throw new Error(`Failed to write: Invalid target file full path`);
+
+  let resultFiles = FindInOpenedFilesByFullPath(targetFileFullPath);
+
+  if (!resultFiles || !resultFiles.length)
+    throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
+
+  const targetFile = resultFiles[0];
+  if (!targetFile) throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
+
+  if (!targetFile.fullPath || targetFile.fullPath === '')
+    throw new Error(`Failed to write: ${targetFile} has no full-path or content`);
+  try {
+    fs.writeFileSync(targetFile.fullPath, targetFile.content ?? '', { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Failed to write: ${targetFile.fullPath}`);
+  }
+  console.log('File Saved:', targetFile.fullPath);
 }
 
 /************
@@ -258,61 +313,6 @@ export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, 
   focusedWindow?.webContents.send(MD_LIST_CHANGED);
 }
 
-// Save the current active file, return true or false, can throw
-const { SAVE_ACTIVE_FILE } = IPCActions.FILES;
-
-export function SaveCurrentActiveFile() {
-  const ActiveFile = GetActiveFile();
-  if (!ActiveFile) return new Error(`Failed to write: No active file`);
-  if (!ActiveFile.content) return new Error(`Failed to write: Active File no content`);
-  try {
-    fs.writeFileSync(ActiveFile.fullPath, ActiveFile.content, { encoding: 'utf8' });
-  } catch (e) {
-    throw new Error(`Failed to write: ${ActiveFile.fullPath}`);
-  }
-}
-
-// Save all opened files,return true or false, can throw
-const { SAVE_ALL_OPENED_FILES } = IPCActions.FILES;
-
-export function SaveAllOpenedFiles() {
-  let ErrorsInWriting: string[] = [];
-  GetOpenedFiles().forEach(item => {
-    if (!item.fullPath || !item.content) return;
-    try {
-      fs.writeFileSync(item.fullPath, item.content, { encoding: 'utf8' });
-    } catch (e) {
-      ErrorsInWriting.push(item.fullPath);
-    }
-  });
-  if (ErrorsInWriting.length) throw new Error(`Failed to write files: ${ErrorsInWriting}`);
-}
-
-// Save a file to disk,  return true or false, can throw
-const { SAVE_TARGET_OPENED_FILE } = IPCActions.FILES;
-
-export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileFullPath: string) {
-  if (!targetFileFullPath || String(targetFileFullPath) !== targetFileFullPath)
-    throw new Error(`Failed to write: Invalid target file full path`);
-
-  let resultFiles = FindInOpenedFilesByFullPath(targetFileFullPath);
-
-  if (!resultFiles || !resultFiles.length)
-    throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
-
-  const targetFile = resultFiles[0];
-  if (!targetFile) throw new Error(`Failed to write: ${targetFileFullPath} has not been operated.`);
-
-  if (!targetFile.fullPath || targetFile.fullPath === '')
-    throw new Error(`Failed to write: ${targetFile} has no full-path or content`);
-  try {
-    fs.writeFileSync(targetFile.fullPath, targetFile.content ?? '', { encoding: 'utf8' });
-  } catch (e) {
-    throw new Error(`Failed to write: ${targetFile.fullPath}`);
-  }
-  console.log('File Saved:', targetFile.fullPath);
-}
-
 /**
  * Bind to ipcMain.handle, two-way communications
  */
@@ -322,7 +322,7 @@ export const IPCHandlerMappings = [
   { trigger: LIST_CURRENT_PATH_MD, handler: ListAllMD },
   { trigger: READ_MD_FROM_PATH, handler: ReadMDAndPushOpenedFiles },
   { trigger: GET_ALL_OPENED_FILES, handler: GetAllOpenedFiles },
-  { trigger: CLOSE_OPENED_FILES, handler: CloseOpenedFile },
+  { trigger: CLOSE_TARGET_OPENED_FILES, handler: CloseOpenedFile },
   { trigger: SHOW_SELECTION_DIR, handler: ShowDialogDIR },
   { trigger: GET_WORK_SPACE, handler: ReturnCurrentWorkspace },
   { trigger: GET_RECENT_WORK_SPACES, handler: ReturnRecentWorkspaces },

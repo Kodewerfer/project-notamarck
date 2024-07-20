@@ -76,7 +76,7 @@ function Settings() {
 
     // Save and close files from the current workspace
     try {
-      await IPCRenderSide.invoke(IPCActions.FILES.SAVE_ALL_OPENED_FILES);
+      await IPCRenderSide.invoke(IPCActions.DATA.SAVE_ALL_OPENED_FILES);
     } catch (e) {
       const buttonPressed = await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
