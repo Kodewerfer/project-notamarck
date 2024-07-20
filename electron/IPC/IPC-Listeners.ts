@@ -67,7 +67,7 @@ const { CHANGE_ACTIVE_FILE } = IPCActions.FILES;
 // Pushing
 const { ACTIVE_FILE_CHANGED } = IPCActions.FILES.PUSH;
 
-export function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMemory) {
+function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMemory) {
   ChangeActiveFile(NewTargetFile);
   const focusedWindow = BrowserWindow.getFocusedWindow();
   focusedWindow?.webContents.send(ACTIVE_FILE_CHANGED, GetActiveFile());

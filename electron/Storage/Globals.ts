@@ -73,7 +73,11 @@ export function GetActiveFile(): Readonly<TFileInMemory> | null {
 }
 
 export function ChangeActiveFile(NewTargetFile: TFileInMemory) {
-  if (!NewTargetFile || !NewTargetFile.fullPath) return;
+  if (!NewTargetFile) {
+    _Active_File = null;
+    return;
+  }
+  if (!NewTargetFile.fullPath) return;
   _Active_File = Object.assign({}, NewTargetFile);
 }
 
@@ -124,4 +128,23 @@ export function AddToRecentWorkspace(lastestWorkspace: string) {
   if (recentWorkspaceMap.get(lastestWorkspace)) return; //duplicated
   _Recent_Workspaces.push(lastestWorkspace);
   return [..._Recent_Workspaces];
+}
+
+/**
+ * Cached caret positions
+ */
+
+// key:fullpath, value: selection status object or null
+let _Selection_Status_Cache = new Map<string, Object | null>();
+
+export function GetSelectionStatusCache(fullPath: string): Readonly<Object | null | undefined> {
+  return _Selection_Status_Cache.get(fullPath);
+}
+
+export function GetALLSelectionStatusCache(): Readonly<Map<string, Object | null>> {
+  return new Map(_Selection_Status_Cache);
+}
+
+export function SetSelectionStatusCache(fullPath: string, status: Object | null) {
+  _Selection_Status_Cache.set(fullPath, status);
 }
