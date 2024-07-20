@@ -11,15 +11,14 @@ import {
 import { BrowserWindow } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 
-/**
- *  On trigger, push opened files to renderer through OPENED_FILES_CHANGED
- */
+/************
+ * - DATA -
+ ************/
 
-//receiving channel
-const { PUSH_ALL_OPENED_FILES } = IPCActions.DATA;
-// push channel
-const { OPENED_FILES_CHANGED } = IPCActions.DATA.PUSH;
+const { PUSH_ALL_OPENED_FILES } = IPCActions.DATA; //receiving channel
+const { OPENED_FILES_CHANGED } = IPCActions.DATA.PUSH; // push channel
 
+// On trigger, push opened files to renderer through OPENED_FILES_CHANGED
 function PushOpenedFiles() {
   const OpenedFilesData = GetOpenedFiles();
 
@@ -29,20 +28,15 @@ function PushOpenedFiles() {
   return;
 }
 
-/**
- *  On trigger, receive the new content and push to renderer again
- */
-
-//receiving channel
-const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.DATA;
-// Push channel
-const { OPENED_FILE_CONTENT_CHANGED } = IPCActions.DATA.PUSH;
+const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.DATA; //receiving channel
+const { OPENED_FILE_CONTENT_CHANGED } = IPCActions.DATA.PUSH; // Push channel
 
 export type TChangedFilesPayload = {
   TargetFilePath: string;
   NewFile: TFileInMemory;
 };
 
+// On trigger, receive the new content and push to renderer again
 function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, FileContent: string) {
   const targetFileResults = FindInOpenedFilesByFullPath(FileFullPath);
   if (!targetFileResults.length) return;
@@ -62,11 +56,9 @@ function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, Fi
   return;
 }
 
-// Receiving
-const { CHANGE_ACTIVE_FILE } = IPCActions.DATA;
-// Pushing
-const { ACTIVE_FILE_CHANGED } = IPCActions.DATA.PUSH;
-
+const { CHANGE_ACTIVE_FILE } = IPCActions.DATA; // Receiving
+const { ACTIVE_FILE_CHANGED } = IPCActions.DATA.PUSH; // Pushing
+// Change the file marked as editing, push to renderer
 function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMemory) {
   ChangeActiveFile(NewTargetFile);
   const focusedWindow = BrowserWindow.getFocusedWindow();
