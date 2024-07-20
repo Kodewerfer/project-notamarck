@@ -289,19 +289,26 @@ export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath:
   }
 }
 
+const { CREATE_NEW_FILE } = IPCActions.FILES; //receiving
+const { MD_LIST_CHANGED } = IPCActions.FILES.SIGNAL; // pushing channel
 // Create a new empty file at target location
-const { CREATE_NEW_FILE } = IPCActions.FILES;
-// pushing channel
-const { MD_LIST_CHANGED } = IPCActions.FILES.SIGNAL;
-
 export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, FileContent?: string) {
   try {
     path.resolve(FileFullName);
   } catch (e) {
     throw new Error(`${FileFullName} is not valid`);
   }
-  if (fs.existsSync(FileFullName)) throw new Error(`${FileFullName} already exists`);
+  // rename with a -1
+  if (fs.existsSync(FileFullName)) {
+    const parsedPath = path.parse(FileFullName);
+    let appendixNum = 1;
 
+    do {
+      const appendix = `-${appendixNum}`;
+      FileFullName = path.join(parsedPath.dir, `${parsedPath.name}${appendix}${parsedPath.ext}`);
+      appendixNum++;
+    } while (fs.existsSync(FileFullName));
+  }
   try {
     fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
   } catch (e) {

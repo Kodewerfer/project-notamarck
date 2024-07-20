@@ -10,6 +10,7 @@ import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon, PlusIco
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
 import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
 import MainFrameContext from '@/context/MainFrame.ts';
+import { getLastPartOfPath } from 'component/util/helper.ts';
 
 const { IPCRenderSide } = window;
 
@@ -21,11 +22,12 @@ export const Route = createFileRoute('/mainFrame')({
 });
 
 function MainFrame() {
+  const [currentFolder, setCurrentFolder] = useState('');
   const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData());
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 
-  const [adddingFile, setadddingFile] = useState(false);
+  const [isAddingFile, setIsAddingFile] = useState(false);
   const [newFileName, setNewFileName] = useState('');
 
   const ScrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -60,10 +62,18 @@ function MainFrame() {
     };
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      const currentFolder = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
+
+      setCurrentFolder(getLastPartOfPath(currentFolder));
+    })();
+  });
+
   async function CreateNewFile() {
     let Testworkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
     try {
-      await IPCRenderSide.invoke(IPCActions.FILES.CREATE_NEW_FILE, `${Testworkspace}/111.md`);
+      await IPCRenderSide.invoke(IPCActions.FILES.CREATE_NEW_FILE, `${Testworkspace}/${newFileName}.md`);
     } catch (e) {
       await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
@@ -71,6 +81,8 @@ function MainFrame() {
         detail: `${e}`,
       });
     }
+    setNewFileName('');
+    setIsAddingFile(false);
   }
 
   return (
@@ -99,19 +111,19 @@ function MainFrame() {
           <div className="grow bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
             <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
               <FolderIcon className="size-4 self-center" />
-              <span className="grow pl-1.5">Folder name</span>
+              <span className="grow pl-1.5">{currentFolder}</span>
             </section>
             {/*Add new file button*/}
             <section
               className={
                 'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
               }
-              onClick={() => setadddingFile(prev => !prev)}
+              onClick={() => setIsAddingFile(prev => !prev)}
             >
               <PlusIcon className={'size-6'} />
             </section>
             <section
-              className={`flex cursor-pointer content-center justify-center bg-slate-100/30 px-2 py-1.5 dark:bg-slate-500/20 ${adddingFile ? '' : 'hidden'}`}
+              className={`flex cursor-pointer content-center justify-center bg-slate-100/30 px-2 py-1.5 dark:bg-slate-500/20 ${isAddingFile ? '' : 'hidden'}`}
             >
               <input
                 type={'text'}
@@ -119,10 +131,10 @@ function MainFrame() {
                 onBlur={() => {
                   // cancel adding file
                   setNewFileName('');
-                  setadddingFile(false);
+                  setIsAddingFile(false);
                 }}
-                onKeyUp={ev => {
-                  if (ev.key === 'Enter') console.log(newFileName);
+                onKeyUp={async ev => {
+                  if (ev.key === 'Enter') await CreateNewFile();
                 }}
                 value={newFileName}
                 onChange={ev => setNewFileName(ev.target.value)}
@@ -198,7 +210,7 @@ function MainFrame() {
   );
 }
 
-async function ListMdInFolder(folderPath = '/testfolder', parentFolderPath?: string) {
+async function ListMdInFolder(folderPath = '\\', parentFolderPath?: string) {
   let MdFiles = [];
   try {
     if (parentFolderPath === undefined) parentFolderPath = await IPCRenderSide.invoke(IPCActions.APP.GET_APP_PATH);
@@ -206,7 +218,10 @@ async function ListMdInFolder(folderPath = '/testfolder', parentFolderPath?: str
 
     let targetFolder = path.join(parentFolderPath, folderPath);
     const cachedPath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
-    if (cachedPath) targetFolder = cachedPath;
+    if (cachedPath) {
+      // console.log('Got workspace:', cachedPath);
+      targetFolder = cachedPath;
+    }
 
     MdFiles = await IPCRenderSide.invoke(IPCActions.FILES.LIST_CURRENT_PATH_MD, targetFolder);
   } catch (e) {
