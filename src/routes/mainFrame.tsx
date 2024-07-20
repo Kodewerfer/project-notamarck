@@ -25,6 +25,9 @@ function MainFrame() {
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 
+  const [adddingFile, setadddingFile] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+
   const ScrollAreaRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -98,14 +101,35 @@ function MainFrame() {
               <FolderIcon className="size-4 self-center" />
               <span className="grow pl-1.5">Folder name</span>
             </section>
-            {/*Add new file*/}
+            {/*Add new file button*/}
             <section
               className={
                 'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
               }
-              onClick={() => CreateNewFile()}
+              onClick={() => setadddingFile(prev => !prev)}
             >
               <PlusIcon className={'size-6'} />
+            </section>
+            <section
+              className={`flex cursor-pointer content-center justify-center bg-slate-100/30 px-2 py-1.5 dark:bg-slate-500/20 ${adddingFile ? '' : 'hidden'}`}
+            >
+              <input
+                type={'text'}
+                placeholder={'New File.md'}
+                onBlur={() => {
+                  // cancel adding file
+                  setNewFileName('');
+                  setadddingFile(false);
+                }}
+                onKeyUp={ev => {
+                  if (ev.key === 'Enter') console.log(newFileName);
+                }}
+                value={newFileName}
+                onChange={ev => setNewFileName(ev.target.value)}
+                className={
+                  'grow border-0 bg-gray-50 py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
+                }
+              />
             </section>
             <ul className="w-full">
               <li className="is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500">
