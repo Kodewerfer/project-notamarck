@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { createFileRoute, Link, Outlet, useLayoutEffect } from '@tanstack/react-router';
+import { createFileRoute, Link, Outlet, useLayoutEffect, useNavigate } from '@tanstack/react-router';
 
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import path from 'path-browserify';
@@ -22,14 +22,20 @@ export const Route = createFileRoute('/mainFrame')({
 });
 
 function MainFrame() {
+  const navigate = useNavigate();
+
   const [currentFolder, setCurrentFolder] = useState('');
   const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData());
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 
+  const [selectedFilesPaths, setSelectedFilesPaths] = useState<string[]>([]); //used in styling elements
+  const selectedFilesPathRef = useRef<string[]>([]); // copy of the state version, actually used as data package
+
   const [isAddingFile, setIsAddingFile] = useState(false);
   const [newFileName, setNewFileName] = useState('');
 
+  // passing down to children
   const ScrollAreaRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -69,6 +75,52 @@ function MainFrame() {
       setCurrentFolder(getLastPartOfPath(currentFolder));
     })();
   });
+
+  useEffect(() => {
+    selectedFilesPathRef.current = [...selectedFilesPaths];
+  }, [selectedFilesPaths]);
+
+  // Multi-file selection
+  function selectFiles(ev: React.MouseEvent, item: TMDFile) {
+    if (ev.ctrlKey) {
+      if (selectedFilesPaths.includes(item.path)) {
+        const filteredFilesPath = selectedFilesPaths.filter(filePath => filePath !== item.path);
+        // ref stores data immediately but state may takes time
+        selectedFilesPathRef.current = filteredFilesPath;
+        setSelectedFilesPaths(filteredFilesPath);
+      } else {
+        const updatedSelectedFilesPath = [...selectedFilesPaths, item.path];
+        selectedFilesPathRef.current = updatedSelectedFilesPath;
+
+        setSelectedFilesPaths(updatedSelectedFilesPath);
+      }
+      return;
+    }
+
+    setSelectedFilesPaths([item.path]);
+  }
+
+  function selectFilesRightClick(ev: React.MouseEvent, item: TMDFile) {
+    if (ev.ctrlKey) {
+      if (!selectedFilesPaths.includes(item.path)) {
+        const combinedFilePaths = [...selectedFilesPaths, item.path];
+        // ref stores data immediately but state may takes time
+        selectedFilesPathRef.current = combinedFilePaths;
+        setSelectedFilesPaths(combinedFilePaths);
+      }
+      return;
+    }
+
+    if (!selectedFilesPaths.includes(item.path)) {
+      selectedFilesPathRef.current = [item.path];
+      setSelectedFilesPaths([item.path]);
+    }
+  }
+
+  // context menu
+  function HandleFileContextMenu() {
+    IPCRenderSide.send(IPCActions.MENU.SHOW_FILE_OPERATION_MENU, [...selectedFilesPathRef.current]); //use the ref as actual data so it will always be the newest version
+  }
 
   async function CreateNewFile() {
     let Testworkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
@@ -122,6 +174,7 @@ function MainFrame() {
             >
               <PlusIcon className={'size-6'} />
             </section>
+            {/* Add new file */}
             <section
               className={`flex cursor-pointer content-center justify-center bg-slate-100/30 px-2 py-1.5 dark:bg-slate-500/20 ${isAddingFile ? '' : 'hidden'}`}
             >
@@ -139,11 +192,18 @@ function MainFrame() {
                 value={newFileName}
                 onChange={ev => setNewFileName(ev.target.value)}
                 className={
-                  'grow border-0 bg-gray-50 py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
+                  'grow border-0 bg-gray-50 py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6'
                 }
               />
             </section>
-            <ul className="w-full">
+            {/*File listing, context menu is bind here, so it is for the best that this is fit to content*/}
+            <ul
+              className="w-full px-1.5"
+              onContextMenu={ev => {
+                ev.preventDefault();
+                HandleFileContextMenu();
+              }}
+            >
               <li className="is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500">
                 <Link className="block grow pl-1.5" to="/mainFrame/edit">
                   Test-Back to Index
@@ -153,21 +213,28 @@ function MainFrame() {
                 MDFiles.map(item => {
                   return (
                     <li
-                      className={`${currentEditingFile?.fullPath === item.path ? 'is-editing' : ''} group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
+                      className={`${currentEditingFile?.fullPath === item.path ? 'is-editing' : ''} ${selectedFilesPaths.includes(item.path) ? 'bg-slate-300 dark:bg-slate-600' : ''} file-listing group my-1 flex cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
                       key={item.path}
+                      onClick={ev => selectFiles(ev, item)}
+                      onContextMenu={ev => {
+                        selectFilesRightClick(ev, item);
+                      }}
+                      onDoubleClick={() => {
+                        navigate({ to: '/mainFrame/edit/$filepath', params: { filepath: item.path } });
+                      }}
                     >
                       {/* mind the group-[.is-editing] */}
                       {/* Arrow only shows if the item is being edited */}
-                      <ArrowRightIcon className="hidden size-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex" />
-                      <Link
-                        className="block grow pl-1.5"
-                        to="/mainFrame/edit/$filepath"
-                        params={{
-                          filepath: item.path,
-                        }}
-                      >
-                        {item.name}
-                      </Link>
+                      <ArrowRightIcon className="mr-2 hidden size-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex" />
+                      {/*<Link*/}
+                      {/*  className="block grow pl-1.5"*/}
+                      {/*  to="/mainFrame/edit/$filepath"*/}
+                      {/*  params={{*/}
+                      {/*    filepath: item.path,*/}
+                      {/*  }}*/}
+                      {/*>*/}
+                      {item.name}
+                      {/*</Link>*/}
                     </li>
                   );
                 })}
