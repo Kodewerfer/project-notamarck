@@ -78,7 +78,7 @@ export function GetActiveFile(): Readonly<TFileInMemory> | null {
   return _Active_File ? Object.assign({}, _Active_File) : null;
 }
 
-export function ChangeActiveFile(NewTargetFile: TFileInMemory) {
+export function ChangeActiveFile(NewTargetFile: TFileInMemory | null) {
   if (!NewTargetFile) {
     _Active_File = null;
     return;

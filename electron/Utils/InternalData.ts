@@ -5,6 +5,6 @@ export function ReassignActiveFile() {
   const activeFile = GetActiveFile();
 
   const nonActiveFile = openedFiles.find(file => file.fullPath !== activeFile?.fullPath);
-  if (!nonActiveFile) return;
+  if (!nonActiveFile || openedFiles.length === 0) return ChangeActiveFile(null);
   ChangeActiveFile(nonActiveFile);
 }
