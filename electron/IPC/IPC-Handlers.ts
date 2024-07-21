@@ -21,6 +21,7 @@ import {
   TFileInMemory,
 } from '../Storage/Globals.ts';
 import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
+import { saveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 
 /************
  * - APP -
@@ -122,11 +123,12 @@ export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TFileInM
     FilesItems = [FilesItems];
   }
 
+  let deleteCount = 0;
   FilesItems.forEach(item => {
-    RemoveOpenedFile(item);
+    if (RemoveOpenedFile(item)) deleteCount += 1;
   });
 
-  // TODO: do the saving in the renderer
+  if (deleteCount == 0) return;
 
   const focusedWindow = BrowserWindow.getFocusedWindow();
   const OpenedFilesData = GetOpenedFiles();
@@ -298,22 +300,8 @@ export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, 
   } catch (e) {
     throw new Error(`${FileFullName} is not valid`);
   }
-  // rename with a -1
-  if (fs.existsSync(FileFullName)) {
-    const parsedPath = path.parse(FileFullName);
-    let appendixNum = 1;
 
-    do {
-      const appendix = `-${appendixNum}`;
-      FileFullName = path.join(parsedPath.dir, `${parsedPath.name}${appendix}${parsedPath.ext}`);
-      appendixNum++;
-    } while (fs.existsSync(FileFullName));
-  }
-  try {
-    fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
-  } catch (e) {
-    throw new Error(`Error writing to file ${FileFullName}, ${e}`);
-  }
+  saveContentToFileRenameOnDup(FileFullName, FileContent);
 
   // push to the current window as a signal
   const focusedWindow = BrowserWindow.getFocusedWindow();

@@ -47,12 +47,17 @@ export function RemoveAllOpenFiles() {
   _Opened_Files = [];
 }
 
-export function RemoveOpenedFile(removingItem: TFileInMemory): ReadonlyArray<TFileInMemory> {
+export function RemoveOpenedFile(removingItem: TFileInMemory | string) {
   const arr = [..._Opened_Files];
   let index = -1;
 
+  let targetPath = '';
+
+  if (typeof removingItem === 'string') targetPath = removingItem;
+  else targetPath = removingItem.fullPath;
+
   arr.some((arrItem: TFileInMemory, arrIndex) => {
-    if (arrItem.fullPath === removingItem.fullPath) {
+    if (arrItem.fullPath === targetPath) {
       index = arrIndex;
       return true;
     }
@@ -61,7 +66,7 @@ export function RemoveOpenedFile(removingItem: TFileInMemory): ReadonlyArray<TFi
 
   index > -1 && arr.splice(index, 1);
   _Opened_Files = arr;
-  return arr;
+  return index > -1;
 }
 
 /**
