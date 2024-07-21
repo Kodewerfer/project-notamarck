@@ -14,7 +14,15 @@ export const IPCActions = {
     SHOW_MESSAGE_DIALOG: 'DIALOG:SHOW_MESSAGE_DIALOG',
     SHOW_SELECTION_DIR: 'DIALOG:SHOW_SELECTION_DIR',
   },
-  DATA: { //app data
+  MENU: {
+    SHOW_FILE_OPERATION_MENU: 'MENU:SHOW_FILE_OPERATION_MENU',
+    PUSH: {
+      RENAME_SELECTED_FILE: 'MENU:PUSH:RENAME_SELECTED_FILE',
+      FILES_DELETED: 'MENU:PUSH:FILES_DELETED', // not in use
+    },
+  },
+  DATA: {
+    //app data
     // opened files
     GET_ALL_OPENED_FILES: 'DATA:GET_ALL_OPENED_FILES',
     PUSH_ALL_OPENED_FILES: 'DATA:PUSH_ALL_OPENED_FILES', //like the previous one but push to all listening component in the renderer
@@ -36,7 +44,8 @@ export const IPCActions = {
       OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, similar to server side pushing
     },
   },
-  FILES: { //fs related
+  FILES: {
+    //fs related
     LIST_CURRENT_PATH: 'FILES:LIST_CURRENT_PATH',
     LIST_CURRENT_PATH_MD: 'FILES:LIST_CURRENT_PATH_MD',
     CREATE_NEW_FILE: 'FILES:CREATE_NEW_FILE',

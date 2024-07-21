@@ -5,11 +5,59 @@ import {
   FindInOpenedFilesByFullPath,
   GetActiveFile,
   GetOpenedFiles,
+  RemoveOpenedFile,
   TFileInMemory,
   UpdateOpenedFile,
 } from '../Storage/Globals.ts';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, Menu } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
+import { UnlinkFile } from '../Utils/FileOperations.ts';
+import { ReassignActiveFile } from '../Utils/InternalData.ts';
+
+/************
+ * - MENU -
+ ************/
+const { SHOW_FILE_OPERATION_MENU } = IPCActions.MENU; //receiving channel
+
+function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
+  // console.log('context args:', JSON.stringify(selectedFiles));
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'Delete',
+      click: () => {
+        let deletedCount = 0;
+        selectedFiles.forEach(filePath => {
+          try {
+            if (RemoveOpenedFile(filePath)) deletedCount += 1;
+            if (GetActiveFile()?.fullPath === filePath) ReassignActiveFile();
+            UnlinkFile(filePath);
+          } catch (e) {
+            console.error(e);
+          }
+
+          if (deletedCount > 0) {
+            const OpenedFilesData = GetOpenedFiles();
+            _event.sender.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
+          }
+          _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
+
+          _event.sender.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
+        });
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Rename',
+      click: () => {
+        // _event.sender.send('context-menu-command', 'menu-item-1');
+      },
+    },
+  ]);
+
+  // const focusedWindow = BrowserWindow.getFocusedWindow(); //same result
+  const senderWindow = BrowserWindow.fromWebContents(_event.sender);
+  if (senderWindow) menu.popup({ window: senderWindow });
+}
 
 /************
  * - DATA -
@@ -73,4 +121,5 @@ export const IPCListenerMappings = [
   },
   { trigger: UPDATE_OPENED_FILE_CONTENT, listener: UpdateFileContentAndPush },
   { trigger: CHANGE_ACTIVE_FILE, listener: ChangeActiveFileAndPush },
+  { trigger: SHOW_FILE_OPERATION_MENU, listener: ShowFileOperationMenu },
 ];
