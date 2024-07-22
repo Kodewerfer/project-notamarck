@@ -13,12 +13,13 @@ import { BrowserWindow, Menu } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
+import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 
 /************
  * - MENU -
  ************/
 const { SHOW_FILE_OPERATION_MENU } = IPCActions.MENU; //receiving channel
-
+// Pushing channels: multiple, check code
 function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
   // console.log('context args:', JSON.stringify(selectedFiles));
   const menu = Menu.buildFromTemplate([
@@ -26,20 +27,28 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
       label: 'Delete',
       click: () => {
         let deletedCount = 0;
+        let activeFileChanged = false;
+
+        const confirmAlert = ShowConfirmAlert(
+          `About to delete ${selectedFiles.length} files, continue?`,
+          'This action cannot be reverted.',
+        );
+        if (confirmAlert === 1) return;
         selectedFiles.forEach(filePath => {
           try {
             if (RemoveOpenedFile(filePath)) deletedCount += 1;
-            if (GetActiveFile()?.fullPath === filePath) ReassignActiveFile();
+            if (GetActiveFile()?.fullPath === filePath) {
+              ReassignActiveFile();
+              activeFileChanged = true;
+            }
             UnlinkFile(filePath);
           } catch (e) {
             console.error(e);
           }
 
-          if (deletedCount > 0) {
-            const OpenedFilesData = GetOpenedFiles();
-            _event.sender.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
-          }
-          _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
+          if (deletedCount > 0) _event.sender.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
+
+          if (activeFileChanged) _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
 
           _event.sender.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
         });
@@ -49,7 +58,12 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
     {
       label: 'Rename',
       click: () => {
-        // _event.sender.send('context-menu-command', 'menu-item-1');
+        const renamingTarget = selectedFiles.length > 1 ? selectedFiles[length - 1] : selectedFiles[0];
+        // const fileInMemo = FindInOpenedFilesByFullPath(renamingTarget);
+
+        // if (!fileInMemo.length) return ShowErrorAlert(`Renaming File ${renamingTarget} is not being operated.`);
+
+        _event.sender.send(IPCActions.FILES.PUSH.RENAMING_TARGET_FILE, renamingTarget);
       },
     },
   ]);
@@ -64,20 +78,18 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
  ************/
 
 const { PUSH_ALL_OPENED_FILES } = IPCActions.DATA; //receiving channel
-const { OPENED_FILES_CHANGED } = IPCActions.DATA.PUSH; // push channel
 
 // On trigger, push opened files to renderer through OPENED_FILES_CHANGED
 function PushOpenedFiles() {
   const OpenedFilesData = GetOpenedFiles();
 
   const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(OPENED_FILES_CHANGED, OpenedFilesData);
+  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
 
   return;
 }
 
 const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.DATA; //receiving channel
-const { OPENED_FILE_CONTENT_CHANGED } = IPCActions.DATA.PUSH; // Push channel
 
 export type TChangedFilesPayload = {
   TargetFilePath: string;
@@ -99,18 +111,16 @@ function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, Fi
     },
   ];
   const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(OPENED_FILE_CONTENT_CHANGED, RendererPayload);
+  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILE_CONTENT_CHANGED, RendererPayload);
 
   return;
 }
 
 const { CHANGE_ACTIVE_FILE } = IPCActions.DATA; // Receiving
-const { ACTIVE_FILE_CHANGED } = IPCActions.DATA.PUSH; // Pushing
-// Change the file marked as editing, push to renderer
 function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMemory) {
   ChangeActiveFile(NewTargetFile);
   const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(ACTIVE_FILE_CHANGED, GetActiveFile());
+  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
 }
 
 // Bind to ipcMain.handle, one-way communications

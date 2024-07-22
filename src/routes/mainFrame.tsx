@@ -34,10 +34,16 @@ function MainFrame() {
 
   const [isAddingFile, setIsAddingFile] = useState(false);
   const [newFileName, setNewFileName] = useState('');
+  const NewFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [filepathToRename, setFilepathToRename] = useState<string | null>('');
+  const [newPendingName, setNewPendingName] = useState('');
+  const RenamingInputRef = useRef<HTMLInputElement | null>(null);
 
   // passing down to children
   const ScrollAreaRef = useRef<HTMLDivElement | null>(null);
 
+  // Initial loading
   useEffect(() => {
     if (MDFiles) return;
     (async () => {
@@ -57,6 +63,11 @@ function MainFrame() {
       },
     );
 
+    // main sent renaming push
+    const unbindRenamingFile = IPCRenderSide.on(IPCActions.FILES.PUSH.RENAMING_TARGET_FILE, (_, payload: string) => {
+      setFilepathToRename(payload || null);
+    });
+
     const unbindMDListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED, async _ => {
       const MDData = await ListMdInFolder();
       setMDFiles(MDData);
@@ -65,9 +76,11 @@ function MainFrame() {
     return () => {
       unbindFileActivationChange();
       unbindMDListingChange();
+      unbindRenamingFile();
     };
   }, []);
 
+  // set folder name each time
   useEffect(() => {
     (async () => {
       const currentFolder = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
@@ -76,9 +89,28 @@ function MainFrame() {
     })();
   });
 
+  // copy selectedFilesPaths state to the ref
   useEffect(() => {
     selectedFilesPathRef.current = [...selectedFilesPaths];
   }, [selectedFilesPaths]);
+
+  // renaming and adding state
+  useEffect(() => {
+    if (isAddingFile) {
+      NewFileInputRef.current?.focus();
+      // cancel renaming file
+      setNewPendingName('');
+      setFilepathToRename(null);
+    }
+  }, [isAddingFile]);
+  useEffect(() => {
+    if (filepathToRename) {
+      RenamingInputRef.current?.focus();
+      // cancel adding file
+      setNewFileName('');
+      setIsAddingFile(false);
+    }
+  }, [filepathToRename]);
 
   // Multi-file selection
   function selectFiles(ev: React.MouseEvent, item: TMDFile) {
@@ -122,6 +154,7 @@ function MainFrame() {
     IPCRenderSide.send(IPCActions.MENU.SHOW_FILE_OPERATION_MENU, [...selectedFilesPathRef.current]); //use the ref as actual data so it will always be the newest version
   }
 
+  // create new file
   async function CreateNewFile() {
     let Testworkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
     try {
@@ -135,6 +168,28 @@ function MainFrame() {
     }
     setNewFileName('');
     setIsAddingFile(false);
+  }
+
+  // Rename file
+  async function RenameTargetFile(FileFullPath: string) {
+    const oldFillPath = FileFullPath;
+    const NewFileName = newPendingName;
+
+    if (!NewFileName || NewFileName.trim() === '') return;
+    console.log('old:', oldFillPath, 'new:', NewFileName);
+
+    try {
+      await IPCRenderSide.invoke(IPCActions.FILES.CHANGE_TARGET_FILE_NAME, oldFillPath, NewFileName);
+    } catch (e) {
+      await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+        type: 'error',
+        message: `Error creating new file`,
+        detail: `${e}`,
+      });
+    }
+
+    setNewPendingName('');
+    setFilepathToRename(null);
   }
 
   return (
@@ -179,8 +234,14 @@ function MainFrame() {
               className={`flex cursor-pointer content-center justify-center bg-slate-100/30 px-2 py-1.5 dark:bg-slate-500/20 ${isAddingFile ? '' : 'hidden'}`}
             >
               <input
+                ref={NewFileInputRef}
                 type={'text'}
                 placeholder={'New File.md'}
+                onFocus={() => {
+                  // cancel renaming file
+                  setNewPendingName('');
+                  setFilepathToRename(null);
+                }}
                 onBlur={() => {
                   // cancel adding file
                   setNewFileName('');
@@ -204,13 +265,48 @@ function MainFrame() {
                 HandleFileContextMenu();
               }}
             >
+              {/*TODO:Remove*/}
               <li className="is-editing group flex px-2 py-1.5 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500">
                 <Link className="block grow pl-1.5" to="/mainFrame/edit">
                   Test-Back to Index
                 </Link>
               </li>
+              {/*File Listings*/}
               {MDFiles &&
                 MDFiles.map(item => {
+                  // when renaming
+                  if (filepathToRename === item.path)
+                    return (
+                      <li
+                        className={`file-listing group my-1 flex cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
+                        key={item.path}
+                      >
+                        <input
+                          ref={RenamingInputRef}
+                          type={'text'}
+                          placeholder={item.name}
+                          onFocus={() => {
+                            // cancel adding file
+                            setNewFileName('');
+                            setIsAddingFile(false);
+                          }}
+                          onBlur={() => {
+                            // cancel renaming file
+                            setNewPendingName('');
+                            setFilepathToRename(null);
+                          }}
+                          onKeyUp={async ev => {
+                            if (ev.key === 'Enter') await RenameTargetFile(item.path);
+                          }}
+                          value={newPendingName}
+                          onChange={ev => setNewPendingName(ev.target.value)}
+                          className={
+                            'grow border-0 bg-gray-50 py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6'
+                          }
+                        />
+                      </li>
+                    );
+                  // normal listing
                   return (
                     <li
                       className={`${currentEditingFile?.fullPath === item.path ? 'is-editing' : ''} ${selectedFilesPaths.includes(item.path) ? 'bg-slate-300 dark:bg-slate-600' : ''} file-listing group my-1 flex cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
@@ -223,18 +319,9 @@ function MainFrame() {
                         navigate({ to: '/mainFrame/edit/$filepath', params: { filepath: item.path } });
                       }}
                     >
-                      {/* mind the group-[.is-editing] */}
-                      {/* Arrow only shows if the item is being edited */}
                       <ArrowRightIcon className="mr-2 hidden size-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex" />
-                      {/*<Link*/}
-                      {/*  className="block grow pl-1.5"*/}
-                      {/*  to="/mainFrame/edit/$filepath"*/}
-                      {/*  params={{*/}
-                      {/*    filepath: item.path,*/}
-                      {/*  }}*/}
-                      {/*>*/}
-                      {item.name}
-                      {/*</Link>*/}
+                      {/*filepathToRename*/}
+                      <span>{item.name}</span>
                     </li>
                   );
                 })}

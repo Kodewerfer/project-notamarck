@@ -38,6 +38,7 @@ export const IPCActions = {
     SAVE_ACTIVE_FILE: 'FILE:SAVE_ACTIVE_FILE',
     SAVE_ALL_OPENED_FILES: 'FILE:SAVE_ALL_OPENED_FILES',
     SAVE_TARGET_OPENED_FILE: 'FILE:SAVE_TARGET_FILE',
+    // Deleting - currently no IPC interface, only context memu
     PUSH: {
       ACTIVE_FILE_CHANGED: 'FILES:PUSH:ACTIVE_FILE_CHANGED',
       OPENED_FILE_CONTENT_CHANGED: 'FILES:PUSH:OPENED_FILE_CONTENT_CHANGED', //main to render
@@ -45,11 +46,16 @@ export const IPCActions = {
     },
   },
   FILES: {
-    //fs related
+    //Generic FS
     LIST_CURRENT_PATH: 'FILES:LIST_CURRENT_PATH',
     LIST_CURRENT_PATH_MD: 'FILES:LIST_CURRENT_PATH_MD',
     CREATE_NEW_FILE: 'FILES:CREATE_NEW_FILE',
     READ_MD_FROM_PATH: 'FILES:READ_MD_FROM_PATH',
+    // renaming
+    CHANGE_TARGET_FILE_NAME: 'FILE:CHANGE_TARGET_FILE_NAME', //generic interface that will be used by renderer
+    PUSH: {
+      RENAMING_TARGET_FILE: 'FILE:RENAMING_TARGET_FILE', //send to renderer along with target file info
+    },
     // signals don't send a payload
     SIGNAL: {
       MD_LIST_CHANGED: 'FILES:SIGNAL:MD_LIST_CHANGED',
