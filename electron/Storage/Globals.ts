@@ -1,5 +1,6 @@
 import path from 'path-browserify';
 import { app } from 'electron';
+import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
 export type TFileInMemory = {
   filename: string;
@@ -153,4 +154,35 @@ export function GetALLSelectionStatusCache(): Readonly<Map<string, Object | null
 
 export function SetSelectionStatusCache(fullPath: string, status: Object | null) {
   _Selection_Status_Cache.set(fullPath, status);
+}
+
+// primarily used in searching
+let _MD_Files_List: TMDFile[] = [];
+
+export function SetMDFilesList(newList: TMDFile[]) {
+  if (!newList || !Array.isArray(newList)) return;
+  _MD_Files_List = newList;
+}
+
+export function GetMDFilesList(): Readonly<TMDFile[]> {
+  return [..._MD_Files_List];
+}
+
+export type TSearchTargetTypes = 'File' | 'Tag';
+
+// the main search bar
+export type TSearchTarget = {
+  searchText?: string;
+  placeHolder?: string;
+  searchType?: TSearchTargetTypes; //todo: tags or else
+};
+
+let _Search_Target_Cache: TSearchTarget | null = null;
+
+export function GetSearchTargetCache(): Readonly<TSearchTarget> | null {
+  return _Search_Target_Cache ? { ..._Search_Target_Cache } : null;
+}
+
+export function SetSearchTargetCache(newSearchTarget: TSearchTarget) {
+  if (newSearchTarget) _Search_Target_Cache = { ...newSearchTarget };
 }

@@ -6,7 +6,9 @@ import {
   GetActiveFile,
   GetOpenedFiles,
   RemoveOpenedFile,
+  SetSearchTargetCache,
   TFileInMemory,
+  TSearchTarget,
   UpdateOpenedFile,
 } from '../Storage/Globals.ts';
 import { BrowserWindow, Menu } from 'electron';
@@ -123,6 +125,17 @@ function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMem
   focusedWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
 }
 
+const { SET_NEW_SEARCH_TARGET } = IPCActions.DATA; // Receiving
+function SetNewSearchAndPush(_event: IpcMainEvent, NewSearch: TSearchTarget) {
+  if (!NewSearch) return;
+
+  // cache the search
+  SetSearchTargetCache(NewSearch);
+
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, { ...NewSearch });
+}
+
 // Bind to ipcMain.handle, one-way communications
 export const IPCListenerMappings = [
   {
@@ -132,4 +145,5 @@ export const IPCListenerMappings = [
   { trigger: UPDATE_OPENED_FILE_CONTENT, listener: UpdateFileContentAndPush },
   { trigger: CHANGE_ACTIVE_FILE, listener: ChangeActiveFileAndPush },
   { trigger: SHOW_FILE_OPERATION_MENU, listener: ShowFileOperationMenu },
+  { trigger: SET_NEW_SEARCH_TARGET, listener: SetNewSearchAndPush },
 ];

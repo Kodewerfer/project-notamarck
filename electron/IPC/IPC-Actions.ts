@@ -23,6 +23,8 @@ export const IPCActions = {
   },
   DATA: {
     //app data
+    // Search bar
+    SET_NEW_SEARCH_TARGET: 'DATA:SET_NEW_SEARCH_TARGET',
     // opened files
     GET_ALL_OPENED_FILES: 'DATA:GET_ALL_OPENED_FILES',
     PUSH_ALL_OPENED_FILES: 'DATA:PUSH_ALL_OPENED_FILES', //like the previous one but push to all listening component in the renderer
@@ -43,6 +45,7 @@ export const IPCActions = {
       ACTIVE_FILE_CHANGED: 'FILES:PUSH:ACTIVE_FILE_CHANGED',
       OPENED_FILE_CONTENT_CHANGED: 'FILES:PUSH:OPENED_FILE_CONTENT_CHANGED', //main to render
       OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, similar to server side pushing
+      BEGIN_NEW_SEARCH: 'DATA:PUSH:FOCUS_SEARCH_BAR', // push the target type for search bar
     },
   },
   FILES: {

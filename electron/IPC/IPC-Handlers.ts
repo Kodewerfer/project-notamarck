@@ -16,6 +16,7 @@ import {
   GetSelectionStatusCache,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
+  SetMDFilesList,
   SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
   TFileInMemory,
@@ -265,6 +266,9 @@ export function ReturnAllMDsInPath(_Event: IpcMainInvokeEvent, targetPath: strin
         size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null,
       };
     });
+
+  // store the list in memory
+  SetMDFilesList(MDFiles);
 
   return MDFiles;
 }

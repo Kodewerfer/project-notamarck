@@ -8,9 +8,10 @@ import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { motion } from 'framer-motion';
 import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
-import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
-import MainFrameContext from '@/context/MainFrame.ts';
+import { TFileInMemory, TSearchTarget } from "electron-src/Storage/Globals.ts";
+import MainFrameContext from '@/context/MainFrameContext.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';
+import SearchBar from 'component/SearchBar.tsx';
 
 const { IPCRenderSide } = window;
 
@@ -31,10 +32,6 @@ function MainFrame() {
 
   const [selectedFilesPaths, setSelectedFilesPaths] = useState<string[]>([]); //used in styling elements
   const selectedFilesPathRef = useRef<string[]>([]); // copy of the state version, actually used as data package
-
-  const [isAddingFile, setIsAddingFile] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const NewFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [filepathToRename, setFilepathToRename] = useState<string | null>('');
   const [newPendingName, setNewPendingName] = useState('');
@@ -94,21 +91,9 @@ function MainFrame() {
     selectedFilesPathRef.current = [...selectedFilesPaths];
   }, [selectedFilesPaths]);
 
-  // renaming and adding state
-  useEffect(() => {
-    if (isAddingFile) {
-      NewFileInputRef.current?.focus();
-      // cancel renaming file
-      setNewPendingName('');
-      setFilepathToRename(null);
-    }
-  }, [isAddingFile]);
   useEffect(() => {
     if (filepathToRename) {
       RenamingInputRef.current?.focus();
-      // cancel adding file
-      setNewFileName('');
-      setIsAddingFile(false);
     }
   }, [filepathToRename]);
 
@@ -152,22 +137,6 @@ function MainFrame() {
   // context menu
   function HandleFileContextMenu() {
     IPCRenderSide.send(IPCActions.MENU.SHOW_FILE_OPERATION_MENU, [...selectedFilesPathRef.current]); //use the ref as actual data so it will always be the newest version
-  }
-
-  // create new file
-  async function CreateNewFile() {
-    let Testworkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
-    try {
-      await IPCRenderSide.invoke(IPCActions.FILES.CREATE_NEW_FILE, `${Testworkspace}/${newFileName}.md`);
-    } catch (e) {
-      await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
-        type: 'error',
-        message: `Error creating new file`,
-        detail: `${e}`,
-      });
-    }
-    setNewFileName('');
-    setIsAddingFile(false);
   }
 
   // Rename file
@@ -225,37 +194,15 @@ function MainFrame() {
               className={
                 'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
               }
-              onClick={() => setIsAddingFile(prev => !prev)}
+              onClick={() => {
+                const NewFileSearch:TSearchTarget= {
+                  placeHolder:"New File",
+                  searchType:"File"
+                };
+                IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET,NewFileSearch);
+              }}
             >
               <PlusIcon className={'size-6'} />
-            </section>
-            {/* Add new file */}
-            <section
-              className={`flex cursor-pointer content-center justify-center bg-slate-100/30 px-2 py-1.5 dark:bg-slate-500/20 ${isAddingFile ? '' : 'hidden'}`}
-            >
-              <input
-                ref={NewFileInputRef}
-                type={'text'}
-                placeholder={'New File.md'}
-                onFocus={() => {
-                  // cancel renaming file
-                  setNewPendingName('');
-                  setFilepathToRename(null);
-                }}
-                onBlur={() => {
-                  // cancel adding file
-                  setNewFileName('');
-                  setIsAddingFile(false);
-                }}
-                onKeyUp={async ev => {
-                  if (ev.key === 'Enter') await CreateNewFile();
-                }}
-                value={newFileName}
-                onChange={ev => setNewFileName(ev.target.value)}
-                className={
-                  'grow border-0 bg-gray-50 py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6'
-                }
-              />
             </section>
             {/*File listing, context menu is bind here, so it is for the best that this is fit to content*/}
             <ul
@@ -285,11 +232,6 @@ function MainFrame() {
                           ref={RenamingInputRef}
                           type={'text'}
                           placeholder={item.name}
-                          onFocus={() => {
-                            // cancel adding file
-                            setNewFileName('');
-                            setIsAddingFile(false);
-                          }}
                           onBlur={() => {
                             // cancel renaming file
                             setNewPendingName('');
@@ -331,22 +273,8 @@ function MainFrame() {
 
         {/*Main editor area*/}
         <main className="ml-96 flex h-screen flex-col dark:bg-slate-200">
-          {/*top nav may expand while searching */}
-          <nav
-            className={
-              'light:border-b h-18 z-40 flex w-full border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
-            }
-          >
-            <MagnifyingGlassIcon className={'size-6 self-center'} />
-            <input
-              type={'text'}
-              placeholder={'Search text'}
-              className={
-                'grow border-0 bg-transparent py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
-              }
-            />
-          </nav>
-
+          {/*all-in-one Search bar component*/}
+          <SearchBar MDList={MDFiles} />
           {/*the main display area*/}
           <div
             ref={ScrollAreaRef}

@@ -6,7 +6,7 @@ import { useLayoutEffect } from '@tanstack/react-router';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
 import { TChangedFilesPayload } from 'electron-src/IPC/IPC-Listeners.ts';
 import { TFileInMemory } from 'electron-src/Storage/Globals.ts';
-import MainFrameContext from '@/context/MainFrame.ts';
+import MainFrameContext from '@/context/MainFrameContext.ts';
 
 // Identifying info a tab holds, in addition to fs related props, add selection cache
 export type TTabItems = TFileInMemory & {
