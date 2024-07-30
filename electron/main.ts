@@ -85,6 +85,7 @@ app.whenReady().then(_ => {
   createWindow();
 });
 
+// Init a default "workspace" folder under the app root
 function InitDefaultFolder() {
   const currentWorkspace = GetCurrentWorkspace();
   if (!fs.existsSync(currentWorkspace)) {

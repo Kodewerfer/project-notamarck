@@ -15,7 +15,7 @@ import { BrowserWindow, Menu } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
-import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
+import { ShowConfirmAlert } from '../Utils/ErrorsAndPrompts.ts';
 
 /************
  * - MENU -

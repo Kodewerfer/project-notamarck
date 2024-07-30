@@ -58,12 +58,12 @@ const MarkdownEditor = forwardRef(
       };
     }, []);
 
-    async function appClick() {
-      // console.log('NOTAMARCK click');
-      // if (EditorRef.current) {
-      //   console.log(await EditorRef.current.ExtractMD());
-      // }
-    }
+    // async function appClick() {
+    // console.log('NOTAMARCK click');
+    // if (EditorRef.current) {
+    //   console.log(await EditorRef.current.ExtractMD());
+    // }
+    // }
 
     return (
       <>

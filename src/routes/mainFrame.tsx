@@ -6,9 +6,9 @@ import path from 'path-browserify';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
 import { motion } from 'framer-motion';
-import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
-import { TFileInMemory, TSearchTarget } from "electron-src/Storage/Globals.ts";
+import { TFileInMemory, TSearchTarget, TSearchtTypes } from 'electron-src/Storage/Globals.ts';
 import MainFrameContext from '@/context/MainFrameContext.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
@@ -195,11 +195,11 @@ function MainFrame() {
                 'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
               }
               onClick={() => {
-                const NewFileSearch:TSearchTarget= {
-                  placeHolder:"New File",
-                  searchType:"File"
+                const NewFileSearch: TSearchTarget = {
+                  placeHolder: 'New File',
+                  searchType: 'File',
                 };
-                IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET,NewFileSearch);
+                IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
               }}
             >
               <PlusIcon className={'size-6'} />

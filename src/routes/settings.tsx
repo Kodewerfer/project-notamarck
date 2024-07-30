@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createFileRoute, useLayoutEffect, useRouter } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/16/solid';
-import { FolderOpenIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { FolderIcon } from '@heroicons/react/24/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';

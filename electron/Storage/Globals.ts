@@ -168,13 +168,18 @@ export function GetMDFilesList(): Readonly<TMDFile[]> {
   return [..._MD_Files_List];
 }
 
-export type TSearchTargetTypes = 'File' | 'Tag';
+export type TSearchtTypes = 'File' | 'Tag';
+
+// export enum TSearchTargetTypes {
+//   File = 'File',
+//   Tag = 'Tag',
+// }
 
 // the main search bar
 export type TSearchTarget = {
   searchText?: string;
   placeHolder?: string;
-  searchType?: TSearchTargetTypes; //todo: tags or else
+  searchType?: TSearchtTypes; //todo: tags or else
 };
 
 let _Search_Target_Cache: TSearchTarget | null = null;

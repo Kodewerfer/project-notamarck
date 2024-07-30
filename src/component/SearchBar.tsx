@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLayoutEffect } from '@tanstack/react-router';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import { TSearchTarget, TSearchTargetTypes } from 'electron-src/Storage/Globals.ts';
+import { TSearchTarget, TSearchtTypes } from 'electron-src/Storage/Globals.ts';
 
 const { IPCRenderSide } = window;
 export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
@@ -13,7 +13,7 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
 
   const [searchString, setSearchString] = useState('');
   const [placeHolderText, setPlaceHolderText] = useState('Search');
-  const [searchType, setSearchType] = useState<TSearchTargetTypes>('File'); //todo
+  const [searchType, setSearchType] = useState<TSearchtTypes | null>("File"); //todo
 
   // TODO: use the placeholder prop to dynamically prompt user
 
@@ -45,7 +45,7 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
       console.log((searchPayload as TSearchTarget).placeHolder);
       setPlaceHolderText((searchPayload as TSearchTarget).placeHolder || '');
       setIsSearching(true);
-      setSearchType((searchPayload as TSearchTarget).searchType || 'File');
+      setSearchType((searchPayload as TSearchTarget).searchType || null);
       if (InputRef.current) (InputRef.current as HTMLInputElement).focus();
     });
 
@@ -86,8 +86,9 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
       }
     >
       <section className={'flex'}>
-        <MagnifyingGlassIcon className={'size-6 self-center'} />
+        <MagnifyingGlassIcon className={'order-1 size-6 self-center'} />
         <input
+          id={'main-search-bar'}
           ref={InputRef}
           type={'text'}
           placeholder={placeHolderText}
@@ -95,9 +96,21 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
           onChange={ev => setSearchString(ev.target.value)}
           onClick={_ => setIsSearching(!isSearching)}
           className={
-            'grow border-0 bg-transparent py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
+            'peer order-3 grow border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-gray-900' +
+            ' placeholder:text-gray-400 focus:border-gray-300 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
           }
         />
+        <label
+          htmlFor={'main-search-bar'}
+          className={
+            'order-2 self-center px-2 text-sm text-gray-500 duration-150' +
+            ' peer-placeholder-shown:scale-80 peer-placeholder-shown:text-gray-400' +
+            ' peer-focus:scale-120 peer-focus:text-lg peer-focus:font-semibold peer-focus:text-blue-500' +
+            ' rtl:peer-focus:translate-x-1/4 dark:bg-gray-900 dark:text-gray-400'
+          }
+        >
+          {searchType}:
+        </label>
       </section>
       {/*  the search result list*/}
       {isSearching && (
@@ -113,7 +126,6 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
                   <li key={item.path} className={'flex py-2 last:pb-8'}>
                     <span className={'grow'}>{item.name}</span>
                     <span className={'px-6'}>{item.path}</span>
-                    <span>{item.size}</span>
                   </li>
                 ))}
               </ul>
