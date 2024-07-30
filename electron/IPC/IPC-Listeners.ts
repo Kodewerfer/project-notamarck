@@ -7,8 +7,6 @@ import {
   GetOpenedFiles,
   RemoveOpenedFile,
   SetSearchTargetCache,
-  TFileInMemory,
-  TSearchTarget,
   UpdateOpenedFile,
 } from '../Storage/Globals.ts';
 import { BrowserWindow, Menu } from 'electron';
@@ -16,6 +14,7 @@ import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
 import { ShowConfirmAlert } from '../Utils/ErrorsAndPrompts.ts';
+import { TFileInMemory, TSearchTarget } from "electron-src/Types/GlobalStorage.ts";
 
 /************
  * - MENU -

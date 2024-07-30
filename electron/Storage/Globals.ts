@@ -1,13 +1,9 @@
 import path from 'path-browserify';
-import { app } from 'electron';
+// import { app } from 'electron';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
-export type TFileInMemory = {
-  filename: string;
-  fullPath: string;
-  title?: string;
-  content?: string;
-};
+import { app } from 'electron';
+import { TFileInMemory, TSearchTarget } from '../Types/GlobalStorage.ts';
 
 /**
  * Array, matches the order of tabs in tabframe component
@@ -168,20 +164,7 @@ export function GetMDFilesList(): Readonly<TMDFile[]> {
   return [..._MD_Files_List];
 }
 
-export type TSearchtTypes = 'File' | 'Tag';
-
-// export enum TSearchTargetTypes {
-//   File = 'File',
-//   Tag = 'Tag',
-// }
-
-// the main search bar
-export type TSearchTarget = {
-  searchText?: string;
-  placeHolder?: string;
-  searchType?: TSearchtTypes; //todo: tags or else
-};
-
+// export type TSearchtTypes = 'File' | 'Tag';
 let _Search_Target_Cache: TSearchTarget | null = null;
 
 export function GetSearchTargetCache(): Readonly<TSearchTarget> | null {

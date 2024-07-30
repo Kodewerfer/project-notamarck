@@ -19,11 +19,11 @@ import {
   SetMDFilesList,
   SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
-  TFileInMemory,
 } from '../Storage/Globals.ts';
 import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, saveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
+import { TFileInMemory } from "electron-src/Types/GlobalStorage.ts";
 
 /************
  * - APP -

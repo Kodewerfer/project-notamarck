@@ -8,10 +8,10 @@ import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { motion } from 'framer-motion';
 import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
-import { TFileInMemory, TSearchTarget, TSearchtTypes } from 'electron-src/Storage/Globals.ts';
 import MainFrameContext from '@/context/MainFrameContext.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
+import { ESearchTypes, TFileInMemory, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
 
 const { IPCRenderSide } = window;
 
@@ -197,7 +197,7 @@ function MainFrame() {
               onClick={() => {
                 const NewFileSearch: TSearchTarget = {
                   placeHolder: 'New File',
-                  searchType: 'File',
+                  searchType: ESearchTypes.File,
                 };
                 IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
               }}

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLayoutEffect } from '@tanstack/react-router';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import { TSearchTarget, TSearchtTypes } from 'electron-src/Storage/Globals.ts';
+import { ESearchTypes, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
 
 const { IPCRenderSide } = window;
 export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
@@ -13,7 +13,7 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
 
   const [searchString, setSearchString] = useState('');
   const [placeHolderText, setPlaceHolderText] = useState('Search');
-  const [searchType, setSearchType] = useState<TSearchtTypes | null>("File"); //todo
+  const [searchType, setSearchType] = useState<ESearchTypes | null>(ESearchTypes.File); //todo
 
   // TODO: use the placeholder prop to dynamically prompt user
 
@@ -106,7 +106,7 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
             'order-2 self-center px-2 text-sm text-gray-500 duration-150' +
             ' peer-placeholder-shown:scale-80 peer-placeholder-shown:text-gray-400' +
             ' peer-focus:scale-120 peer-focus:text-lg peer-focus:font-semibold peer-focus:text-blue-500' +
-            ' rtl:peer-focus:translate-x-1/4 dark:bg-gray-900 dark:text-gray-400'
+            ' rtl:peer-focus:translate-x-1/4 dark:text-gray-400'
           }
         >
           {searchType}:
