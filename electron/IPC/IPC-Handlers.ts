@@ -1,4 +1,5 @@
 import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
+import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { FormatFileSize } from '../Helper.ts';
@@ -20,12 +21,11 @@ import {
   SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
 } from '../Storage/Globals.ts';
-import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
 import { TFileInMemory } from '../Types/GlobalStorage.ts';
-import { ListAllTags, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
-import { SetTagList } from '../Storage/Tags.ts';
+import { SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
+import { GetTagList } from '../Storage/Tags.ts';
 
 /************
  * - APP -
@@ -359,22 +359,12 @@ export function CreateNewTagAndSendSignal(_Event: IpcMainInvokeEvent, TagFileNam
   }
 
   SaveTagFileRenameOnDup(TagFileName);
-
-  // push to the current window as a signal
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
 }
 
 const { LIST_ALL_TAGS } = IPCActions.FILES; //receiving
 
 export function ReturnAllTags() {
-  const allTags = ListAllTags();
-
-  if (!allTags || allTags.length === 0) return;
-
-  SetTagList(allTags);
-
-  return allTags;
+  return GetTagList(); // this only return the currently cached tag list(which is fetched in the background)
 }
 
 /**

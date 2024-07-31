@@ -30,8 +30,8 @@ function MainFrame() {
   const navigate = useNavigate();
 
   const [currentFolder, setCurrentFolder] = useState('');
-  const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData().MD);
-  const [TagList, setTagList] = useState<TTagsInMemory[] | null>(Route.useLoaderData().Tags);
+  const [MDFiles, setMDFiles] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
+  const [TagList, setTagList] = useState<TTagsInMemory[] | null | undefined>(Route.useLoaderData()?.Tags);
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 

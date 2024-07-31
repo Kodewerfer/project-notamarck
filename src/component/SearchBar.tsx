@@ -45,10 +45,6 @@ export default function SearchBar({
   useEffect(() => {
     const UnbindEvent = IPCRenderSide.on(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, (_, searchPayload) => {
       if (!searchPayload) return console.warn('Search bar: Received empty payload');
-
-      console.log(searchPayload);
-
-      console.log((searchPayload as TSearchTarget).placeHolder);
       setPlaceHolderText((searchPayload as TSearchTarget).placeHolder || '');
       setIsSearching(true);
       setSearchType((searchPayload as TSearchTarget).searchType || null);
@@ -85,11 +81,11 @@ export default function SearchBar({
       });
     }
     setSearchString('');
-    setIsSearching(false);
+    // setIsSearching(false);
   }
 
   const filteredMDList = MDList?.filter(item => item.name.startsWith(searchString));
-  const filteredTagList = TagsList?.filter(item => item.tagName.startsWith(searchString));
+  const filteredTagList = TagsList?.filter(item => item.tagFileName.startsWith(searchString));
 
   return (
     <nav
@@ -162,7 +158,7 @@ export default function SearchBar({
                 {filteredTagList.map(item => (
                   <li key={item.tagPath} className={'flex py-2 last:pb-8'}>
                     <span className={'pr-3 font-semibold text-gray-600 dark:text-slate-600'}>Tag:</span>
-                    <span className={'grow'}>{path.parse(item.tagName).name.split('.')[0]}</span>
+                    <span className={'grow'}>{path.parse(item.tagFileName).name.split('.')[0]}</span>
                   </li>
                 ))}
               </ul>

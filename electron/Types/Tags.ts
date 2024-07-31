@@ -1,6 +1,6 @@
 export type TTagsInMemory = {
-  tagName: string;
+  tagFileName: string;
   tagPath: string;
-  tagContent?: string;
-  linkToFiles?: string[];
+  tagContentRaw?: string;
+  linkToFiles?: string[];//todo
 };

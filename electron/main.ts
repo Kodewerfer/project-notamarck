@@ -3,8 +3,13 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { IPCHandlerMappings } from './IPC/IPC-Handlers.ts';
 import { IPCListenerMappings } from './IPC/IPC-Listeners.ts';
-import { GetCurrentWorkspace } from './Storage/Globals.ts';
+import { GetAppMainWindowID, GetCurrentWorkspace, SetAppMainWindowID } from './Storage/Globals.ts';
 import * as fs from 'node:fs';
+import { FetchAllTagsAsync } from './Utils/TagOperations.ts';
+import { TTagsInMemory } from './Types/Tags.ts';
+import { SetTagMap } from './Storage/Tags.ts';
+import { IPCActions } from './IPC/IPC-Actions.ts';
+import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,6 +42,9 @@ function createWindow() {
       // nodeIntegration: true
     },
   });
+
+  // cache the ID for later use
+  SetAppMainWindowID(win.id);
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
@@ -78,13 +86,18 @@ app.whenReady().then(_ => {
   IPCListenerMappings.forEach(IPC => {
     ipcMain.on(IPC.trigger, IPC.listener);
   });
-  
+
   // TODO: after adding app config with file persistence, load previous workspace info here
 
   InitDefaultFolder();
 
+  InitAllTagsAsync();
+
   // create window
   createWindow();
+
+  // Setup Fs monitoring
+  StartTagsWatcher();
 });
 
 // Init a default "workspace" folder under the app root
@@ -98,4 +111,15 @@ function InitDefaultFolder() {
       console.log('error creating default workspace directory,', e);
     }
   }
+}
+
+async function InitAllTagsAsync() {
+  const allTags = await FetchAllTagsAsync();
+  if (!allTags || !allTags.length) return;
+
+  allTags.forEach((tag: TTagsInMemory) => {
+    SetTagMap(tag);
+  });
+
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
 }
