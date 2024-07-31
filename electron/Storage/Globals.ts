@@ -5,6 +5,16 @@ import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { app } from 'electron';
 import { TFileInMemory, TSearchTarget } from '../Types/GlobalStorage.ts';
 
+let _App_MainWindow_ID = 0;
+
+export function SetAppMainWindowID(id: number) {
+  _App_MainWindow_ID = id;
+}
+
+export function GetAppMainWindowID() {
+  return _App_MainWindow_ID;
+}
+
 /**
  * Array, matches the order of tabs in tabframe component
  */
