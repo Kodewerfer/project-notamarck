@@ -3,7 +3,6 @@ import { createFileRoute, Link, Outlet, useLayoutEffect, useNavigate } from '@ta
 
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import path from 'path-browserify';
-import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
 import { motion } from 'framer-motion';
 import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -13,6 +12,7 @@ import { getLastPartOfPath } from 'component/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
 import { ESearchTypes, TFileInMemory, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
+import { TMDFile } from 'electron-src/Types/Files.ts';
 
 const { IPCRenderSide } = window;
 
@@ -294,7 +294,7 @@ function MainFrame() {
           <div
             ref={ScrollAreaRef}
             className={
-              'mainframe-display h-full overflow-auto scroll-smooth focus:scroll-auto dark:bg-slate-600 dark:text-blue-50'
+              'mainframe-display z-10 h-full overflow-auto scroll-smooth focus:scroll-auto dark:bg-slate-600 dark:text-blue-50'
             }
           >
             <MainFrameContext.Provider value={ScrollAreaRef}>

@@ -1,9 +1,9 @@
 import path from 'path-browserify';
 // import { app } from 'electron';
-import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 
 import { app } from 'electron';
 import { TFileInMemory, TSearchTarget } from '../Types/GlobalStorage.ts';
+import { TMDFile } from "../Types/Files.ts";
 
 let _App_MainWindow_ID = 0;
 

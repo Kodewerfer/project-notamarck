@@ -1,11 +1,11 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from 'react';
 import { useLayoutEffect } from '@tanstack/react-router';
-import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { ESearchTypes, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import path from 'path-browserify';
+import { TMDFile } from 'electron-src/Types/Files.ts';
 
 const { IPCRenderSide } = window;
 export default function SearchBar({
@@ -90,7 +90,7 @@ export default function SearchBar({
   return (
     <nav
       className={
-        'light:border-b h-18 relative z-40 w-full border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
+        'light:border-b h-18 relative z-50 w-full border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
       }
     >
       <section className={'flex'}>
@@ -134,7 +134,7 @@ export default function SearchBar({
       {/*  the search result list*/}
       {isSearching && (
         <div
-          className={`absolute left-2 top-16 h-fit max-h-96 w-11/12 cursor-default select-none overflow-y-auto overflow-x-hidden rounded-lg bg-gray-50 px-6 py-4 shadow-xl dark:bg-slate-700 dark:text-blue-50`}
+          className={`absolute left-2 top-14 h-fit max-h-96 w-11/12 cursor-default select-none overflow-y-auto overflow-x-hidden rounded-lg bg-gray-50 px-6 py-4 shadow-xl dark:bg-slate-700 dark:text-blue-50`}
           ref={WrapperElementRef}
         >
           {/*search result - files*/}

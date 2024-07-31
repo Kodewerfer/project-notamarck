@@ -196,7 +196,7 @@ export default function TabFrame() {
       {/*the tab row*/}
       <nav
         ref={TabBarRef}
-        className={`sticky top-0 z-50 flex h-9 w-full overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
+        className={`sticky top-0 flex h-9 w-full overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
       >
         <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>

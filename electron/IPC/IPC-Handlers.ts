@@ -26,6 +26,7 @@ import { ReassignActiveFile } from '../Utils/InternalData.ts';
 import { TFileInMemory } from '../Types/GlobalStorage.ts';
 import { SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
 import { GetTagList } from '../Storage/Tags.ts';
+import { TMDFile } from '../Types/Files.ts';
 
 /************
  * - APP -
@@ -224,36 +225,10 @@ export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileF
  * - FILES -
  ************/
 
-// List all files or directories in the given path
-const { LIST_CURRENT_PATH } = IPCActions.FILES;
-export type TListedFile = ReturnType<typeof ListAllFiles>[0];
-
-export function ListAllFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
-  const files = fs
-    .readdirSync(targetPath)
-    .map(file => {
-      const fileStats = fs.statSync(path.join(targetPath, file));
-      return {
-        name: file,
-        size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null,
-        directory: fileStats.isDirectory(),
-      };
-    })
-    .sort((a, b) => {
-      if (a.directory === b.directory) {
-        return a.name.localeCompare(b.name);
-      }
-      return a.directory ? -1 : 1;
-    });
-
-  return files;
-}
-
 // List all MD files from a path
 const { LIST_CURRENT_PATH_MD } = IPCActions.FILES;
-export type TMDFile = ReturnType<typeof ReturnAllMDsInPath>[0];
 
-export function ReturnAllMDsInPath(_Event: IpcMainInvokeEvent, targetPath: string) {
+export function ReturnAllMDsInPath(_Event: IpcMainInvokeEvent, targetPath: string): TMDFile[] {
   const MDFiles = fs
     .readdirSync(targetPath)
     .filter(file => {
@@ -372,7 +347,6 @@ export function ReturnAllTags() {
  */
 export const IPCHandlerMappings = [
   { trigger: GET_APP_PATH, handler: GetAppPath },
-  { trigger: LIST_CURRENT_PATH, handler: ListAllFiles },
   { trigger: LIST_CURRENT_PATH_MD, handler: ReturnAllMDsInPath },
   { trigger: READ_MD_FROM_PATH, handler: ReadMDAndPushOpenedFiles },
   { trigger: GET_ALL_OPENED_FILES, handler: GetAllOpenedFiles },

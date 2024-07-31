@@ -26,7 +26,7 @@ export default function StartTagsWatcher() {
 }
 
 // Handlers
-async function OnNewTag(tagPath: string, tagStats: Stats | undefined) {
+async function OnNewTag(tagPath: string, _: Stats | undefined) {
   let NewTagData;
   try {
     NewTagData = await ReadTagAsync(tagPath);
@@ -38,7 +38,7 @@ async function OnNewTag(tagPath: string, tagStats: Stats | undefined) {
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
 }
 
-async function OnDeleteTag(tagPath: string, tagStats: Stats | undefined) {
+async function OnDeleteTag(tagPath: string, _: Stats | undefined) {
   const { base: TagNameKey } = path.parse(tagPath);
   RemoveFromTagMap(TagNameKey);
   //
