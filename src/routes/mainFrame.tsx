@@ -12,12 +12,16 @@ import MainFrameContext from '@/context/MainFrameContext.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
 import { ESearchTypes, TFileInMemory, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
+import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 
 const { IPCRenderSide } = window;
 
 export const Route = createFileRoute('/mainFrame')({
   loader: async () => {
-    return await ListMdInFolder();
+    return {
+      MD: await ListMdInFolder(),
+      Tags: await ListAllTags(),
+    };
   },
   component: MainFrame,
 });
@@ -26,7 +30,8 @@ function MainFrame() {
   const navigate = useNavigate();
 
   const [currentFolder, setCurrentFolder] = useState('');
-  const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData());
+  const [MDFiles, setMDFiles] = useState<TMDFile[] | null>(Route.useLoaderData().MD);
+  const [TagList, setTagList] = useState<TTagsInMemory[] | null>(Route.useLoaderData().Tags);
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 
@@ -47,6 +52,10 @@ function MainFrame() {
       console.log('Main Frame: No data from loader, re-fetching.');
       const MDData = await ListMdInFolder();
       setMDFiles(MDData);
+
+      // fetch tags
+      const allTags = await ListAllTags();
+      setTagList(allTags);
     })();
   }, []);
 
@@ -70,10 +79,16 @@ function MainFrame() {
       setMDFiles(MDData);
     });
 
+    const unbindTagListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED, async _ => {
+      const MDData = await ListAllTags();
+      setTagList(MDData);
+    });
+
     return () => {
       unbindFileActivationChange();
       unbindMDListingChange();
       unbindRenamingFile();
+      unbindTagListingChange();
     };
   }, []);
 
@@ -274,7 +289,7 @@ function MainFrame() {
         {/*Main editor area*/}
         <main className="ml-96 flex h-screen flex-col dark:bg-slate-200">
           {/*all-in-one Search bar component*/}
-          <SearchBar MDList={MDFiles} />
+          <SearchBar MDList={MDFiles} TagsList={TagList} />
           {/*the main display area*/}
           <div
             ref={ScrollAreaRef}
@@ -310,4 +325,16 @@ async function ListMdInFolder(folderPath = '\\', parentFolderPath?: string) {
     console.error(e);
   }
   return MdFiles;
+}
+
+async function ListAllTags() {
+  let AllTags = [];
+
+  try {
+    AllTags = await IPCRenderSide.invoke(IPCActions.FILES.LIST_ALL_TAGS);
+  } catch (e) {
+    console.log(e);
+  }
+
+  return AllTags;
 }

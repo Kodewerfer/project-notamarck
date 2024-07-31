@@ -78,6 +78,8 @@ app.whenReady().then(_ => {
   IPCListenerMappings.forEach(IPC => {
     ipcMain.on(IPC.trigger, IPC.listener);
   });
+  
+  // TODO: after adding app config with file persistence, load previous workspace info here
 
   InitDefaultFolder();
 

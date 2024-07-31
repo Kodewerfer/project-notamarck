@@ -30,7 +30,7 @@ export function ReadMDAndAddToOpenedFile(targetPath: string) {
  *
  * @throws {Error} Throws an error if there was an issue writing to the file.
  */
-export function saveContentToFileRenameOnDup(FileFullName: string, FileContent?: string) {
+export function SaveContentToFileRenameOnDup(FileFullName: string, FileContent?: string) {
   // rename with a -1
   const renamedFileFullName = CheckFileRenameOnDup(FileFullName);
   try {
@@ -89,7 +89,7 @@ export function UnlinkFile(FileFullName: string) {
  * @param {string} FileFullName - The full name (including path) of the file.
  * @returns {string} The updated file name if there was a duplication, or the original file name otherwise.
  */
-function CheckFileRenameOnDup(FileFullName: string) {
+export function CheckFileRenameOnDup(FileFullName: string) {
   let resultName = FileFullName;
 
   // rename with a -1
@@ -97,9 +97,18 @@ function CheckFileRenameOnDup(FileFullName: string) {
     const parsedPath = path.parse(resultName);
     let appendixNum = 1;
 
+    let RealFileName = parsedPath.name;
+    let FileNameOtherParts = '';
+    // In case the file name has .
+    const dotIndex = parsedPath.name.indexOf('.');
+    if (dotIndex !== -1) {
+      RealFileName = parsedPath.name.substring(0, dotIndex);
+      FileNameOtherParts = parsedPath.name.substring(dotIndex);
+    }
+
     do {
       const appendix = `-${appendixNum}`;
-      resultName = path.join(parsedPath.dir, `${parsedPath.name}${appendix}${parsedPath.ext}`);
+      resultName = path.join(parsedPath.dir, `${RealFileName}${appendix}${FileNameOtherParts}${parsedPath.ext}`);
       appendixNum++;
     } while (fs.existsSync(resultName));
   }

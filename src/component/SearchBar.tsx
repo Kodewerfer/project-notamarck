@@ -4,18 +4,24 @@ import { useLayoutEffect } from '@tanstack/react-router';
 import { TMDFile } from 'electron-src/IPC/IPC-Handlers.ts';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { ESearchTypes, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
+import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
+import path from 'path-browserify';
 
 const { IPCRenderSide } = window;
-export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
+export default function SearchBar({
+  MDList,
+  TagsList,
+}: {
+  MDList?: TMDFile[] | null;
+  TagsList?: TTagsInMemory[] | null;
+}) {
   const [isSearching, setIsSearching] = useState(false);
   const InputRef = useRef(null);
   const WrapperElementRef = useRef<HTMLDivElement | null>(null);
 
   const [searchString, setSearchString] = useState('');
   const [placeHolderText, setPlaceHolderText] = useState('Search');
-  const [searchType, setSearchType] = useState<ESearchTypes | null>(ESearchTypes.File); //todo
-
-  // TODO: use the placeholder prop to dynamically prompt user
+  const [searchType, setSearchType] = useState<ESearchTypes | null>(ESearchTypes.File);
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {
@@ -62,10 +68,15 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
 
   // create new file
   async function CreateNewFile() {
-    if (!searchString || searchString.trim() === '') return;
+    // todo:prompt the user about invalid file names
+    if (!searchString || searchString.trim() === '' || searchString.indexOf('.') !== -1) return;
     let currentWorkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
     try {
-      await IPCRenderSide.invoke(IPCActions.FILES.CREATE_NEW_FILE, `${currentWorkspace}/${searchString}.md`);
+      // file creation
+      if (searchType === ESearchTypes.File)
+        await IPCRenderSide.invoke(IPCActions.FILES.CREATE_NEW_FILE, `${currentWorkspace}/${searchString}.md`);
+      // tags
+      if (searchType === ESearchTypes.Tag) await IPCRenderSide.invoke(IPCActions.FILES.CREATE_NEW_TAG, searchString);
     } catch (e) {
       await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
@@ -78,6 +89,7 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
   }
 
   const filteredMDList = MDList?.filter(item => item.name.startsWith(searchString));
+  const filteredTagList = TagsList?.filter(item => item.tagName.startsWith(searchString));
 
   return (
     <nav
@@ -93,7 +105,18 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
           type={'text'}
           placeholder={placeHolderText}
           value={searchString}
-          onChange={ev => setSearchString(ev.target.value)}
+          onChange={ev => {
+            let inputValue = ev.target.value;
+            const inputParts = inputValue.split(':');
+            const prefix = inputParts[0];
+            const ComparingPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase(); //turn the first letter to upper case
+            const searchType = ComparingPrefix in ESearchTypes ? (ComparingPrefix as ESearchTypes) : null;
+            if (searchType && inputParts.length > 1) {
+              setSearchType(searchType);
+              inputValue = inputParts[1];
+            }
+            setSearchString(inputValue);
+          }}
           onClick={_ => setIsSearching(!isSearching)}
           className={
             'peer order-3 grow border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-gray-900' +
@@ -109,7 +132,7 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
             ' rtl:peer-focus:translate-x-1/4 dark:text-gray-400'
           }
         >
-          {searchType}:
+          {searchType ? searchType : ''}:
         </label>
       </section>
       {/*  the search result list*/}
@@ -118,8 +141,8 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
           className={`absolute left-2 top-16 h-fit max-h-96 w-11/12 cursor-default select-none overflow-y-auto overflow-x-hidden rounded-lg bg-gray-50 px-6 py-4 shadow-xl dark:bg-slate-700 dark:text-blue-50`}
           ref={WrapperElementRef}
         >
-          {/*search result*/}
-          {filteredMDList && filteredMDList.length > 0 && (
+          {/*search result - files*/}
+          {searchType === ESearchTypes.File && filteredMDList && filteredMDList.length > 0 && (
             <>
               <ul>
                 {filteredMDList.map(item => (
@@ -132,10 +155,24 @@ export default function SearchBar({ MDList }: { MDList: TMDFile[] | null }) {
               <hr />
             </>
           )}
+          {/*search result - tags*/}
+          {searchType === ESearchTypes.Tag && filteredTagList && filteredTagList.length > 0 && (
+            <>
+              <ul>
+                {filteredTagList.map(item => (
+                  <li key={item.tagPath} className={'flex py-2 last:pb-8'}>
+                    <span className={'pr-3 font-semibold text-gray-600 dark:text-slate-600'}>Tag:</span>
+                    <span className={'grow'}>{path.parse(item.tagName).name.split('.')[0]}</span>
+                  </li>
+                ))}
+              </ul>
+              <hr />
+            </>
+          )}
           {/*additional actions*/}
           <ul className={'mt-2 cursor-pointer'}>
             <li className={'py-2 last:pb-6'} onClick={() => CreateNewFile()}>
-              <span>Create New {searchType} </span>
+              <span>Create New {searchType || ''} </span>
               <span>{searchString || ''}</span>
             </li>
           </ul>

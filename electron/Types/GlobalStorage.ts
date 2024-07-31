@@ -7,7 +7,7 @@ export enum ESearchTypes {
 export type TSearchTarget = {
   searchText?: string;
   placeHolder?: string;
-  searchType?: ESearchTypes; //todo: tags or else
+  searchType?: ESearchTypes;
 };
 
 export type TFileInMemory = {

@@ -87,7 +87,7 @@ export function ChangeActiveFile(NewTargetFile: TFileInMemory | null) {
 /**
  * the working directory
  */
-let _Current_Workspace: string = `${app.getAppPath()}\\workspace`; //default to app path
+let _Current_Workspace: string = `${app.getAppPath()}\\workspace`; //default to app path todo: using file cache to read the last workspace
 
 let _Recent_Workspaces: string[] = [];
 

@@ -21,9 +21,11 @@ import {
   SyncWorkspaceAndRecents,
 } from '../Storage/Globals.ts';
 import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
-import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, saveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
+import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
-import { TFileInMemory } from "electron-src/Types/GlobalStorage.ts";
+import { TFileInMemory } from '../Types/GlobalStorage.ts';
+import { ListAllTags, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
+import { SetTagList } from '../Storage/Tags.ts';
 
 /************
  * - APP -
@@ -291,6 +293,8 @@ export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath:
   }
 }
 
+// - MD Files
+
 const { CREATE_NEW_FILE } = IPCActions.FILES; //receiving
 // Create a new empty file at target location
 export function CreateNewFileAndSendSignal(_Event: IpcMainInvokeEvent, FileFullName: string, FileContent?: string) {
@@ -300,7 +304,7 @@ export function CreateNewFileAndSendSignal(_Event: IpcMainInvokeEvent, FileFullN
     throw new Error(`${FileFullName} is not valid`);
   }
 
-  saveContentToFileRenameOnDup(FileFullName, FileContent);
+  SaveContentToFileRenameOnDup(FileFullName, FileContent);
 
   // push to the current window as a signal
   const focusedWindow = BrowserWindow.getFocusedWindow();
@@ -344,6 +348,35 @@ export function ChangeTargetFileToNewNameAndSignal(
   focusedWindow?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }
 
+// - Tags
+const { CREATE_NEW_TAG } = IPCActions.FILES; //receiving
+// Create a new empty tag at tag folder
+export function CreateNewTagAndSendSignal(_Event: IpcMainInvokeEvent, TagFileName: string) {
+  try {
+    path.resolve(TagFileName);
+  } catch (e) {
+    throw new Error(`${TagFileName} is not valid`);
+  }
+
+  SaveTagFileRenameOnDup(TagFileName);
+
+  // push to the current window as a signal
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  focusedWindow?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
+}
+
+const { LIST_ALL_TAGS } = IPCActions.FILES; //receiving
+
+export function ReturnAllTags() {
+  const allTags = ListAllTags();
+
+  if (!allTags || allTags.length === 0) return;
+
+  SetTagList(allTags);
+
+  return allTags;
+}
+
 /**
  * Bind to ipcMain.handle, two-way communications
  */
@@ -367,4 +400,6 @@ export const IPCHandlerMappings = [
   { trigger: GET_SELECTION_STATUS_CACHE, handler: ReturnSelectionStatusForPath },
   { trigger: UPDATE_SELECTION_STATUS_CACHE, handler: SetSelectionStatusForPath },
   { trigger: CHANGE_TARGET_FILE_NAME, handler: ChangeTargetFileToNewNameAndSignal },
+  { trigger: CREATE_NEW_TAG, handler: CreateNewTagAndSendSignal },
+  { trigger: LIST_ALL_TAGS, handler: ReturnAllTags },
 ];

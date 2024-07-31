@@ -8,7 +8,7 @@ function EmptyEditor() {
   // Index for the whole app
   return (
     <>
-      {/* TODO: Default to editing frame for now */}
+      {/* TODO: Default to editing frame for now, add a proper index page later */}
       <Navigate to={'/mainFrame'} replace={true} />
       <div>APP Index</div>
     </>

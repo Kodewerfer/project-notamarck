@@ -52,7 +52,10 @@ export const IPCActions = {
     //Generic FS
     LIST_CURRENT_PATH: 'FILES:LIST_CURRENT_PATH',
     LIST_CURRENT_PATH_MD: 'FILES:LIST_CURRENT_PATH_MD',
+    // tags
+    LIST_ALL_TAGS: 'FILES:LIST_ALL_TAGS',
     CREATE_NEW_FILE: 'FILES:CREATE_NEW_FILE',
+    CREATE_NEW_TAG: 'FILES:CREATE_NEW_TAG',
     READ_MD_FROM_PATH: 'FILES:READ_MD_FROM_PATH',
     // renaming
     CHANGE_TARGET_FILE_NAME: 'FILE:CHANGE_TARGET_FILE_NAME', //generic interface that will be used by renderer
@@ -62,6 +65,7 @@ export const IPCActions = {
     // signals don't send a payload
     SIGNAL: {
       MD_LIST_CHANGED: 'FILES:SIGNAL:MD_LIST_CHANGED',
+      TAG_LIST_CHANGED: 'FILES:SIGNAL:TAG_LIST_CHANGED',
     },
   },
 };
