@@ -4,6 +4,7 @@ import './index.css';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
 import { TExposedAPIType } from 'electron-src/preload.ts';
+import './main.css';
 
 // Create a new router instance
 export const MainRouter = createRouter({ routeTree });
@@ -23,8 +24,6 @@ declare global {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RouterProvider router={MainRouter} />
-    {/*<FileExplorer/>*/}
-    {/*<TabFrame />*/}
   </React.StrictMode>,
 );
 

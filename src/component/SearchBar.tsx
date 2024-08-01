@@ -143,8 +143,9 @@ export default function SearchBar({
               <ul>
                 {filteredMDList.map(item => (
                   <li key={item.path} className={'flex py-2 last:pb-8'}>
-                    <span className={'grow'}>{item.name}</span>
-                    <span className={'px-6'}>{item.path}</span>
+                    <span className={'grow'}>{path.parse(item.name).name}</span>
+                    {/*<span className={'px-6'}>{item.path}</span>*/}
+                    <span className={'px-6'}>TODO:Actions</span>
                   </li>
                 ))}
               </ul>

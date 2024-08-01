@@ -6,10 +6,11 @@ import { cloneDeep } from 'lodash';
 
 export type TOutletWithAnimationProps = {
   AnimationProps?: Object;
+  AdditionalClassName?: string;
 };
 
 function OutletWithAnimation(
-  { AnimationProps, ...additionalProps }: TOutletWithAnimationProps,
+  { AnimationProps, AdditionalClassName, ...additionalProps }: TOutletWithAnimationProps,
   forwardedRef: ForwardedRef<HTMLDivElement>,
 ) {
   const RouterContext = getRouterContext();
@@ -40,7 +41,7 @@ function OutletWithAnimation(
 
   return (
     <motion.div
-      className={'animated-outlet relative h-screen w-screen overflow-hidden'}
+      className={`animated-outlet ${AdditionalClassName ? AdditionalClassName : ''}`}
       ref={forwardedRef}
       {...additionalProps}
       {...currentAnimationSettings.current}

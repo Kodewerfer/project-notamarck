@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 
 const { IPCRenderSide } = window;
-export const Route = createFileRoute('/mainFrame/_tabFrame')({
+export const Route = createFileRoute('/FileFrame/_tabFrame')({
   component: TabFrameWrapper,
 });
 

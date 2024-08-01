@@ -6,7 +6,7 @@ import { useLayoutEffect } from '@tanstack/react-router';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
 import MainFrameContext from '@/context/MainFrameContext.ts';
 import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
-import { TChangedFilesPayload } from "electron-src/Types/IPC.ts";
+import { TChangedFilesPayload } from 'electron-src/Types/IPC.ts';
 
 // Identifying info a tab holds, in addition to fs related props, add selection cache
 export type TTabItems = TFileInMemory & {
@@ -196,7 +196,7 @@ export default function TabFrame() {
       {/*the tab row*/}
       <nav
         ref={TabBarRef}
-        className={`sticky top-0 flex h-9 w-full overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
+        className={`sticky top-0 z-20 flex h-9 w-full overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
       >
         <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
@@ -213,7 +213,7 @@ export default function TabFrame() {
         </Reorder.Group>
       </nav>
       {/* content for the tab */}
-      <section className={`px-2 pb-5 pl-4 pt-3 ${Tabs.length === 0 && 'hidden'}`}>
+      <section className={`z-10 px-2 pb-5 pl-4 pt-3 ${Tabs.length === 0 && 'hidden'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             className={'animate-wrapper h-full'} //marking the usage, no real purpose

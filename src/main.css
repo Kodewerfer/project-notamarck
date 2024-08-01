@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.App {
+    @apply p-5;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+    border: 0;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background-color: #1e293b;
+}
+
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-thumb {
+        border-radius: 8px;
+        background-color: #94a3b8;
+    }
+}

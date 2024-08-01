@@ -9,7 +9,7 @@ function EmptyEditor() {
   return (
     <>
       {/* TODO: Default to editing frame for now, add a proper index page later */}
-      <Navigate to={'/mainFrame'} replace={true} />
+      <Navigate to={'/FileFrame'} replace={true} />
       <div>APP Index</div>
     </>
   );
