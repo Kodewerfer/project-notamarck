@@ -14,7 +14,7 @@ import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
 import { ShowConfirmAlert } from '../Utils/ErrorsAndPrompts.ts';
-import { TFileInMemory, TSearchTarget } from "electron-src/Types/GlobalStorage.ts";
+import { TFileInMemory, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
 
 /************
  * - MENU -
@@ -22,7 +22,6 @@ import { TFileInMemory, TSearchTarget } from "electron-src/Types/GlobalStorage.t
 const { SHOW_FILE_OPERATION_MENU } = IPCActions.MENU; //receiving channel
 // Pushing channels: multiple, check code
 function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
-  // console.log('context args:', JSON.stringify(selectedFiles));
   const menu = Menu.buildFromTemplate([
     {
       label: 'Delete',
@@ -50,8 +49,6 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
           if (deletedCount > 0) _event.sender.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
 
           if (activeFileChanged) _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
-
-          _event.sender.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
         });
       },
     },
@@ -60,16 +57,11 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
       label: 'Rename',
       click: () => {
         const renamingTarget = selectedFiles.length > 1 ? selectedFiles[length - 1] : selectedFiles[0];
-        // const fileInMemo = FindInOpenedFilesByFullPath(renamingTarget);
-
-        // if (!fileInMemo.length) return ShowErrorAlert(`Renaming File ${renamingTarget} is not being operated.`);
-
         _event.sender.send(IPCActions.FILES.PUSH.RENAMING_TARGET_FILE, renamingTarget);
       },
     },
   ]);
 
-  // const focusedWindow = BrowserWindow.getFocusedWindow(); //same result
   const senderWindow = BrowserWindow.fromWebContents(_event.sender);
   if (senderWindow) menu.popup({ window: senderWindow });
 }
@@ -81,11 +73,10 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
 const { PUSH_ALL_OPENED_FILES } = IPCActions.DATA; //receiving channel
 
 // On trigger, push opened files to renderer through OPENED_FILES_CHANGED
-function PushOpenedFiles() {
+function PushOpenedFiles(_event: IpcMainEvent) {
   const OpenedFilesData = GetOpenedFiles();
 
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
+  _event.sender.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
 
   return;
 }
@@ -111,8 +102,7 @@ function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, Fi
       NewFile: targetFileCache,
     },
   ];
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILE_CONTENT_CHANGED, RendererPayload);
+  _event.sender.send(IPCActions.DATA.PUSH.OPENED_FILE_CONTENT_CHANGED, RendererPayload);
 
   return;
 }
@@ -120,8 +110,7 @@ function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, Fi
 const { CHANGE_ACTIVE_FILE } = IPCActions.DATA; // Receiving
 function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMemory) {
   ChangeActiveFile(NewTargetFile);
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
+  _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
 }
 
 const { SET_NEW_SEARCH_TARGET } = IPCActions.DATA; // Receiving
@@ -131,8 +120,7 @@ function SetNewSearchAndPush(_event: IpcMainEvent, NewSearch: TSearchTarget) {
   // cache the search
   SetSearchTargetCache(NewSearch);
 
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, { ...NewSearch });
+  _event.sender.send(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, { ...NewSearch });
 }
 
 // Bind to ipcMain.handle, one-way communications

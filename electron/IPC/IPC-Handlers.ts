@@ -2,16 +2,16 @@ import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 import MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { FormatFileSize } from '../Helper.ts';
 import { IPCActions } from './IPC-Actions.ts';
 import { app, BrowserWindow, dialog } from 'electron';
 import {
   AddToRecentWorkspace,
   ChangeActiveFile,
-  ChangeWorkspace,
+  SetCurrentWorkspace,
   FindInOpenedFilesByFullPath,
   GetActiveFile,
   GetCurrentWorkspace,
+  GetMDFilesList,
   GetOpenedFiles,
   GetRecentWorkspace,
   GetSelectionStatusCache,
@@ -20,6 +20,7 @@ import {
   SetMDFilesList,
   SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
+  GetAppMainWindowID,
 } from '../Storage/Globals.ts';
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/InternalData.ts';
@@ -68,19 +69,24 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
 
   // TODO: do the saving in the renderer
   // change workspace and add old to recent
-  const oldDIrPath = ChangeWorkspace(NewDirPath);
+  const oldDIrPath = SetCurrentWorkspace(NewDirPath);
   if (oldDIrPath === null) return; // new path is the same as the last one
 
   console.log('Setting workspace to :', NewDirPath);
   // push to renderer
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(IPCActions.APP.PUSH.WORK_SPACE_CHANGED, GetCurrentWorkspace());
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+    IPCActions.APP.PUSH.WORK_SPACE_CHANGED,
+    GetCurrentWorkspace(),
+  );
 
   // add to recent workspace
   if (oldDIrPath.trim() !== '') {
     AddToRecentWorkspace(oldDIrPath);
     SyncWorkspaceAndRecents();
-    focusedWindow?.webContents.send(IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED, GetRecentWorkspace());
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+      IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED,
+      GetRecentWorkspace(),
+    );
   }
 }
 
@@ -137,10 +143,16 @@ export function CloseOpenedFile(_Event: IpcMainInvokeEvent, FilesItems: TFileInM
 
   if (deleteCount == 0) return;
 
-  const focusedWindow = BrowserWindow.getFocusedWindow();
   const OpenedFilesData = GetOpenedFiles();
-  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
-  if (activeFileChanged) focusedWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+    IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
+    OpenedFilesData,
+  );
+  if (activeFileChanged)
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+      IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED,
+      GetActiveFile(),
+    );
 }
 
 // Close All opened files
@@ -149,9 +161,11 @@ const { CLOSE_ALL_OPENED_FILES } = IPCActions.DATA;
 export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
   // close all opened files in the last folder
   RemoveAllOpenFiles();
-  const focusedWindow = BrowserWindow.getFocusedWindow();
   const OpenedFilesData = GetOpenedFiles();
-  focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+    IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
+    OpenedFilesData,
+  );
 }
 
 const { GET_SELECTION_STATUS_CACHE } = IPCActions.DATA;
@@ -228,26 +242,8 @@ export function SaveTargetFileBaseOnPath(_Event: IpcMainInvokeEvent, targetFileF
 // List all MD files from a path
 const { LIST_CURRENT_PATH_MD } = IPCActions.FILES;
 
-export function ReturnAllMDsInPath(_Event: IpcMainInvokeEvent, targetPath: string): TMDFile[] {
-  const MDFiles = fs
-    .readdirSync(targetPath)
-    .filter(file => {
-      const fileStats = fs.statSync(path.join(targetPath, file));
-      return !fileStats.isDirectory() && file.endsWith('.md');
-    })
-    .map(file => {
-      const fileStats = fs.statSync(path.join(targetPath, file));
-      return {
-        name: file,
-        path: path.join(targetPath, file),
-        size: fileStats.isFile() ? FormatFileSize(fileStats.size ?? 0) : null,
-      };
-    });
-
-  // store the list in memory
-  SetMDFilesList(MDFiles);
-
-  return MDFiles;
+export function ReturnAllMDsInPath(_Event: IpcMainInvokeEvent): TMDFile[] {
+  return [...GetMDFilesList()];
 }
 
 // Read a MD file from path, add to opened file and push to renderer
@@ -259,20 +255,20 @@ export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath:
   try {
     const MDFileInfo = ReadMDAndAddToOpenedFile(targetPath);
     // push to the current window
-    const focusedWindow = BrowserWindow.getFocusedWindow();
     const OpenedFilesData = GetOpenedFiles();
-    focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, OpenedFilesData);
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+      IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
+      OpenedFilesData,
+    );
     return MDFileInfo;
   } catch (e) {
     throw e;
   }
 }
 
-// - MD Files
-
 const { CREATE_NEW_FILE } = IPCActions.FILES; //receiving
 // Create a new empty file at target location
-export function CreateNewFileAndSendSignal(_Event: IpcMainInvokeEvent, FileFullName: string, FileContent?: string) {
+export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, FileContent?: string) {
   try {
     path.resolve(FileFullName);
   } catch (e) {
@@ -280,19 +276,11 @@ export function CreateNewFileAndSendSignal(_Event: IpcMainInvokeEvent, FileFullN
   }
 
   SaveContentToFileRenameOnDup(FileFullName, FileContent);
-
-  // push to the current window as a signal
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  focusedWindow?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }
 
 const { CHANGE_TARGET_FILE_NAME } = IPCActions.FILES;
 
-export function ChangeTargetFileToNewNameAndSignal(
-  _Event: IpcMainInvokeEvent,
-  OldFilePath: string,
-  NewFileName: string,
-) {
+export function RenameFileAndSignal(_Event: IpcMainInvokeEvent, OldFilePath: string, NewFileName: string) {
   // check if renaming active file
   let bInActiveFile = false;
   if (GetActiveFile()?.fullPath === OldFilePath) {
@@ -317,16 +305,22 @@ export function ChangeTargetFileToNewNameAndSignal(
     throw e;
   }
 
-  const focusedWindow = BrowserWindow.getFocusedWindow();
-  if (bInActiveFile) focusedWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
-  if (bInOpenedFile) focusedWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
-  focusedWindow?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
+  const mainWindow = BrowserWindow.fromId(GetAppMainWindowID());
+  if (bInActiveFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
+  if (bInOpenedFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
 }
 
 // - Tags
+
+const { LIST_ALL_TAGS } = IPCActions.FILES; //receiving
+
+export function ReturnAllTags() {
+  return GetTagList(); // this only return the currently cached tag list(which is fetched in the background)
+}
+
 const { CREATE_NEW_TAG } = IPCActions.FILES; //receiving
 // Create a new empty tag at tag folder
-export function CreateNewTagAndSendSignal(_Event: IpcMainInvokeEvent, TagFileName: string) {
+export function CreateNewTag(_Event: IpcMainInvokeEvent, TagFileName: string) {
   try {
     path.resolve(TagFileName);
   } catch (e) {
@@ -334,12 +328,6 @@ export function CreateNewTagAndSendSignal(_Event: IpcMainInvokeEvent, TagFileNam
   }
 
   SaveTagFileRenameOnDup(TagFileName);
-}
-
-const { LIST_ALL_TAGS } = IPCActions.FILES; //receiving
-
-export function ReturnAllTags() {
-  return GetTagList(); // this only return the currently cached tag list(which is fetched in the background)
 }
 
 /**
@@ -360,10 +348,10 @@ export const IPCHandlerMappings = [
   { trigger: SAVE_TARGET_OPENED_FILE, handler: SaveTargetFileBaseOnPath },
   { trigger: CLOSE_ALL_OPENED_FILES, handler: CloseAllOpenedFiles },
   { trigger: SHOW_MESSAGE_DIALOG, handler: ShowDialogMessage },
-  { trigger: CREATE_NEW_FILE, handler: CreateNewFileAndSendSignal },
+  { trigger: CREATE_NEW_FILE, handler: CreateNewFile },
   { trigger: GET_SELECTION_STATUS_CACHE, handler: ReturnSelectionStatusForPath },
   { trigger: UPDATE_SELECTION_STATUS_CACHE, handler: SetSelectionStatusForPath },
-  { trigger: CHANGE_TARGET_FILE_NAME, handler: ChangeTargetFileToNewNameAndSignal },
-  { trigger: CREATE_NEW_TAG, handler: CreateNewTagAndSendSignal },
+  { trigger: CHANGE_TARGET_FILE_NAME, handler: RenameFileAndSignal },
+  { trigger: CREATE_NEW_TAG, handler: CreateNewTag },
   { trigger: LIST_ALL_TAGS, handler: ReturnAllTags },
 ];

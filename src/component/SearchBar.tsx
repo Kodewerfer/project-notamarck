@@ -80,7 +80,7 @@ export default function SearchBar({
         detail: `${e}`,
       });
     }
-    setSearchString('');
+    // setSearchString('');
     // setIsSearching(false);
   }
 

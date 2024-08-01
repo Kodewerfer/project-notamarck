@@ -1,9 +1,7 @@
 import path from 'path-browserify';
-// import { app } from 'electron';
 
-import { app } from 'electron';
 import { TFileInMemory, TSearchTarget } from '../Types/GlobalStorage.ts';
-import { TMDFile } from "../Types/Files.ts";
+import { TMDFile } from '../Types/Files.ts';
 
 let _App_MainWindow_ID = 0;
 
@@ -97,7 +95,7 @@ export function ChangeActiveFile(NewTargetFile: TFileInMemory | null) {
 /**
  * the working directory
  */
-let _Current_Workspace: string = `${app.getAppPath()}\\workspace`; //default to app path todo: using file cache to read the last workspace
+let _Current_Workspace: string = ''; //main process will load or create folder.
 
 let _Recent_Workspaces: string[] = [];
 
@@ -107,7 +105,7 @@ let _Recent_Workspaces: string[] = [];
  * @param {string} directory - The new working directory.
  * @returns {string} The old working directory.
  */
-export function ChangeWorkspace(directory: string) {
+export function SetCurrentWorkspace(directory: string) {
   if (path.normalize(directory) === path.normalize(_Current_Workspace)) {
     console.log('same workspace dir');
     return null;

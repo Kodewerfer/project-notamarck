@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link, Outlet, useLayoutEffect, useNavigate } from '@tanstack/react-router';
 
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import path from 'path-browserify';
 
 import { motion } from 'framer-motion';
 import { ArchiveBoxIcon, Cog6ToothIcon, FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -307,20 +306,10 @@ function MainFrame() {
   );
 }
 
-async function ListMdInFolder(folderPath = '\\', parentFolderPath?: string) {
+async function ListMdInFolder() {
   let MdFiles = [];
   try {
-    if (parentFolderPath === undefined) parentFolderPath = await IPCRenderSide.invoke(IPCActions.APP.GET_APP_PATH);
-    if (!parentFolderPath) return;
-
-    let targetFolder = path.join(parentFolderPath, folderPath);
-    const cachedPath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
-    if (cachedPath) {
-      // console.log('Got workspace:', cachedPath);
-      targetFolder = cachedPath;
-    }
-
-    MdFiles = await IPCRenderSide.invoke(IPCActions.FILES.LIST_CURRENT_PATH_MD, targetFolder);
+    MdFiles = await IPCRenderSide.invoke(IPCActions.FILES.LIST_CURRENT_PATH_MD);
   } catch (e) {
     console.error(e);
   }

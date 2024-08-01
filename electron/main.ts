@@ -3,13 +3,21 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { IPCHandlerMappings } from './IPC/IPC-Handlers.ts';
 import { IPCListenerMappings } from './IPC/IPC-Listeners.ts';
-import { GetAppMainWindowID, GetCurrentWorkspace, SetAppMainWindowID } from './Storage/Globals.ts';
+import {
+  SetCurrentWorkspace,
+  GetAppMainWindowID,
+  GetCurrentWorkspace,
+  SetAppMainWindowID,
+  SetMDFilesList,
+} from './Storage/Globals.ts';
 import * as fs from 'node:fs';
 import { FetchAllTagsAsync } from './Utils/TagOperations.ts';
 import { TTagsInMemory } from './Types/Tags.ts';
 import { SetTagMap } from './Storage/Tags.ts';
 import { IPCActions } from './IPC/IPC-Actions.ts';
 import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
+import { ListAllMDAsync } from './Utils/FileOperations.ts';
+import StartFilesWatcher from './FSMonitor/FilesWatcher.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -91,29 +99,37 @@ app.whenReady().then(_ => {
 
   InitDefaultFolder();
 
-  InitAllTagsAsync();
+  // Cache the file list of both tags and main workspace MDs
+  CacheTagsListAsync();
+  CacheMDFilesListAsync();
 
   // create window
   createWindow();
 
   // Setup Fs monitoring
   StartTagsWatcher();
+  StartFilesWatcher();
 });
 
 // Init a default "workspace" folder under the app root
 function InitDefaultFolder() {
   const currentWorkspace = GetCurrentWorkspace();
-  if (!fs.existsSync(currentWorkspace)) {
-    console.log('Defualt fallback workspace does not exist, creating one');
+  try {
+    fs.accessSync(currentWorkspace);
+  } catch (e) {
+    //   problem accessing the workspace
+    console.log('Workspace cannot be accessed, defaulting to AppFolder');
     try {
-      fs.mkdirSync(currentWorkspace);
+      const DefaultWorkSpace = `${app.getAppPath()}\\workspace`;
+      if (!fs.existsSync(DefaultWorkSpace)) fs.mkdirSync(DefaultWorkSpace);
+      SetCurrentWorkspace(DefaultWorkSpace);
     } catch (e) {
       console.log('error creating default workspace directory,', e);
     }
   }
 }
 
-async function InitAllTagsAsync() {
+async function CacheTagsListAsync() {
   const allTags = await FetchAllTagsAsync();
   if (!allTags || !allTags.length) return;
 
@@ -122,4 +138,13 @@ async function InitAllTagsAsync() {
   });
 
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
+}
+
+async function CacheMDFilesListAsync() {
+  const mdFiles = await ListAllMDAsync();
+  if (!mdFiles || !mdFiles.length) return;
+
+  SetMDFilesList(mdFiles);
+
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }

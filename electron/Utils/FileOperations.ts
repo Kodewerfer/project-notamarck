@@ -1,6 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { AddToOpenedFiles } from '../Storage/Globals.ts';
+import { AddToOpenedFiles, GetCurrentWorkspace } from '../Storage/Globals.ts';
+import { FormatFileSize } from '../Helper.ts';
+import { TMDFile } from 'electron-src/Types/Files.ts';
 
 /**
  * Reads the contents of a Markdown file specified by the targetPath and adds the information to the opened files.
@@ -113,4 +115,26 @@ export function CheckFileRenameOnDup(FileFullName: string) {
     } while (fs.existsSync(resultName));
   }
   return resultName;
+}
+
+export async function ListAllMDAsync(): Promise<TMDFile[]> {
+  const currentWorkspace = GetCurrentWorkspace();
+  const files = await fs.promises.readdir(currentWorkspace);
+  const MDFiles = [];
+
+  for (const file of files) {
+    const filePath = path.join(currentWorkspace, file);
+    const fileStats = await fs.promises.stat(filePath);
+
+    // Check if it is a file and ends with .md
+    if (fileStats.isFile() && file.endsWith('.md')) {
+      MDFiles.push({
+        name: file,
+        path: filePath,
+        size: FormatFileSize(fileStats.size ?? 0),
+      });
+    }
+  }
+
+  return MDFiles;
 }
