@@ -1,9 +1,17 @@
 import chokidar, { FSWatcher } from 'chokidar';
 import { Stats } from 'node:fs';
-import { GetAppMainWindowID, GetCurrentWorkspace, SetMDFilesList } from '../Storage/Globals.ts';
+import {
+  GetActiveFile,
+  GetAppMainWindowID,
+  GetCurrentWorkspace,
+  GetOpenedFiles,
+  RemoveOpenedFile,
+  SetMDFilesList,
+} from '../Storage/Globals.ts';
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { ListAllMDAsync } from '../Utils/FileOperations.ts';
+import { ReassignActiveFile } from '../Utils/InternalData.ts';
 
 let FilesWatcher: FSWatcher;
 
@@ -34,7 +42,24 @@ async function OnNewFile(path: string, stats: Stats | undefined) {
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }
 
-async function OnDeleteFile(path: string, stats: Stats | undefined) {
+async function OnDeleteFile(deleteFilePath: string, stats: Stats | undefined) {
+  // deleted file is the active file
+  if (GetActiveFile()?.fullPath === deleteFilePath) {
+    ReassignActiveFile();
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+      IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED,
+      GetActiveFile(),
+    );
+  }
+
+  // delete file is in opened file
+  if (RemoveOpenedFile(deleteFilePath))
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+      IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
+      GetOpenedFiles(),
+    );
+
+  // set new file list and signal
   const mdFiles = await ListAllMDAsync();
   if (!mdFiles || !mdFiles.length) return;
 

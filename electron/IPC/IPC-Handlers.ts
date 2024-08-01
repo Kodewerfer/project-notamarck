@@ -17,7 +17,6 @@ import {
   GetSelectionStatusCache,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
-  SetMDFilesList,
   SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
   GetAppMainWindowID,

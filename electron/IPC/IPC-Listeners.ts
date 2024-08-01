@@ -5,16 +5,15 @@ import {
   FindInOpenedFilesByFullPath,
   GetActiveFile,
   GetOpenedFiles,
-  RemoveOpenedFile,
   SetSearchTargetCache,
   UpdateOpenedFile,
 } from '../Storage/Globals.ts';
 import { BrowserWindow, Menu } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
-import { ReassignActiveFile } from '../Utils/InternalData.ts';
 import { ShowConfirmAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { TFileInMemory, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
+import { TChangedFilesPayload } from 'electron-src/Types/IPC.ts';
 
 /************
  * - MENU -
@@ -26,30 +25,19 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
     {
       label: 'Delete',
       click: () => {
-        let deletedCount = 0;
-        let activeFileChanged = false;
-
-        const confirmAlert = ShowConfirmAlert(
+        const confirmAlertResponse = ShowConfirmAlert(
           `About to delete ${selectedFiles.length} files, continue?`,
           'This action cannot be reverted.',
         );
-        if (confirmAlert === 1) return;
+        if (confirmAlertResponse === 1) return;
         selectedFiles.forEach(filePath => {
           try {
-            if (RemoveOpenedFile(filePath)) deletedCount += 1;
-            if (GetActiveFile()?.fullPath === filePath) {
-              ReassignActiveFile();
-              activeFileChanged = true;
-            }
             UnlinkFile(filePath);
           } catch (e) {
             console.error(e);
           }
-
-          if (deletedCount > 0) _event.sender.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
-
-          if (activeFileChanged) _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
         });
+        //NOTE: pushing and signaling will be done in the fileWatcher
       },
     },
     { type: 'separator' },
@@ -82,11 +70,6 @@ function PushOpenedFiles(_event: IpcMainEvent) {
 }
 
 const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.DATA; //receiving channel
-
-export type TChangedFilesPayload = {
-  TargetFilePath: string;
-  NewFile: TFileInMemory;
-};
 
 // On trigger, receive the new content and push to renderer again
 function UpdateFileContentAndPush(_event: IpcMainEvent, FileFullPath: string, FileContent: string) {
