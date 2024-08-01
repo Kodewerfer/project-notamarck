@@ -11,7 +11,7 @@ import {
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { ListAllMDAsync } from '../Utils/FileOperations.ts';
-import { ReassignActiveFile } from '../Utils/InternalData.ts';
+import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 
 let FilesWatcher: FSWatcher;
 

@@ -22,7 +22,7 @@ import {
   GetAppMainWindowID,
 } from '../Storage/Globals.ts';
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
-import { ReassignActiveFile } from '../Utils/InternalData.ts';
+import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import { TFileInMemory } from '../Types/GlobalStorage.ts';
 import { SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
 import { GetTagList } from '../Storage/Tags.ts';
@@ -305,6 +305,7 @@ export function RenameFileAndSignal(_Event: IpcMainInvokeEvent, OldFilePath: str
   }
 
   const mainWindow = BrowserWindow.fromId(GetAppMainWindowID());
+  // NOTE: file deletion handler in file watcher will also push these
   if (bInActiveFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
   if (bInOpenedFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
 }
