@@ -9,11 +9,11 @@ import {
   GetCurrentWorkspace,
   SetAppMainWindowID,
   SetMDFilesList,
-} from './Storage/Globals.ts';
+} from './Data/Globals.ts';
 import * as fs from 'node:fs';
 import { FetchAllTagsAsync } from './Utils/TagOperations.ts';
 import { TTagsInMemory } from './Types/Tags.ts';
-import { SetTagMap } from './Storage/Tags.ts';
+import { SetTagMap } from './Data/Tags.ts';
 import { IPCActions } from './IPC/IPC-Actions.ts';
 import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
 import { ListAllMDAsync } from './Utils/FileOperations.ts';

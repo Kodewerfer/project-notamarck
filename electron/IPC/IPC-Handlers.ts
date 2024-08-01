@@ -20,12 +20,12 @@ import {
   SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
   GetAppMainWindowID,
-} from '../Storage/Globals.ts';
+} from '../Data/Globals.ts';
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
-import { TFileInMemory } from '../Types/GlobalStorage.ts';
+import { TFileInMemory } from '../Types/GlobalData.ts';
 import { SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
-import { GetTagList } from '../Storage/Tags.ts';
+import { GetTagList } from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
 
 /************

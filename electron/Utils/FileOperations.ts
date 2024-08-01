@@ -1,8 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { AddToOpenedFiles, GetCurrentWorkspace } from '../Storage/Globals.ts';
+import { AddToOpenedFiles, GetCurrentWorkspace } from '../Data/Globals.ts';
 import { FormatFileSize } from '../Helper.ts';
-import { TMDFile } from 'electron-src/Types/Files.ts';
+import { TMDFile } from '../Types/Files.ts';
 
 /**
  * Reads the contents of a Markdown file specified by the targetPath and adds the information to the opened files.

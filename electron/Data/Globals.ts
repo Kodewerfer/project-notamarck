@@ -1,6 +1,6 @@
 import path from 'path-browserify';
 
-import { TFileInMemory, TSearchTarget } from '../Types/GlobalStorage.ts';
+import { TFileInMemory, TSearchTarget } from '../Types/GlobalData.ts';
 import { TMDFile } from '../Types/Files.ts';
 
 let _App_MainWindow_ID = 0;

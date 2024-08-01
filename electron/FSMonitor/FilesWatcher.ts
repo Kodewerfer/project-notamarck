@@ -7,7 +7,7 @@ import {
   GetOpenedFiles,
   RemoveOpenedFile,
   SetMDFilesList,
-} from '../Storage/Globals.ts';
+} from '../Data/Globals.ts';
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { ListAllMDAsync } from '../Utils/FileOperations.ts';
@@ -18,12 +18,11 @@ let FilesWatcher: FSWatcher;
 function InitFilesWatcher() {
   if (!FilesWatcher)
     // only watches files in main folder
-    console.log(GetCurrentWorkspace());
-  FilesWatcher = chokidar.watch(GetCurrentWorkspace() + '/*', {
-    ignored: /(^|[\/\\])\../,
-    persistent: true,
-    ignoreInitial: true, //no add handler firing immediately after binding
-  });
+    FilesWatcher = chokidar.watch(GetCurrentWorkspace() + '/*', {
+      ignored: /(^|[\/\\])\../,
+      persistent: true,
+      ignoreInitial: true, //no add handler firing immediately after binding
+    });
 }
 
 export default function StartFilesWatcher() {

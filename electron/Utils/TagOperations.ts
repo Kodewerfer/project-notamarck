@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { CheckFileRenameOnDup } from './FileOperations.ts';
-import { GetCurrentWorkspace } from '../Storage/Globals.ts';
+import { GetCurrentWorkspace } from '../Data/Globals.ts';
 import path from 'node:path';
 import { TTagsInMemory } from '../Types/Tags.ts';
 

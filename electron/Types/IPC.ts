@@ -1,4 +1,4 @@
-import { TFileInMemory } from './GlobalStorage.ts';
+import { TFileInMemory } from './GlobalData.ts';
 
 // For tabFrame
 export type TChangedFilesPayload = {

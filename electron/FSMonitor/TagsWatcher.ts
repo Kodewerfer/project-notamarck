@@ -4,9 +4,9 @@ import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { Stats } from 'node:fs';
 import { BrowserWindow } from 'electron';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
-import { RemoveFromTagMap, SetTagMap } from '../Storage/Tags.ts';
+import { RemoveFromTagMap, SetTagMap } from '../Data/Tags.ts';
 import path from 'node:path';
-import { GetAppMainWindowID } from '../Storage/Globals.ts';
+import { GetAppMainWindowID } from '../Data/Globals.ts';
 
 let TagsWatcher: FSWatcher;
 

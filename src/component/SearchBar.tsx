@@ -2,7 +2,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef, useState } from 'react';
 import { useLayoutEffect } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import { ESearchTypes, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
+import { ESearchTypes, TSearchTarget } from 'electron-src/Types/GlobalData.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import path from 'path-browserify';
 import { TMDFile } from 'electron-src/Types/Files.ts';

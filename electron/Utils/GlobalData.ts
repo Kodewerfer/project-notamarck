@@ -1,4 +1,4 @@
-import { ChangeActiveFile, GetActiveFile, GetOpenedFiles } from '../Storage/Globals.ts';
+import { ChangeActiveFile, GetActiveFile, GetOpenedFiles } from '../Data/Globals.ts';
 
 export function ReassignActiveFile() {
   const openedFiles = GetOpenedFiles();

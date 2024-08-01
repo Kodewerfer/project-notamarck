@@ -7,13 +7,13 @@ import {
   GetOpenedFiles,
   SetSearchTargetCache,
   UpdateOpenedFile,
-} from '../Storage/Globals.ts';
+} from '../Data/Globals.ts';
 import { BrowserWindow, Menu } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ShowConfirmAlert } from '../Utils/ErrorsAndPrompts.ts';
-import { TFileInMemory, TSearchTarget } from 'electron-src/Types/GlobalStorage.ts';
-import { TChangedFilesPayload } from 'electron-src/Types/IPC.ts';
+import { TFileInMemory, TSearchTarget } from '../Types/GlobalData.ts';
+import { TChangedFilesPayload } from '../Types/IPC.ts';
 
 /************
  * - MENU -
