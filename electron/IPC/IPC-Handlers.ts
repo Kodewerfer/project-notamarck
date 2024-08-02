@@ -24,7 +24,7 @@ import {
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
-import { SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
+import { RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
 import { GetTagList } from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
 
@@ -66,7 +66,7 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
 
   if (!fs.existsSync(path.resolve(NewDirPath))) throw new Error(`Dir does not exist: ${NewDirPath}`);
 
-  // TODO: do the saving in the renderer
+  // TODO: save all file contents in the renderer
   // change workspace and add old to recent
   const oldDIrPath = SetCurrentWorkspace(NewDirPath);
   if (oldDIrPath === null) return; // new path is the same as the last one
@@ -279,7 +279,7 @@ export function CreateNewFile(_Event: IpcMainInvokeEvent, FileFullName: string, 
 
 const { CHANGE_TARGET_FILE_NAME } = IPCActions.FILES;
 
-export function RenameFileAndSignal(_Event: IpcMainInvokeEvent, OldFilePath: string, NewFileName: string) {
+export function RenameFileAndPush(_Event: IpcMainInvokeEvent, OldFilePath: string, NewFileName: string) {
   // check if renaming active file
   let bInActiveFile = false;
   if (GetActiveFile()?.fullPath === OldFilePath) {
@@ -308,6 +308,41 @@ export function RenameFileAndSignal(_Event: IpcMainInvokeEvent, OldFilePath: str
   // NOTE: file deletion handler in file watcher will also push these
   if (bInActiveFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
   if (bInOpenedFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
+}
+
+const { CHANGE_TARGET_TAG_NAME } = IPCActions.FILES;
+
+export function RenameTagAndPush(_Event: IpcMainInvokeEvent, OldTagPath: string, NewTagName: string) {
+  // check if renaming active file
+  let bInActiveFile = false;
+  // TODO: active tag
+  if (GetActiveFile()?.fullPath === OldTagPath) {
+    // ReassignActiveFile();
+    // bInActiveFile = true;
+  }
+  // check if renaming an opened file
+  let bInOpenedFile = false;
+  // TODO: opened tag file
+  // const openedFileRecord = FindInOpenedFilesByFullPath(OldTagPath)[0];
+  // if (openedFileRecord) {
+  //   RemoveOpenedFile(OldTagPath);
+  //   bInOpenedFile = true;
+  // }
+
+  try {
+    const newFilePath = RenameTagKeepDup(OldTagPath, NewTagName);
+    // let newOpenedFile;
+    //re-open the file if need be
+    // if (bInOpenedFile) newOpenedFile = ReadMDAndAddToOpenedFile(newFilePath);
+    // if (bInActiveFile && newOpenedFile) ChangeActiveFile(newOpenedFile);
+  } catch (e) {
+    throw e;
+  }
+
+  // const mainWindow = BrowserWindow.fromId(GetAppMainWindowID());
+  // NOTE: file deletion handler in file watcher will also push these
+  // if (bInActiveFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
+  // if (bInOpenedFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
 }
 
 // - Tags
@@ -351,7 +386,8 @@ export const IPCHandlerMappings = [
   { trigger: CREATE_NEW_FILE, handler: CreateNewFile },
   { trigger: GET_SELECTION_STATUS_CACHE, handler: ReturnSelectionStatusForPath },
   { trigger: UPDATE_SELECTION_STATUS_CACHE, handler: SetSelectionStatusForPath },
-  { trigger: CHANGE_TARGET_FILE_NAME, handler: RenameFileAndSignal },
+  { trigger: CHANGE_TARGET_FILE_NAME, handler: RenameFileAndPush },
   { trigger: CREATE_NEW_TAG, handler: CreateNewTag },
   { trigger: LIST_ALL_TAGS, handler: ReturnAllTags },
+  { trigger: CHANGE_TARGET_TAG_NAME, handler: RenameTagAndPush },
 ];

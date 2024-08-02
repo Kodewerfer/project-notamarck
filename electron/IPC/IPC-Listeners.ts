@@ -11,41 +11,89 @@ import {
 import { BrowserWindow, Menu } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
-import { ShowConfirmAlert } from '../Utils/ErrorsAndPrompts.ts';
+import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { TFileInMemory, TSearchTarget } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
+import { UnlinkTag } from '../Utils/TagOperations.ts';
 
 /************
  * - MENU -
  ************/
 const { SHOW_FILE_OPERATION_MENU } = IPCActions.MENU; //receiving channel
 // Pushing channels: multiple, check code
-function ShowFileOperationMenu(_event: IpcMainEvent, selectedFiles: string[]) {
+function ShowFileOperationMenu(_event: IpcMainEvent, selectedFilesPath: string[]) {
+  if (!selectedFilesPath) return;
   const menu = Menu.buildFromTemplate([
     {
+      label: 'Rename',
+      enabled: selectedFilesPath.length > 0,
+      click: () => {
+        const renamingTarget = selectedFilesPath.length > 1 ? selectedFilesPath[length - 1] : selectedFilesPath[0];
+        _event.sender.send(IPCActions.FILES.PUSH.RENAMING_TARGET_FILE, renamingTarget);
+      },
+    },
+    { type: 'separator' },
+    {
       label: 'Delete',
+      enabled: selectedFilesPath.length > 0,
       click: () => {
         const confirmAlertResponse = ShowConfirmAlert(
-          `About to delete ${selectedFiles.length} files, continue?`,
+          `About to delete ${selectedFilesPath.length} files, continue?`,
           'This action cannot be reverted.',
         );
         if (confirmAlertResponse === 1) return;
-        selectedFiles.forEach(filePath => {
+        selectedFilesPath.forEach(filePath => {
           try {
             UnlinkFile(filePath);
           } catch (e) {
-            console.error(e);
+            ShowErrorAlert((e as Error).message);
           }
         });
         //NOTE: pushing and signaling will be done in the fileWatcher
       },
     },
+  ]);
+
+  const senderWindow = BrowserWindow.fromWebContents(_event.sender);
+  if (senderWindow) menu.popup({ window: senderWindow });
+}
+
+const { SHOW_TAG_OPERATION_MENU } = IPCActions.MENU; //receiving channel
+// Pushing channels: multiple, check code
+function ShowTagOperationMenu(_event: IpcMainEvent, selectedTagsPath: string[]) {
+  if (!selectedTagsPath) return;
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'New Tag',
+      click: () => {},
+    },
     { type: 'separator' },
     {
       label: 'Rename',
+      enabled: selectedTagsPath.length > 0,
       click: () => {
-        const renamingTarget = selectedFiles.length > 1 ? selectedFiles[length - 1] : selectedFiles[0];
-        _event.sender.send(IPCActions.FILES.PUSH.RENAMING_TARGET_FILE, renamingTarget);
+        const renamingTarget = selectedTagsPath.length > 1 ? selectedTagsPath[length - 1] : selectedTagsPath[0];
+        _event.sender.send(IPCActions.FILES.PUSH.RENAMING_SELECTED_TAG, renamingTarget);
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Delete',
+      enabled: selectedTagsPath.length > 0,
+      click: () => {
+        const confirmAlertResponse = ShowConfirmAlert(
+          `About to delete ${selectedTagsPath.length} tags, continue?`,
+          'This action cannot be reverted.',
+        );
+        if (confirmAlertResponse === 1) return;
+        selectedTagsPath.forEach(tagPath => {
+          try {
+            UnlinkTag(tagPath);
+          } catch (e) {
+            ShowErrorAlert((e as Error).message);
+          }
+        });
+        //NOTE: pushing and signaling will be done in the fileWatcher
       },
     },
   ]);
@@ -116,4 +164,5 @@ export const IPCListenerMappings = [
   { trigger: CHANGE_ACTIVE_FILE, listener: ChangeActiveFileAndPush },
   { trigger: SHOW_FILE_OPERATION_MENU, listener: ShowFileOperationMenu },
   { trigger: SET_NEW_SEARCH_TARGET, listener: SetNewSearchAndPush },
+  { trigger: SHOW_TAG_OPERATION_MENU, listener: ShowTagOperationMenu },
 ];

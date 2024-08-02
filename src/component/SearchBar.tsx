@@ -112,6 +112,7 @@ export default function SearchBar({
               inputValue = inputParts[1];
             }
             setSearchString(inputValue);
+            if (!isSearching && inputValue !== '') setIsSearching(true);
           }}
           onClick={_ => setIsSearching(!isSearching)}
           className={

@@ -3,7 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 import AnimatedOutlet from 'component/AnimatedOutlet.tsx';
 import { AnimatePresence } from 'framer-motion';
 import { useRef } from 'react';
-import { ArchiveBoxIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, Cog6ToothIcon, WalletIcon } from '@heroicons/react/24/outline';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -61,6 +61,12 @@ function RootComponent() {
             <Link className="block grow pl-1.5" to="/FileFrame/edit">
               {/* mind the group-[.is-active] */}
               <ArchiveBoxIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
+            </Link>
+          </li>
+          <li className="is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
+            <Link className="block grow pl-1.5" to="/TagFrame">
+              {/* mind the group-[.is-active] */}
+              <WalletIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
             </Link>
           </li>
           {/*the "setting button"*/}

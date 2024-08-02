@@ -16,10 +16,7 @@ export const IPCActions = {
   },
   MENU: {
     SHOW_FILE_OPERATION_MENU: 'MENU:SHOW_FILE_OPERATION_MENU',
-    PUSH: {
-      RENAME_SELECTED_FILE: 'MENU:PUSH:RENAME_SELECTED_FILE',
-      FILES_DELETED: 'MENU:PUSH:FILES_DELETED', // not in use
-    },
+    SHOW_TAG_OPERATION_MENU: 'MENU:SHOW_TAG_OPERATION_MENU',
   },
   DATA: {
     //app data
@@ -59,8 +56,10 @@ export const IPCActions = {
     READ_MD_FROM_PATH: 'FILES:READ_MD_FROM_PATH',
     // renaming
     CHANGE_TARGET_FILE_NAME: 'FILE:CHANGE_TARGET_FILE_NAME', //generic interface that will be used by renderer
+    CHANGE_TARGET_TAG_NAME: 'FILE:CHANGE_TARGET_TAG_NAME', //generic interface that will be used by renderer
     PUSH: {
       RENAMING_TARGET_FILE: 'FILE:RENAMING_TARGET_FILE', //send to renderer along with target file info
+      RENAMING_SELECTED_TAG: 'MENU:PUSH:RENAMING_SELECTED_TAG',
     },
     // signals don't send a payload
     SIGNAL: {

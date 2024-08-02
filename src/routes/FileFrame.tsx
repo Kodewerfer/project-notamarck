@@ -78,8 +78,8 @@ function FileFrame() {
     });
 
     const unbindTagListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED, async _ => {
-      const MDData = await ListAllTags();
-      setTagList(MDData);
+      const tagData = await ListAllTags();
+      setTagList(tagData);
     });
 
     return () => {
@@ -157,8 +157,7 @@ function FileFrame() {
     const oldFillPath = FileFullPath;
     const NewFileName = newPendingName;
 
-    if (!NewFileName || NewFileName.trim() === '') return;
-    console.log('old:', oldFillPath, 'new:', NewFileName);
+    if (!NewFileName || NewFileName.trim() === '' || NewFileName.indexOf('.') !== -1) return;
 
     try {
       await IPCRenderSide.invoke(IPCActions.FILES.CHANGE_TARGET_FILE_NAME, oldFillPath, NewFileName);

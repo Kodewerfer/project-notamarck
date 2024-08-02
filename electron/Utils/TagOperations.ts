@@ -92,3 +92,30 @@ export async function ReadTagAsync(tagPath: string): Promise<TTagsInMemory> {
     tagContentRaw: tagFileContentRaw,
   };
 }
+
+export function UnlinkTag(TagFullName: string) {
+  // TODO: may need to delete reference
+  try {
+    fs.unlinkSync(TagFullName);
+  } catch (e) {
+    throw new Error(`Error deleting tag ${TagFullName}, ${e}`);
+  }
+}
+
+export function RenameTagKeepDup(OldTagPath: string, NewName: string) {
+  // TODO: may need to fix references
+
+  const oldPathParse = path.parse(OldTagPath);
+  const newNameParse = path.parse(NewName);
+  let newBaseName =
+    newNameParse.name + (newNameParse.ext.trim() !== '' ? '.tag' + newNameParse.ext : '.tag' + oldPathParse.ext);
+
+  const finalizedNewName = CheckFileRenameOnDup(path.join(oldPathParse.dir, newBaseName));
+
+  try {
+    fs.renameSync(OldTagPath, finalizedNewName);
+  } catch (e) {
+    throw new Error(`Error renaming tag ${OldTagPath}, ${(e as Error).message}`);
+  }
+  return finalizedNewName;
+}
