@@ -1,6 +1,6 @@
 import path from 'path-browserify';
 
-import { TFileInMemory, TSearchTarget } from '../Types/GlobalData.ts';
+import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TMDFile } from '../Types/Files.ts';
 
 let _App_MainWindow_ID = 0;
@@ -170,15 +170,4 @@ export function SetMDFilesList(newList: TMDFile[]) {
 
 export function GetMDFilesList(): Readonly<TMDFile[]> {
   return [..._MD_Files_List];
-}
-
-// export type TSearchtTypes = 'File' | 'Tag';
-let _Search_Target_Cache: TSearchTarget | null = null;
-
-export function GetSearchTargetCache(): Readonly<TSearchTarget> | null {
-  return _Search_Target_Cache ? { ..._Search_Target_Cache } : null;
-}
-
-export function SetSearchTargetCache(newSearchTarget: TSearchTarget) {
-  if (newSearchTarget) _Search_Target_Cache = { ...newSearchTarget };
 }

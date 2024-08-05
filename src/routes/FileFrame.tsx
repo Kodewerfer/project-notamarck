@@ -8,9 +8,10 @@ import { ArrowRightIcon } from '@heroicons/react/16/solid';
 import MainFrameContext from '@/context/MainFrameContext.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
-import { ESearchTypes, TFileInMemory, TSearchTarget } from 'electron-src/Types/GlobalData.ts';
+import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import { TMDFile } from 'electron-src/Types/Files.ts';
+import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
 
 const { IPCRenderSide } = window;
 
@@ -127,6 +128,7 @@ function FileFrame() {
       return;
     }
 
+    selectedFilesPathRef.current = [item.path];
     setSelectedFilesPaths([item.path]);
   }
 

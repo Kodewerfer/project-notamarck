@@ -1,27 +1,70 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLayoutEffect } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import { ESearchTypes, TSearchTarget } from 'electron-src/Types/GlobalData.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import path from 'path-browserify';
 import { TMDFile } from 'electron-src/Types/Files.ts';
+import { ESearchTypes, TSearchFilteredData, TSearchTarget } from 'electron-src/Types/Search.ts';
 
 const { IPCRenderSide } = window;
+
+export type TSearchOptions = {
+  ShowResult?: boolean;
+  ShowActions?: boolean;
+  DisplayMode?: 'dropdown' | 'block';
+  LockSearchType?: ESearchTypes | null;
+};
+
 export default function SearchBar({
   MDList,
   TagsList,
+  AdditionalClasses,
+  SearchOptions,
 }: {
   MDList?: TMDFile[] | null;
   TagsList?: TTagsInMemory[] | null;
+  AdditionalClasses?: string;
+  SearchOptions: Partial<TSearchOptions>;
 }) {
   const [isSearching, setIsSearching] = useState(false);
   const InputRef = useRef(null);
   const WrapperElementRef = useRef<HTMLDivElement | null>(null);
 
+  // Merge "default options" and the parent passed options
+  const Options: TSearchOptions = {
+    ShowResult: true,
+    ShowActions: true,
+    DisplayMode: 'dropdown',
+    LockSearchType: null,
+    ...SearchOptions,
+  };
+
   const [searchString, setSearchString] = useState('');
   const [placeHolderText, setPlaceHolderText] = useState('Search');
-  const [searchType, setSearchType] = useState<ESearchTypes | null>(ESearchTypes.File);
+  const [searchType, setSearchType] = useState<ESearchTypes | null>(
+    Options.LockSearchType ? Options.LockSearchType : ESearchTypes.File,
+  );
+
+  const DataSourceMap = useMemo(
+    () =>
+      new Map<ESearchTypes, any[]>([
+        [ESearchTypes.File, MDList?.filter(item => item.name.startsWith(searchString)) || []],
+        [ESearchTypes.Tag, TagsList?.filter(item => item.tagFileName.startsWith(searchString)) || []],
+      ]),
+    [MDList, TagsList, searchString],
+  );
+  // shortcuts
+  const filteredMDList = DataSourceMap.get(ESearchTypes.File) as TMDFile[];
+  const filteredTagList = DataSourceMap.get(ESearchTypes.Tag) as TTagsInMemory[];
+
+  // Arrow keys navigated index
+  const [activeResultIndex, setActiveResultIndex] = useState(0);
+
+  // reset the index when data or state changes
+  useEffect(() => {
+    setActiveResultIndex(0);
+  }, [MDList, TagsList, isSearching]);
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {
@@ -62,6 +105,16 @@ export default function SearchBar({
     setPlaceHolderText('Search');
   }, [isSearching]);
 
+  // Send the filtered data to main process
+  useEffect(() => {
+    const newData: TSearchFilteredData = {
+      MDList: filteredMDList,
+      TagList: filteredTagList,
+    };
+
+    IPCRenderSide.send(IPCActions.DATA.SET_FILTERED_DATA, newData);
+  }, [searchString, TagsList, MDList]);
+
   // create new file
   async function CreateNewFile() {
     // todo:prompt the user about invalid file names
@@ -84,14 +137,22 @@ export default function SearchBar({
     // setIsSearching(false);
   }
 
-  const filteredMDList = MDList?.filter(item => item.name.startsWith(searchString));
-  const filteredTagList = TagsList?.filter(item => item.tagFileName.startsWith(searchString));
+  function ArrowKeyNavigation(Arrowkey: 'up' | 'down') {
+    if (!searchType) return;
+    const activeDataSet = DataSourceMap.get(searchType);
+    if (!activeDataSet) return;
+    if (Arrowkey === 'up')
+      setActiveResultIndex(prevIndex => (prevIndex > 0 ? prevIndex - 1 : activeDataSet.length - 1));
+    if (Arrowkey === 'down')
+      setActiveResultIndex(prevIndex => (prevIndex < activeDataSet.length - 1 ? prevIndex + 1 : 0));
+  }
 
   return (
     <nav
-      className={
-        'light:border-b h-18 relative z-50 w-full border-gray-200 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50'
-      }
+      className={`light:border-b h-18 relative z-50 w-full px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
+      onClick={_ => {
+        if (InputRef.current) (InputRef.current as HTMLInputElement).focus();
+      }}
     >
       <section className={'flex'}>
         <MagnifyingGlassIcon className={'order-1 size-6 self-center'} />
@@ -101,6 +162,10 @@ export default function SearchBar({
           type={'text'}
           placeholder={placeHolderText}
           value={searchString}
+          onKeyUp={ev => {
+            if (ev.key === 'ArrowUp') ArrowKeyNavigation('up');
+            if (ev.key === 'ArrowDown') ArrowKeyNavigation('down');
+          }}
           onChange={ev => {
             let inputValue = ev.target.value;
             const inputParts = inputValue.split(':');
@@ -108,8 +173,8 @@ export default function SearchBar({
             const ComparingPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase(); //turn the first letter to upper case
             const searchType = ComparingPrefix in ESearchTypes ? (ComparingPrefix as ESearchTypes) : null;
             if (searchType && inputParts.length > 1) {
-              setSearchType(searchType);
               inputValue = inputParts[1];
+              if (!Options.LockSearchType) setSearchType(searchType);
             }
             setSearchString(inputValue);
             if (!isSearching && inputValue !== '') setIsSearching(true);
@@ -135,45 +200,54 @@ export default function SearchBar({
       {/*  the search result list*/}
       {isSearching && (
         <div
-          className={`absolute left-2 top-14 h-fit max-h-96 w-11/12 cursor-default select-none overflow-y-auto overflow-x-hidden rounded-lg bg-gray-50 px-6 py-4 shadow-xl dark:bg-slate-700 dark:text-blue-50`}
+          className={` ${Options.DisplayMode === 'dropdown' ? 'absolute' : 'block'} left-2 top-14 h-fit max-h-96 w-11/12 cursor-default select-none overflow-y-auto overflow-x-hidden bg-gray-50 px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-lg shadow-xl' : ''} dark:bg-slate-700 dark:text-blue-50`}
           ref={WrapperElementRef}
         >
+          {/*additional actions*/}
+          {Options.ShowActions && (
+            <ul className={'mt-2 cursor-pointer pb-2'}>
+              <li className={`rounded px-4 py-2 hover:bg-blue-100`} onClick={() => CreateNewFile()}>
+                <span>Create New {searchType || ''} </span>
+                <span className={'font-semibold text-blue-500'}>{searchString || ''}</span>
+              </li>
+            </ul>
+          )}
           {/*search result - files*/}
-          {searchType === ESearchTypes.File && filteredMDList && filteredMDList.length > 0 && (
+          {searchType === ESearchTypes.File && Options.ShowResult && filteredMDList && filteredMDList.length > 0 && (
             <>
-              <ul>
-                {filteredMDList.map(item => (
-                  <li key={item.path} className={'flex py-2 last:pb-8'}>
+              <hr className={'mb-2'} />
+              <ul className={'mb-4'}>
+                {filteredMDList.map((item, index) => (
+                  <li
+                    key={item.path}
+                    className={`flex rounded px-4 py-2 hover:bg-gray-200 ${activeResultIndex === index ? 'bg-gray-100' : ''}`}
+                  >
                     <span className={'grow'}>{path.parse(item.name).name}</span>
                     {/*<span className={'px-6'}>{item.path}</span>*/}
-                    <span className={'px-6'}>TODO:Actions</span>
+                    <span className={'px-6'}>TODO:Operations</span>
                   </li>
                 ))}
               </ul>
-              <hr />
             </>
           )}
           {/*search result - tags*/}
-          {searchType === ESearchTypes.Tag && filteredTagList && filteredTagList.length > 0 && (
+          {searchType === ESearchTypes.Tag && Options.ShowResult && filteredTagList && filteredTagList.length > 0 && (
             <>
-              <ul>
-                {filteredTagList.map(item => (
-                  <li key={item.tagPath} className={'flex py-2 last:pb-8'}>
+              <hr className={'mb-2'} />
+              <ul className={'mb-4'}>
+                {filteredTagList.map((item, index) => (
+                  <li
+                    key={item.tagPath}
+                    className={`flex rounded px-4 py-2 hover:bg-gray-200 ${activeResultIndex === index ? 'bg-gray-100' : ''}`}
+                  >
                     <span className={'pr-3 font-semibold text-gray-600 dark:text-slate-600'}>Tag:</span>
                     <span className={'grow'}>{path.parse(item.tagFileName).name.split('.')[0]}</span>
+                    <span className={'px-6'}>TODO:Operations</span>
                   </li>
                 ))}
               </ul>
-              <hr />
             </>
           )}
-          {/*additional actions*/}
-          <ul className={'mt-2 cursor-pointer'}>
-            <li className={'py-2 last:pb-6'} onClick={() => CreateNewFile()}>
-              <span>Create New {searchType || ''} </span>
-              <span>{searchString || ''}</span>
-            </li>
-          </ul>
         </div>
       )}
     </nav>

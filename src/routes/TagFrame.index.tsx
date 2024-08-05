@@ -3,8 +3,10 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useEffect, useRef, useState } from 'react';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import { TagIcon } from '@heroicons/react/24/outline';
+import { TagIcon as TagIconSolid } from '@heroicons/react/24/solid';
 import path from 'path-browserify';
 import SearchBar from 'component/SearchBar.tsx';
+import { ESearchTypes, TSearchFilteredData } from 'electron-src/Types/Search.ts';
 
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/')({
@@ -15,7 +17,9 @@ export const Route = createFileRoute('/TagFrame/')({
 });
 
 function TagList() {
-  const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData());
+  const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()); //passed down to search bar
+  // for display
+  const [FilteredTagList, setFilteredTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()); //default to the full list
 
   const [selectedTagsPaths, setSelectedTagsPaths] = useState<string[]>([]); //used in styling elements
   const selectedTagsPathRef = useRef<string[]>([]); // copy of the state version, actually used as data package
@@ -41,6 +45,7 @@ function TagList() {
       return;
     }
 
+    selectedTagsPathRef.current = [item.tagPath];
     setSelectedTagsPaths([item.tagPath]);
   }
 
@@ -106,9 +111,17 @@ function TagList() {
       setTagList(TagData);
     });
 
+    const unbindFilteredTagListingChange = IPCRenderSide.on(
+      IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED,
+      async (_, payload: TSearchFilteredData) => {
+        if (payload.TagList) setFilteredTagList(payload.TagList);
+      },
+    );
+
     return () => {
       unbindTagListingChange();
       unbindRenamingTag();
+      unbindFilteredTagListingChange();
     };
   }, []);
 
@@ -118,14 +131,19 @@ function TagList() {
         ev.preventDefault();
         ShowTagContextMenu();
       }}
-      className={'TagFrame-root h-full bg-gray-50 px-4 py-8'}
+      className={'TagFrame-root h-full bg-gray-50 px-4 py-8 dark:bg-slate-800'}
     >
       {/*all-in-one Search bar component*/}
-      <SearchBar MDList={null} TagsList={TagList} />
+      <SearchBar
+        MDList={null}
+        TagsList={TagList}
+        AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-0'}
+        SearchOptions={{ ShowResult: false, LockSearchType: ESearchTypes.Tag, ShowActions: true, DisplayMode: 'block' }}
+      />
       {/*Tags grid*/}
       <div className={'mt-4 grid select-none grid-cols-6 gap-4 sm:grid-cols-3 sm:gap-2 md:grid-cols-4'}>
-        {TagList &&
-          TagList.map(tagInfo => (
+        {FilteredTagList &&
+          FilteredTagList.map(tagInfo => (
             <div
               key={tagInfo.tagPath}
               onClick={ev => selectTags(ev, tagInfo)}
@@ -133,10 +151,14 @@ function TagList() {
                 ev.preventDefault();
                 selectTagRightClick(ev, tagInfo);
               }}
-              className={`relative cursor-default text-ellipsis rounded-xl py-2 pl-4 pr-4 hover:bg-gray-200 ${selectedTagsPaths.includes(tagInfo.tagPath) ? 'bg-gray-300' : 'bg-gray-100'}`}
+              className={`relative cursor-default text-ellipsis rounded-xl py-2 pl-4 pr-4 hover:bg-gray-200 dark:text-gray-100 dark:hover:bg-slate-400 ${selectedTagsPaths.includes(tagInfo.tagPath) ? 'bg-gray-300 dark:bg-slate-300' : 'bg-gray-100 dark:bg-slate-600'}`}
             >
               <div className={'flex h-full w-full items-center'}>
-                <TagIcon className={'z-10 min-w-14 max-w-14'} />
+                {selectedTagsPaths.includes(tagInfo.tagPath) ? (
+                  <TagIconSolid className={'z-10 min-w-14 max-w-14'} />
+                ) : (
+                  <TagIcon className={'z-10 min-w-14 max-w-14'} />
+                )}
 
                 {tagPathToRename === tagInfo.tagPath ? (
                   <input

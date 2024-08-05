@@ -1,15 +1,4 @@
-export enum ESearchTypes {
-  File = 'File',
-  Tag = 'Tag',
-}
-
-// the main search bar
-export type TSearchTarget = {
-  searchText?: string;
-  placeHolder?: string;
-  searchType?: ESearchTypes;
-};
-
+// used for "opened files" that records content
 export type TFileInMemory = {
   filename: string;
   fullPath: string;

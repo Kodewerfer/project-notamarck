@@ -27,6 +27,7 @@ import { TFileInMemory } from '../Types/GlobalData.ts';
 import { RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
 import { GetTagList } from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
+import { GetAllFilteredData, GetLastSearchTargetToken } from '../Data/Seach.ts';
 
 /************
  * - APP -
@@ -112,6 +113,18 @@ export function ShowDialogMessage(_Event: IpcMainInvokeEvent, Message: MessageBo
 /************
  * - DATA -
  ************/
+const { GET_LAST_SEARCH_TARGET } = IPCActions.DATA;
+
+export function ReturnLastSearchToken() {
+  //unused for now
+  return GetLastSearchTargetToken();
+}
+
+const { GET_FILTERED_DATA } = IPCActions.DATA;
+
+export function ReturnAllFilteredData() {
+  return GetAllFilteredData();
+}
 
 // Close an opened file or an array
 const { GET_ALL_OPENED_FILES } = IPCActions.DATA;
@@ -390,4 +403,6 @@ export const IPCHandlerMappings = [
   { trigger: CREATE_NEW_TAG, handler: CreateNewTag },
   { trigger: LIST_ALL_TAGS, handler: ReturnAllTags },
   { trigger: CHANGE_TARGET_TAG_NAME, handler: RenameTagAndPush },
+  { trigger: GET_LAST_SEARCH_TARGET, handler: ReturnLastSearchToken },
+  { trigger: GET_FILTERED_DATA, handler: ReturnAllFilteredData },
 ];

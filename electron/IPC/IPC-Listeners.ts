@@ -5,16 +5,17 @@ import {
   FindInOpenedFilesByFullPath,
   GetActiveFile,
   GetOpenedFiles,
-  SetSearchTargetCache,
   UpdateOpenedFile,
 } from '../Data/Globals.ts';
 import { BrowserWindow, Menu } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
-import { TFileInMemory, TSearchTarget } from '../Types/GlobalData.ts';
+import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
 import { UnlinkTag } from '../Utils/TagOperations.ts';
+import { GetAllFilteredData, GetLastSearchTargetToken, SetFilteredData, SetSearchTargetToken } from '../Data/Seach.ts';
+import { ESearchTypes, TSearchFilteredData, TSearchTarget } from '../Types/Search.ts';
 
 /************
  * - MENU -
@@ -65,7 +66,13 @@ function ShowTagOperationMenu(_event: IpcMainEvent, selectedTagsPath: string[]) 
   const menu = Menu.buildFromTemplate([
     {
       label: 'New Tag',
-      click: () => {},
+      click: () => {
+        const NewFileSearch: TSearchTarget = {
+          placeHolder: 'New Tag',
+          searchType: ESearchTypes.Tag,
+        };
+        SetNewSearchAndPush(_event, NewFileSearch);
+      },
     },
     { type: 'separator' },
     {
@@ -144,14 +151,25 @@ function ChangeActiveFileAndPush(_event: IpcMainEvent, NewTargetFile: TFileInMem
   _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
 }
 
+// -Search
 const { SET_NEW_SEARCH_TARGET } = IPCActions.DATA; // Receiving
 function SetNewSearchAndPush(_event: IpcMainEvent, NewSearch: TSearchTarget) {
   if (!NewSearch) return;
 
   // cache the search
-  SetSearchTargetCache(NewSearch);
+  SetSearchTargetToken(NewSearch);
 
-  _event.sender.send(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, { ...NewSearch });
+  _event.sender.send(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, GetLastSearchTargetToken());
+}
+
+const { SET_FILTERED_DATA } = IPCActions.DATA; // Receiving
+
+function SetFilteredDataAndPush(_event: IpcMainEvent, NewFilteredData: TSearchFilteredData) {
+  if (!NewFilteredData) return;
+
+  SetFilteredData(NewFilteredData);
+
+  _event.sender.send(IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED, GetAllFilteredData());
 }
 
 // Bind to ipcMain.handle, one-way communications
@@ -165,4 +183,5 @@ export const IPCListenerMappings = [
   { trigger: SHOW_FILE_OPERATION_MENU, listener: ShowFileOperationMenu },
   { trigger: SET_NEW_SEARCH_TARGET, listener: SetNewSearchAndPush },
   { trigger: SHOW_TAG_OPERATION_MENU, listener: ShowTagOperationMenu },
+  { trigger: SET_FILTERED_DATA, listener: SetFilteredDataAndPush },
 ];

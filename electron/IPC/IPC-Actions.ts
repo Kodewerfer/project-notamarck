@@ -22,6 +22,9 @@ export const IPCActions = {
     //app data
     // Search bar
     SET_NEW_SEARCH_TARGET: 'DATA:SET_NEW_SEARCH_TARGET',
+    GET_LAST_SEARCH_TARGET: 'DATA:GET_LAST_SEARCH_TARGET', //unused for now
+    SET_FILTERED_DATA: 'DATA:SET_FILTERED_DATA',
+    GET_FILTERED_DATA: 'DATA:GET_FILTERED_DATA',
     // opened files
     GET_ALL_OPENED_FILES: 'DATA:GET_ALL_OPENED_FILES',
     PUSH_ALL_OPENED_FILES: 'DATA:PUSH_ALL_OPENED_FILES', //like the previous one but push to all listening component in the renderer
@@ -39,10 +42,11 @@ export const IPCActions = {
     SAVE_TARGET_OPENED_FILE: 'FILE:SAVE_TARGET_FILE',
     // Deleting - currently no IPC interface, only context memu
     PUSH: {
-      ACTIVE_FILE_CHANGED: 'FILES:PUSH:ACTIVE_FILE_CHANGED',
-      OPENED_FILE_CONTENT_CHANGED: 'FILES:PUSH:OPENED_FILE_CONTENT_CHANGED', //main to render
+      ACTIVE_FILE_CHANGED: 'DATA:PUSH:ACTIVE_FILE_CHANGED',
+      OPENED_FILE_CONTENT_CHANGED: 'DATA:PUSH:OPENED_FILE_CONTENT_CHANGED', //main to render
       OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, similar to server side pushing
       BEGIN_NEW_SEARCH: 'DATA:PUSH:FOCUS_SEARCH_BAR', // push the target type for search bar
+      FILTERED_DATA_CHANGED: 'DATA:FILTERED_DATA_CHANGED',
     },
   },
   FILES: {
