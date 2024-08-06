@@ -3,7 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 import AnimatedOutlet from 'component/AnimatedOutlet.tsx';
 import { AnimatePresence } from 'framer-motion';
 import { useRef } from 'react';
-import { ArchiveBoxIcon, Cog6ToothIcon, WalletIcon } from '@heroicons/react/24/outline';
+import { RootSideBar } from 'component/RootSideBar.tsx';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -54,29 +54,7 @@ function RootComponent() {
   return (
     <div className={'router-root h-screen w-screen overflow-hidden'}>
       {/*side buttons*/}
-      <aside className={'fixed left-0 top-0 z-50 h-full w-14 bg-gray-50 dark:bg-gray-900'}>
-        {/*side buttons*/}
-        <ul className="relative flex h-full w-14 flex-col align-middle">
-          <li className="is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
-            <Link className="block grow pl-1.5" to="/FileFrame/edit">
-              {/* mind the group-[.is-active] */}
-              <ArchiveBoxIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
-            </Link>
-          </li>
-          <li className="is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
-            <Link className="block grow pl-1.5" to="/TagFrame">
-              {/* mind the group-[.is-active] */}
-              <WalletIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
-            </Link>
-          </li>
-          {/*the "setting button"*/}
-          <li className="group absolute bottom-0 left-0 flex w-full justify-center py-4 font-semibold dark:text-blue-50">
-            <Link className="block grow pl-1.5" to="/settings">
-              <Cog6ToothIcon className={'size-8 group-hover:size-10'} />
-            </Link>
-          </li>
-        </ul>
-      </aside>
+      <RootSideBar />
 
       <AnimatePresence mode={'popLayout'}>
         <AnimatedOutlet
