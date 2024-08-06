@@ -25,7 +25,7 @@ import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnD
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
-import { GetTagList } from '../Data/Tags.ts';
+import { GetEditingTag, GetTagCache, GetTagList, SetEditingTag } from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { GetAllFilteredData, GetLastSearchTargetToken } from '../Data/Seach.ts';
 
@@ -178,6 +178,37 @@ export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
     IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
     OpenedFilesData,
   );
+}
+
+// --tag
+const { SET_TAG_AS_EDITING } = IPCActions.DATA; //receiving
+export function SetEditingTagAndPush(_Event: IpcMainInvokeEvent, tagPath: string | null) {
+  if (GetEditingTag()?.tagPath === tagPath) return GetEditingTag();
+
+  if (!tagPath) {
+    SetEditingTag(null);
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.EDITING_TAG_CHANGED, null);
+    return null;
+  }
+
+  const tagNameKey = path.basename(tagPath); //ensure the key is valid
+  const cachedTag = GetTagCache(tagNameKey);
+
+  if (!cachedTag) {
+    SetEditingTag(null);
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.EDITING_TAG_CHANGED, null);
+
+    return null;
+  }
+
+  SetEditingTag(cachedTag);
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.EDITING_TAG_CHANGED, cachedTag);
+  return cachedTag;
+}
+
+const { GET_EDITING_TAG } = IPCActions.DATA; //receiving
+export function ReturnEditingTag() {
+  return GetEditingTag();
 }
 
 const { GET_SELECTION_STATUS_CACHE } = IPCActions.DATA;
@@ -405,4 +436,6 @@ export const IPCHandlerMappings = [
   { trigger: CHANGE_TARGET_TAG_NAME, handler: RenameTagAndPush },
   { trigger: GET_LAST_SEARCH_TARGET, handler: ReturnLastSearchToken },
   { trigger: GET_FILTERED_DATA, handler: ReturnAllFilteredData },
+  { trigger: SET_TAG_AS_EDITING, handler: SetEditingTagAndPush },
+  { trigger: GET_EDITING_TAG, handler: ReturnEditingTag },
 ];

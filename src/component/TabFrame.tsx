@@ -227,6 +227,14 @@ export default function TabFrame() {
               <MarkdownEditor
                 onEditorMounted={onSubEditorMounted}
                 onEditorUnmounted={onSubEditorUnmounted}
+                FileLinks={{
+                  removeCallback: linkTarget => {
+                    IPCRenderSide.send(IPCActions.FILES.REMOVE_FROM_TAG, linkTarget, SelectedTab?.fullPath);
+                  },
+                  initCallback: linkTarget => {
+                    IPCRenderSide.send(IPCActions.FILES.SYNC_TO_TAG, linkTarget, SelectedTab?.fullPath);
+                  },
+                }}
                 ref={MDEditorRef}
                 MDSource={SelectedTab.content || ''}
               />

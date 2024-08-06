@@ -1,4 +1,4 @@
-import { createFileRoute, useLayoutEffect } from '@tanstack/react-router';
+import { createFileRoute, useLayoutEffect, useNavigate } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useEffect, useRef, useState } from 'react';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
@@ -17,6 +17,8 @@ export const Route = createFileRoute('/TagFrame/')({
 });
 
 function TagList() {
+  // use to navigate to tag editing
+  const navigate = useNavigate();
   const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()); //passed down to search bar
   // for display
   const [FilteredTagList, setFilteredTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()); //default to the full list
@@ -147,6 +149,7 @@ function TagList() {
             <div
               key={tagInfo.tagPath}
               onClick={ev => selectTags(ev, tagInfo)}
+              onDoubleClick={() => navigate({ to: '/TagFrame/$tagPath', params: { tagPath: tagInfo.tagPath } })}
               onContextMenu={ev => {
                 ev.preventDefault();
                 selectTagRightClick(ev, tagInfo);

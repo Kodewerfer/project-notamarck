@@ -21,12 +21,13 @@ function InitTagsWatcher() {
 
 export default function StartTagsWatcher() {
   if (!TagsWatcher) InitTagsWatcher();
-  TagsWatcher.on('add', (path, stats) => OnNewTag(path, stats));
-  TagsWatcher.on('unlink', (path: string, stats: Stats | undefined) => OnDeleteTag(path, stats));
+  TagsWatcher.on('add', (path, stats) => addNewTagToCache(path, stats));
+  TagsWatcher.on('unlink', (path: string, stats: Stats | undefined) => removeTagFromCache(path, stats));
+  TagsWatcher.on('change', (path: string, stats: Stats | undefined) => ReloadTagContent(path, stats));
 }
 
 // Handlers
-async function OnNewTag(tagPath: string, _: Stats | undefined) {
+async function addNewTagToCache(tagPath: string, _: Stats | undefined) {
   let NewTagData;
   try {
     NewTagData = await ReadTagAsync(tagPath);
@@ -38,9 +39,24 @@ async function OnNewTag(tagPath: string, _: Stats | undefined) {
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
 }
 
-async function OnDeleteTag(tagPath: string, _: Stats | undefined) {
+async function removeTagFromCache(tagPath: string, _: Stats | undefined) {
   const { base: TagNameKey } = path.parse(tagPath);
   RemoveFromTagMap(TagNameKey);
   //
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
+}
+
+async function ReloadTagContent(tagPath: string, _: Stats | undefined) {
+  let ChangedData;
+  try {
+    ChangedData = await ReadTagAsync(tagPath);
+  } catch (e) {
+    ShowErrorAlert('File Access Error', (e as Error)?.message);
+    return;
+  }
+
+  SetTagMap(ChangedData);
+
+  //
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.TAG_CONTENT_CHANGED, ChangedData);
 }

@@ -5,6 +5,10 @@ import { TTagsInMemory } from '../Types/Tags.ts';
 
 const _Tags_Map: Map<string, TTagsInMemory> = new Map(); //only an index keeping the most basic info
 
+export function GetTagCache(tagFilename: string): TTagsInMemory | undefined {
+  return _Tags_Map.get(tagFilename);
+}
+
 export function SetTagMap(newItem: TTagsInMemory) {
   _Tags_Map.set(newItem.tagFileName, newItem);
 }
@@ -20,4 +24,15 @@ export function GetTagList(): Readonly<TTagsInMemory[]> {
   });
 
   return tagList;
+}
+
+let _Editing_Tag: TTagsInMemory | null = null;
+
+export function SetEditingTag(newItem: TTagsInMemory | null) {
+  if (newItem == null) return (_Editing_Tag = newItem);
+  _Editing_Tag = { ...newItem };
+}
+
+export function GetEditingTag(): Readonly<TTagsInMemory> | null {
+  return _Editing_Tag;
 }

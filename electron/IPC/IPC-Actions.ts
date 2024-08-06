@@ -31,6 +31,9 @@ export const IPCActions = {
     UPDATE_OPENED_FILE_CONTENT: 'FILES:UPDATE_OPENED_FILE_CONTENT', //render to main
     CLOSE_TARGET_OPENED_FILES: 'DATA:CLOSE_OPENED_FILES',
     CLOSE_ALL_OPENED_FILES: 'DATA:CLOSE_ALL_OPENED_FILES',
+    // Tags
+    SET_TAG_AS_EDITING: 'DATA:SET_TAG_AS_EDITING',
+    GET_EDITING_TAG: 'DATA:GET_EDITING_TAG',
     // selection status
     GET_SELECTION_STATUS_CACHE: 'DATA:GET_SELECTION_STATUS_CACHE',
     UPDATE_SELECTION_STATUS_CACHE: 'DATA:UPDATE_SELECTION_STATUS_CACHE',
@@ -42,11 +45,13 @@ export const IPCActions = {
     SAVE_TARGET_OPENED_FILE: 'FILE:SAVE_TARGET_FILE',
     // Deleting - currently no IPC interface, only context memu
     PUSH: {
-      ACTIVE_FILE_CHANGED: 'DATA:PUSH:ACTIVE_FILE_CHANGED',
-      OPENED_FILE_CONTENT_CHANGED: 'DATA:PUSH:OPENED_FILE_CONTENT_CHANGED', //main to render
-      OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, similar to server side pushing
+      ACTIVE_FILE_CHANGED: 'DATA:PUSH:ACTIVE_FILE_CHANGED', //push the current active file
+      OPENED_FILE_CONTENT_CHANGED: 'DATA:PUSH:OPENED_FILE_CONTENT_CHANGED', //push payload in TChangedFilesPayload
+      OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, pushes all opened files in TFileInMemory
       BEGIN_NEW_SEARCH: 'DATA:PUSH:FOCUS_SEARCH_BAR', // push the target type for search bar
-      FILTERED_DATA_CHANGED: 'DATA:FILTERED_DATA_CHANGED',
+      FILTERED_DATA_CHANGED: 'DATA:FILTERED_DATA_CHANGED', //push all filtered data
+      TAG_CONTENT_CHANGED: 'DATA:TAG_CONTENT_CHANGED', //push the changed tag as TTagsInMemory
+      EDITING_TAG_CHANGED: 'DATA:EDITING_TAG_CHANGED', //push TTagsInMemory or null
     },
   },
   FILES: {
@@ -55,15 +60,18 @@ export const IPCActions = {
     LIST_CURRENT_PATH_MD: 'FILES:LIST_CURRENT_PATH_MD',
     // tags
     LIST_ALL_TAGS: 'FILES:LIST_ALL_TAGS',
-    CREATE_NEW_FILE: 'FILES:CREATE_NEW_FILE',
     CREATE_NEW_TAG: 'FILES:CREATE_NEW_TAG',
+    SYNC_TO_TAG: 'FILES:SYNC_TO_TAGS',
+    REMOVE_FROM_TAG: 'FILES:REMOVE_FROM_TAG',
+    // Files
+    CREATE_NEW_FILE: 'FILES:CREATE_NEW_FILE',
     READ_MD_FROM_PATH: 'FILES:READ_MD_FROM_PATH',
     // renaming
     CHANGE_TARGET_FILE_NAME: 'FILE:CHANGE_TARGET_FILE_NAME', //generic interface that will be used by renderer
     CHANGE_TARGET_TAG_NAME: 'FILE:CHANGE_TARGET_TAG_NAME', //generic interface that will be used by renderer
     PUSH: {
       RENAMING_TARGET_FILE: 'FILE:RENAMING_TARGET_FILE', //send to renderer along with target file info
-      RENAMING_SELECTED_TAG: 'MENU:PUSH:RENAMING_SELECTED_TAG',
+      RENAMING_SELECTED_TAG: 'MENU:PUSH:RENAMING_SELECTED_TAG', //push rename target's Path
     },
     // signals don't send a payload
     SIGNAL: {

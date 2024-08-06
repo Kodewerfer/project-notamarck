@@ -13,7 +13,13 @@ import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
-import { UnlinkTag } from '../Utils/TagOperations.ts';
+import {
+  SaveTagFileRenameOnDup,
+  SearchAndAppendToTag,
+  SearchAndRemoveFromTag,
+  UnlinkTag,
+  ValidateTag,
+} from '../Utils/TagOperations.ts';
 import { GetAllFilteredData, GetLastSearchTargetToken, SetFilteredData, SetSearchTargetToken } from '../Data/Seach.ts';
 import { ESearchTypes, TSearchFilteredData, TSearchTarget } from '../Types/Search.ts';
 
@@ -172,6 +178,35 @@ function SetFilteredDataAndPush(_event: IpcMainEvent, NewFilteredData: TSearchFi
   _event.sender.send(IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED, GetAllFilteredData());
 }
 
+/************
+ * - FILE -
+ ************/
+
+const { SYNC_TO_TAG } = IPCActions.FILES; // Receiving
+
+function SyncToTag(_event: IpcMainEvent, targetTag: string, FromFile: string) {
+  try {
+    ValidateTag(targetTag);
+  } catch (e) {
+    // Error accessing the tag, create a new tag with the name provided.
+    SaveTagFileRenameOnDup(targetTag);
+  }
+
+  SearchAndAppendToTag(targetTag, FromFile);
+}
+
+const { REMOVE_FROM_TAG } = IPCActions.FILES; // Receiving
+
+function RemoveFromTag(_event: IpcMainEvent, targetTag: string, FromFile: string) {
+  try {
+    ValidateTag(targetTag);
+  } catch (e) {
+    ShowErrorAlert(`Trying to remove link from a tag that cannot be accessed ${targetTag}`);
+  }
+
+  SearchAndRemoveFromTag(targetTag, FromFile);
+}
+
 // Bind to ipcMain.handle, one-way communications
 export const IPCListenerMappings = [
   {
@@ -184,4 +219,6 @@ export const IPCListenerMappings = [
   { trigger: SET_NEW_SEARCH_TARGET, listener: SetNewSearchAndPush },
   { trigger: SHOW_TAG_OPERATION_MENU, listener: ShowTagOperationMenu },
   { trigger: SET_FILTERED_DATA, listener: SetFilteredDataAndPush },
+  { trigger: SYNC_TO_TAG, listener: SyncToTag },
+  { trigger: REMOVE_FROM_TAG, listener: RemoveFromTag },
 ];

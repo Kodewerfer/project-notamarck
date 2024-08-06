@@ -3,6 +3,9 @@ import { CheckFileRenameOnDup } from './FileOperations.ts';
 import { GetCurrentWorkspace } from '../Data/Globals.ts';
 import path from 'node:path';
 import { TTagsInMemory } from '../Types/Tags.ts';
+import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
+
+import FlexSearch from 'flexsearch';
 
 const _Tag_Folder_Name = 'tags';
 
@@ -19,7 +22,20 @@ export function GetTagFolderFullPath() {
   return tagFolderFullPath;
 }
 
+export function GetFileLinkSyntax(fromFile: string) {
+  if (!fromFile || fromFile === '') throw new Error('file name is required');
+  return `:Link[${fromFile}]`;
+}
+
+export function ValidateTag(TagFileName: string) {
+  TagFileName = TagFileName.split('.')[0];
+  const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
+
+  fs.accessSync(tagFilePath);
+}
+
 export function SaveTagFileRenameOnDup(TagFileName: string, TagContent?: string) {
+  TagFileName = path.basename(TagFileName).split('.')[0];
   const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
 
   try {
@@ -34,7 +50,26 @@ export function SaveTagFileRenameOnDup(TagFileName: string, TagContent?: string)
   try {
     fs.writeFileSync(renamedTagFilePath, TagContent ?? '', { encoding: 'utf8' });
   } catch (e) {
-    throw new Error(`Error writing to tag ${renamedTagFilePath}, ${e}`);
+    throw new Error(`Error writing to tag ${renamedTagFilePath}, ${(e as Error).message}`);
+  }
+
+  return tagFilePath;
+}
+
+export function SaveTagFileOverrideOnDup(TagFileName: string, TagContent?: string) {
+  TagFileName = path.basename(TagFileName).split('.')[0];
+  const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
+
+  try {
+    path.resolve(tagFilePath);
+  } catch (e) {
+    throw new Error(`Tag path ${tagFilePath} is not valid.`);
+  }
+
+  try {
+    fs.writeFileSync(tagFilePath, TagContent ?? '', { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Error writing to tag ${tagFilePath}, ${(e as Error).message}`);
   }
 
   return tagFilePath;
@@ -93,6 +128,21 @@ export async function ReadTagAsync(tagPath: string): Promise<TTagsInMemory> {
   };
 }
 
+// Sync function to avoid unnecessary concurrency issue, only used internally.
+function ReadTag(tagPath: string): TTagsInMemory {
+  if (!fs.existsSync(tagPath)) throw new Error('tagPath does not exist');
+
+  const tagFileContentRaw = fs.readFileSync(tagPath, 'utf8');
+
+  const baseName = path.basename(tagPath);
+
+  return {
+    tagFileName: baseName,
+    tagPath: tagPath,
+    tagContentRaw: tagFileContentRaw,
+  };
+}
+
 export function UnlinkTag(TagFullName: string) {
   // TODO: may need to delete reference
   try {
@@ -118,4 +168,61 @@ export function RenameTagKeepDup(OldTagPath: string, NewName: string) {
     throw new Error(`Error renaming tag ${OldTagPath}, ${(e as Error).message}`);
   }
   return finalizedNewName;
+}
+
+function SearchTagForLink(tagInfo: TTagsInMemory | null, searchFor: string) {
+  if (!tagInfo || !tagInfo.tagContentRaw) return null;
+  // const lines = tagContent.tagContentRaw.split('\n').map((line, index) => ({ id: index, text: line }));
+  const searchDocument = new FlexSearch.Index('performance');
+  const lines = tagInfo.tagContentRaw.split('\n');
+  // Add data to the index
+  for (let i = 0; i < lines.length; i++) {
+    searchDocument.add(i, lines[i]);
+  }
+
+  const searchResult = searchDocument.search(searchFor);
+  if (!searchResult.length) return null;
+
+  return searchResult;
+}
+
+export function SearchAndAppendToTag(TagFileName: string, FromFilePath: string) {
+  TagFileName = TagFileName.split('.')[0];
+  FromFilePath = path.basename(FromFilePath);
+  const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
+  try {
+    const tagContent = ReadTag(tagFilePath);
+    const searchResult = SearchTagForLink(tagContent, GetFileLinkSyntax(FromFilePath));
+
+    if (searchResult) return;
+
+    fs.appendFileSync(tagFilePath, '\n' + GetFileLinkSyntax(FromFilePath));
+  } catch (e) {
+    ShowErrorAlert((e as Error).message);
+  }
+}
+
+export function SearchAndRemoveFromTag(TagFileName: string, FromFilePath: string) {
+  TagFileName = TagFileName.split('.')[0];
+  FromFilePath = path.basename(FromFilePath);
+  const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
+  try {
+    const tagContent = ReadTag(tagFilePath);
+    const searchResult = SearchTagForLink(tagContent, GetFileLinkSyntax(FromFilePath));
+
+    if (!searchResult) return;
+    const rawContentLines = tagContent.tagContentRaw!.split('\n');
+
+    for (let lineNum of searchResult) {
+      const updatedLine = rawContentLines[lineNum as number].replace(GetFileLinkSyntax(FromFilePath), '');
+      rawContentLines[lineNum as number] = updatedLine;
+      if (updatedLine.trim() === '') {
+        rawContentLines.splice(lineNum as number);
+      }
+    }
+
+    SaveTagFileOverrideOnDup(tagFilePath, rawContentLines.join('\n'));
+  } catch (e) {
+    ShowErrorAlert((e as Error).message);
+  }
 }

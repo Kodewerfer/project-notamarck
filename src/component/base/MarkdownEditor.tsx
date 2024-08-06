@@ -7,6 +7,7 @@ export type TEditorComponentRef = {
   ExtractMD: () => Promise<string>;
   ExtractSelection: () => Object | null | undefined;
   SetSelection: (SelectionStatus: Object) => void;
+  InsertText: (TextContent: string, syncAfter?: boolean) => void;
 };
 
 const MarkdownEditor = forwardRef(
@@ -15,10 +16,15 @@ const MarkdownEditor = forwardRef(
       MDSource,
       onEditorUnmounted,
       onEditorMounted,
+      FileLinks,
     }: {
       MDSource: string;
       onEditorMounted?: () => Promise<void> | void;
       onEditorUnmounted?: () => Promise<void> | void;
+      FileLinks?: {
+        initCallback?: (linkTarget: string) => void | Promise<void>;
+        removeCallback?: (linkTarget: string) => void | Promise<void>;
+      }
     },
     ref: ForwardedRef<TEditorComponentRef>,
   ) => {
@@ -46,6 +52,9 @@ const MarkdownEditor = forwardRef(
 
           if (EditorRef.current) return EditorRef.current.SetCaretData(SelectionStatus as TSelectionStatus);
         },
+        InsertText: (TextContent: string, syncAfter: boolean = true) => {
+          if (EditorRef.current) return EditorRef.current.InsertText(TextContent, syncAfter);
+        },
       };
     });
 
@@ -70,7 +79,13 @@ const MarkdownEditor = forwardRef(
         {/*<button className={'bg-amber-600'} onClick={appClick}>*/}
         {/*  NOTAMARCK EXTRACT*/}
         {/*</button>*/}
-        <Editor SourceData={MDSource} ref={EditorRef} />
+        <Editor
+          SourceData={MDSource}
+          ref={EditorRef}
+          ComponentCallbacks={{
+            FileLinks: FileLinks,
+          }}
+        />
       </>
     );
   },
