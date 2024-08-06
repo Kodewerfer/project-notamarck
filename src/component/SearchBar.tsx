@@ -25,7 +25,7 @@ export default function SearchBar({
   MDList?: TMDFile[] | null;
   TagsList?: TTagsInMemory[] | null;
   AdditionalClasses?: string;
-  SearchOptions: Partial<TSearchOptions>;
+  SearchOptions?: Partial<TSearchOptions>;
 }) {
   const [isSearching, setIsSearching] = useState(false);
   const InputRef = useRef(null);
