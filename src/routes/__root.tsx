@@ -52,7 +52,7 @@ function RootComponent() {
   }
 
   return (
-    <div className={'router-root h-screen w-screen overflow-hidden'}>
+    <div className={'router-root h-screen w-screen overflow-hidden dark:bg-slate-700'}>
       {/*side buttons*/}
       <RootSideBar />
 
