@@ -1,4 +1,4 @@
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { ForwardedRef, forwardRef, useLayoutEffect, useImperativeHandle, useRef, useEffect } from 'react';
 import './MarkdownEditor.css';
 import Editor, { TEditorForwardRef } from 'react-magic-draft';
 import { TSelectionStatus } from 'react-magic-draft/dist/hooks/useEditorDaemon';
@@ -13,18 +13,20 @@ export type TEditorComponentRef = {
 const MarkdownEditor = forwardRef(
   (
     {
+      fullPath,
       MDSource,
       onEditorUnmounted,
       onEditorMounted,
       FileLinks,
     }: {
+      fullPath: string; //used as an id when passing up data to parent
       MDSource: string;
       onEditorMounted?: () => Promise<void> | void;
-      onEditorUnmounted?: () => Promise<void> | void;
+      onEditorUnmounted?: (extractedData: Object) => Promise<void> | void;
       FileLinks?: {
         initCallback?: (linkTarget: string) => void | Promise<void>;
         removeCallback?: (linkTarget: string) => void | Promise<void>;
-      }
+      };
     },
     ref: ForwardedRef<TEditorComponentRef>,
   ) => {
@@ -58,27 +60,31 @@ const MarkdownEditor = forwardRef(
       };
     });
 
+    // run parent passed functions, also pass info the parent before unmounting
+    useLayoutEffect(() => {
+      return () => {
+        if (EditorRef.current) {
+          const selectionStatus = EditorRef.current.ExtractCaretData();
+          const mdData = EditorRef.current.ExtractMD();
+
+          if (typeof onEditorUnmounted === 'function')
+            onEditorUnmounted({
+              fullPath,
+              selectionStatus,
+              mdData,
+            });
+        }
+      };
+    }, []);
+
     useEffect(() => {
       (async () => {
         if (typeof onEditorMounted === 'function') await onEditorMounted();
       })();
-      return () => {
-        if (typeof onEditorUnmounted === 'function') onEditorUnmounted();
-      };
-    }, []);
-
-    // async function appClick() {
-    // console.log('NOTAMARCK click');
-    // if (EditorRef.current) {
-    //   console.log(await EditorRef.current.ExtractMD());
-    // }
-    // }
+    });
 
     return (
       <>
-        {/*<button className={'bg-amber-600'} onClick={appClick}>*/}
-        {/*  NOTAMARCK EXTRACT*/}
-        {/*</button>*/}
         <Editor
           SourceData={MDSource}
           ref={EditorRef}

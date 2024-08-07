@@ -25,15 +25,16 @@ export default function TabFrame() {
   // Passed down from main frame context
   const mainFrameScrollable = useContext(MainFrameContext);
 
+  // Old implementation, saving for reference todo: remove later
   // extract editor's content then send it to main process, mainly used when SelectedTab changed
-  async function SendCurrentTabContentToMain() {
-    if (MDEditorRef.current && SelectedTab)
-      IPCRenderSide.send(
-        IPCActions.DATA.UPDATE_OPENED_FILE_CONTENT,
-        SelectedTab.fullPath,
-        await MDEditorRef.current.ExtractMD(),
-      );
-  }
+  // async function SendCurrentTabContentToMain() {
+  // if (MDEditorRef.current && SelectedTab)
+  //   IPCRenderSide.send(
+  //     IPCActions.DATA.UPDATE_OPENED_FILE_CONTENT,
+  //     SelectedTab.fullPath,
+  //     await MDEditorRef.current.ExtractMD(),
+  //   );
+  // }
 
   // init component
   useLayoutEffect(() => {
@@ -41,10 +42,6 @@ export default function TabFrame() {
       const AllOpenedFiles: TTabItems[] = await IPCRenderSide.invoke(IPCActions.DATA.GET_ALL_OPENED_FILES);
       if (Array.isArray(AllOpenedFiles) && Tabs.length === 0) setTabs(AllOpenedFiles);
     })();
-    return () => {
-      // save editing content
-      SendCurrentTabContentToMain();
-    };
   }, []);
 
   // ini the selected tab, set to the first tab if non-exist
@@ -83,10 +80,6 @@ export default function TabFrame() {
         const payloadPathMap = new Map(payload.map(fileItem => [fileItem.fullPath, fileItem]));
         const FilteredTabs = Tabs.filter(tabItem => payloadPathMap.has(tabItem.fullPath));
 
-        if (Added.length) {
-          console.log('Tab Frame: New Tab -', Added);
-        }
-
         setTabs(FilteredTabs.concat(Added));
       },
     );
@@ -117,16 +110,8 @@ export default function TabFrame() {
 
         const tabIndex = Tabs.findIndex(item => item.fullPath === payload.fullPath);
         if (tabIndex === -1) return;
-        SendCurrentTabContentToMain();
-        (async () => {
-          if (SelectedTab)
-            await IPCRenderSide.invoke(
-              IPCActions.DATA.UPDATE_SELECTION_STATUS_CACHE,
-              SelectedTab.fullPath,
-              MDEditorRef.current?.ExtractSelection(),
-            );
-          setSelectedTab(Tabs[tabIndex]);
-        })();
+        // SendCurrentTabContentToMain();
+        setSelectedTab(Tabs[tabIndex]);
       },
     );
 
@@ -143,15 +128,7 @@ export default function TabFrame() {
   };
 
   const onSelectTab = async (item: TTabItems) => {
-    await SendCurrentTabContentToMain();
-    if (SelectedTab && item !== SelectedTab)
-      // save the caret info from the currently selected tab
-      await IPCRenderSide.invoke(
-        IPCActions.DATA.UPDATE_SELECTION_STATUS_CACHE,
-        SelectedTab.fullPath,
-        MDEditorRef.current?.ExtractSelection(),
-      );
-
+    // await SendCurrentTabContentToMain();
     // NOTE:setting the SelectedTab is not exactly required because main process will put into it after the next line.
     setSelectedTab(item);
     IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, item);
@@ -160,12 +137,7 @@ export default function TabFrame() {
   const onCloseTab = async (item: TTabItems) => {
     // Notify backend
     if (item === SelectedTab) {
-      await SendCurrentTabContentToMain();
-      await IPCRenderSide.invoke(
-        IPCActions.DATA.UPDATE_SELECTION_STATUS_CACHE,
-        SelectedTab.fullPath,
-        MDEditorRef.current?.ExtractSelection(),
-      );
+      // await SendCurrentTabContentToMain();
       const nextTab = closestItem(Tabs, item);
       setSelectedTab(nextTab);
       IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, nextTab);
@@ -190,20 +162,16 @@ export default function TabFrame() {
       IPCActions.DATA.GET_SELECTION_STATUS_CACHE,
       SelectedTab.fullPath,
     );
+
     MDEditorRef.current?.SetSelection(cachedSelection);
 
     // force the code to run at the end of the even loop
     setTimeout(() => {
       const selection = window.getSelection();
       if (!selection) return;
-      const range = document.createRange();
-      try {
-        range.setStart(selection.anchorNode!, selection.anchorOffset);
-        range.setEnd(selection.focusNode!, selection.focusOffset);
-      } catch (e) {
-        console.warn('Reference anchor setup failed,', e);
-      }
+      const range = selection.getRangeAt(0).cloneRange();
       const { top } = range.getBoundingClientRect();
+
       if (mainFrameScrollable?.current) {
         const divTop = mainFrameScrollable.current.getBoundingClientRect().top;
         const tabBarHeight = (TabBarRef?.current && TabBarRef.current.scrollHeight) || 0;
@@ -211,8 +179,23 @@ export default function TabFrame() {
       }
     }, 0);
   };
-  // unused for now
-  const onSubEditorUnmounted = async () => {};
+
+  // cache info such as selection status to main process using info passed from editor before unmounting
+  const onSubEditorUnmounted = async (extractedData: any) => {
+    if (!extractedData.fullPath || extractedData.fullPath === '') return;
+    // save selection status
+    if (extractedData.selectionStatus)
+      IPCRenderSide.invoke(
+        IPCActions.DATA.UPDATE_SELECTION_STATUS_CACHE,
+        extractedData.fullPath,
+        extractedData.selectionStatus,
+      );
+
+    // save file content
+    const extractedMdData = await extractedData?.mdData;
+    if (extractedMdData !== undefined && extractedMdData !== null)
+      IPCRenderSide.send(IPCActions.DATA.UPDATE_OPENED_FILE_CONTENT, extractedData.fullPath, extractedMdData);
+  };
 
   return (
     <>
@@ -248,6 +231,9 @@ export default function TabFrame() {
           >
             {SelectedTab && (
               <MarkdownEditor
+                key={SelectedTab.fullPath}
+                fullPath={SelectedTab.fullPath}
+                MDSource={SelectedTab.content || ''}
                 onEditorMounted={onSubEditorMounted}
                 onEditorUnmounted={onSubEditorUnmounted}
                 FileLinks={{
@@ -259,7 +245,6 @@ export default function TabFrame() {
                   },
                 }}
                 ref={MDEditorRef}
-                MDSource={SelectedTab.content || ''}
               />
             )}
           </motion.div>
