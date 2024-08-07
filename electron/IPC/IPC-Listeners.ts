@@ -5,6 +5,7 @@ import {
   FindInOpenedFilesByFullPath,
   GetActiveFile,
   GetOpenedFiles,
+  SetOpenFiles,
   UpdateOpenedFile,
 } from '../Data/Globals.ts';
 import { BrowserWindow, Menu } from 'electron';
@@ -130,6 +131,13 @@ function PushOpenedFiles(_event: IpcMainEvent) {
   return;
 }
 
+const { SET_OPENED_FILES } = IPCActions.DATA;
+
+function SetOpenedFiles(_Event: IpcMainEvent, newArray: TFileInMemory[]) {
+  if (!newArray || !newArray.length) return;
+  return SetOpenFiles(newArray);
+}
+
 const { UPDATE_OPENED_FILE_CONTENT } = IPCActions.DATA; //receiving channel
 
 // On trigger, receive the new content and push to renderer again
@@ -213,6 +221,7 @@ export const IPCListenerMappings = [
     trigger: PUSH_ALL_OPENED_FILES,
     listener: PushOpenedFiles,
   },
+  { trigger: SET_OPENED_FILES, listener: SetOpenedFiles },
   { trigger: UPDATE_OPENED_FILE_CONTENT, listener: UpdateFileContentAndPush },
   { trigger: CHANGE_ACTIVE_FILE, listener: ChangeActiveFileAndPush },
   { trigger: SHOW_FILE_OPERATION_MENU, listener: ShowFileOperationMenu },

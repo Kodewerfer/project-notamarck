@@ -230,6 +230,12 @@ export function SetSelectionStatusForPath(_Event: IpcMainInvokeEvent, fullPath: 
   return SetSelectionStatusCache(fullPath, status);
 }
 
+const { GET_ACTIVE_FILE } = IPCActions.DATA;
+
+export function ReturnCurrentActiveFile(_Event: IpcMainInvokeEvent) {
+  return GetActiveFile();
+}
+
 // Save the current active file, return true or false, can throw
 const { SAVE_ACTIVE_FILE } = IPCActions.DATA;
 
@@ -418,11 +424,13 @@ export const IPCHandlerMappings = [
   { trigger: LIST_CURRENT_PATH_MD, handler: ReturnAllMDsInPath },
   { trigger: READ_MD_FROM_PATH, handler: ReadMDAndPushOpenedFiles },
   { trigger: GET_ALL_OPENED_FILES, handler: GetAllOpenedFiles },
+  // { trigger: SET_OPENED_FILES, handler: SetOpenedFiles },
   { trigger: CLOSE_TARGET_OPENED_FILES, handler: CloseOpenedFile },
   { trigger: SHOW_SELECTION_DIR, handler: ShowDialogDIR },
   { trigger: GET_WORK_SPACE, handler: ReturnCurrentWorkspace },
   { trigger: GET_RECENT_WORK_SPACES, handler: ReturnRecentWorkspaces },
   { trigger: SET_WORK_SPACE, handler: ValidateAndChangeWorkspaceThenPush },
+  { trigger: GET_ACTIVE_FILE, handler: ReturnCurrentActiveFile },
   { trigger: SAVE_ACTIVE_FILE, handler: SaveCurrentActiveFile },
   { trigger: SAVE_ALL_OPENED_FILES, handler: SaveAllOpenedFiles },
   { trigger: SAVE_TARGET_OPENED_FILE, handler: SaveTargetFileBaseOnPath },

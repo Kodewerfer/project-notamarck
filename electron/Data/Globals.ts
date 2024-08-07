@@ -67,6 +67,11 @@ export function AddToRecentWorkspace(lastestWorkspace: string) {
  */
 let _Opened_Files: TFileInMemory[] = [];
 
+// mainly used to reset the order(from tab frame)
+export function SetOpenFiles(openedFiles: TFileInMemory[]) {
+  _Opened_Files = [...openedFiles];
+}
+
 export function GetOpenedFiles(): ReadonlyArray<TFileInMemory> {
   return [..._Opened_Files];
 }

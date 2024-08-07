@@ -41,14 +41,32 @@ export default function TabFrame() {
       const AllOpenedFiles: TTabItems[] = await IPCRenderSide.invoke(IPCActions.DATA.GET_ALL_OPENED_FILES);
       if (Array.isArray(AllOpenedFiles) && Tabs.length === 0) setTabs(AllOpenedFiles);
     })();
+    return () => {
+      // save editing content
+      SendCurrentTabContentToMain();
+    };
   }, []);
 
-  // ini the selected tab if non-exist
+  // ini the selected tab, set to the first tab if non-exist
   useEffect(() => {
-    if (!SelectedTab) {
-      setSelectedTab(Tabs[0]);
-      IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, Tabs[0]);
-    }
+    (async () => {
+      if (SelectedTab || !Tabs || !Tabs.length) return;
+      const cachedActiveFile: TFileInMemory | null = await IPCRenderSide.invoke(IPCActions.DATA.GET_ACTIVE_FILE);
+
+      const setToFirstTab = () => {
+        setSelectedTab(Tabs[0]);
+        IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, Tabs[0]);
+      };
+
+      if (!cachedActiveFile) {
+        setToFirstTab();
+        return;
+      }
+
+      const foundTabIndex = Tabs.findIndex(loadedTab => loadedTab.fullPath === cachedActiveFile.fullPath);
+      if (foundTabIndex >= 0) setSelectedTab(Tabs[foundTabIndex]);
+      else setToFirstTab();
+    })();
   }, [Tabs]);
 
   // Critical: Bind to main process' push events, sync tab's data to main
@@ -118,6 +136,11 @@ export default function TabFrame() {
       unbindFileActivationChange();
     };
   });
+
+  const onReOrder = (newArray: TTabItems[]) => {
+    setTabs(newArray);
+    IPCRenderSide.send(IPCActions.DATA.SET_OPENED_FILES, newArray);
+  };
 
   const onSelectTab = async (item: TTabItems) => {
     await SendCurrentTabContentToMain();
@@ -198,7 +221,7 @@ export default function TabFrame() {
         ref={TabBarRef}
         className={`sticky top-0 z-20 flex h-9 w-full overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
       >
-        <Reorder.Group as="ul" axis="x" onReorder={setTabs} className="flex flex-nowrap text-nowrap" values={Tabs}>
+        <Reorder.Group as="ul" axis="x" onReorder={onReOrder} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
             {Tabs.map((item: TTabItems) => (
               <Tab
