@@ -4,7 +4,7 @@ import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { Stats } from 'node:fs';
 import { BrowserWindow } from 'electron';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
-import { RemoveFromTagMap, SetTagMap } from '../Data/Tags.ts';
+import { CheckForTagRenaming, GetEditingTag, RemoveFromTagMap, SetEditingTag, SetTagMap } from '../Data/Tags.ts';
 import path from 'node:path';
 import { GetAppMainWindowID } from '../Data/Globals.ts';
 
@@ -42,8 +42,17 @@ async function addNewTagToCache(tagPath: string, _: Stats | undefined) {
 async function removeTagFromCache(tagPath: string, _: Stats | undefined) {
   const { base: TagNameKey } = path.parse(tagPath);
   RemoveFromTagMap(TagNameKey);
-  //
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
+
+  // will only signal for list change if it is not being renamed
+  if (!CheckForTagRenaming(tagPath))
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
+
+  //if the deleted tag is also the tag in editing, reset the editing tag to null, will only push the null to renderer if it is not being renamed
+  if (tagPath === GetEditingTag()?.tagPath) {
+    SetEditingTag(null);
+    if (!CheckForTagRenaming(tagPath))
+      BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.EDITING_TAG_CHANGED, null);
+  }
 }
 
 async function ReloadTagContent(tagPath: string, _: Stats | undefined) {

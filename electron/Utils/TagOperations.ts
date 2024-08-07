@@ -129,7 +129,7 @@ export async function ReadTagAsync(tagPath: string): Promise<TTagsInMemory> {
 }
 
 // Sync function to avoid unnecessary concurrency issue, only used internally.
-function ReadTag(tagPath: string): TTagsInMemory {
+export function ReadTag(tagPath: string): TTagsInMemory {
   if (!fs.existsSync(tagPath)) throw new Error('tagPath does not exist');
 
   const tagFileContentRaw = fs.readFileSync(tagPath, 'utf8');

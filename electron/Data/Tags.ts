@@ -36,3 +36,20 @@ export function SetEditingTag(newItem: TTagsInMemory | null) {
 export function GetEditingTag(): Readonly<TTagsInMemory> | null {
   return _Editing_Tag;
 }
+
+// temp var for saving the tag file that's been renamed so that the file monitor won't reset the editing tag
+let _Renaming_Tags_Paths: string[] = [];
+
+export function MarkPathForRenaming(renamingPath: string) {
+  _Renaming_Tags_Paths.push(renamingPath);
+}
+
+export function RenamingTagComplete(tagPath: string) {
+  const findIndex = _Renaming_Tags_Paths.findIndex(item => item === tagPath);
+  if (findIndex >= 0) _Renaming_Tags_Paths.splice(findIndex, 1);
+}
+
+export function CheckForTagRenaming(tagPath: string) {
+  const findIndex = _Renaming_Tags_Paths.findIndex(item => item === tagPath);
+  return findIndex >= 0;
+}

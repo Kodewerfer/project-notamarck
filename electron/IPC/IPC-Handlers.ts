@@ -24,8 +24,15 @@ import {
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
-import { RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
-import { GetEditingTag, GetTagCache, GetTagList, SetEditingTag } from '../Data/Tags.ts';
+import { ReadTag, RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
+import {
+  GetEditingTag,
+  GetTagCache,
+  GetTagList,
+  MarkPathForRenaming,
+  RenamingTagComplete,
+  SetEditingTag,
+} from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { GetAllFilteredData, GetLastSearchTargetToken } from '../Data/Seach.ts';
 
@@ -354,42 +361,36 @@ export function RenameFileAndPush(_Event: IpcMainInvokeEvent, OldFilePath: strin
   if (bInOpenedFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
 }
 
+// - Tags
+
 const { CHANGE_TARGET_TAG_NAME } = IPCActions.FILES;
 
 export function RenameTagAndPush(_Event: IpcMainInvokeEvent, OldTagPath: string, NewTagName: string) {
+  MarkPathForRenaming(OldTagPath);
   // check if renaming active file
-  let bInActiveFile = false;
+  let bRenamingEditingTag = false;
   // TODO: active tag
-  if (GetActiveFile()?.fullPath === OldTagPath) {
-    // ReassignActiveFile();
-    // bInActiveFile = true;
+  if (GetEditingTag()?.tagPath === OldTagPath) {
+    bRenamingEditingTag = true;
   }
-  // check if renaming an opened file
-  let bInOpenedFile = false;
-  // TODO: opened tag file
-  // const openedFileRecord = FindInOpenedFilesByFullPath(OldTagPath)[0];
-  // if (openedFileRecord) {
-  //   RemoveOpenedFile(OldTagPath);
-  //   bInOpenedFile = true;
-  // }
 
   try {
-    const newFilePath = RenameTagKeepDup(OldTagPath, NewTagName);
-    // let newOpenedFile;
-    //re-open the file if need be
-    // if (bInOpenedFile) newOpenedFile = ReadMDAndAddToOpenedFile(newFilePath);
-    // if (bInActiveFile && newOpenedFile) ChangeActiveFile(newOpenedFile);
+    const newFilePath = RenameTagKeepDup(OldTagPath, NewTagName); // will be pick up by file monitor and add to map cache
+    // immediately re-read the file and add to editing
+    const newTagInfo = ReadTag(newFilePath);
+    if (bRenamingEditingTag && newTagInfo) SetEditingTag(newTagInfo);
   } catch (e) {
     throw e;
   }
 
-  // const mainWindow = BrowserWindow.fromId(GetAppMainWindowID());
-  // NOTE: file deletion handler in file watcher will also push these
-  // if (bInActiveFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED, GetActiveFile());
-  // if (bInOpenedFile) mainWindow?.webContents.send(IPCActions.DATA.PUSH.OPENED_FILES_CHANGED, GetOpenedFiles());
+  RenamingTagComplete(OldTagPath);
+  // push new editing tag info
+  if (bRenamingEditingTag)
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+      IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
+      GetEditingTag(),
+    );
 }
-
-// - Tags
 
 const { LIST_ALL_TAGS } = IPCActions.FILES; //receiving
 

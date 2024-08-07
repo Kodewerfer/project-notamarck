@@ -1,4 +1,4 @@
-import { createFileRoute, useLayoutEffect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useEffect, useRef, useState } from 'react';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
@@ -11,17 +11,20 @@ import { ESearchTypes, TSearchFilteredData } from 'electron-src/Types/Search.ts'
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/')({
   loader: async () => {
-    return await ListAllTags();
+    return { list: await ListAllTags(), editing: await GetEditingTags() };
   },
+  gcTime: 5,
+  staleTime: 0,
   component: TagList,
 });
 
 function TagList() {
   // use to navigate to tag editing
   const navigate = useNavigate();
-  const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()); //passed down to search bar
-  // for display
-  const [FilteredTagList, setFilteredTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()); //default to the full list
+  const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData().list); //passed down to search bar
+  const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData().editing); //passed down to search bar
+  // for display, in sync with search bar
+  const [FilteredTagList, setFilteredTagList] = useState<TTagsInMemory[]>(Route.useLoaderData().list); //default to the full list
 
   const [selectedTagsPaths, setSelectedTagsPaths] = useState<string[]>([]); //used in styling elements
   const selectedTagsPathRef = useRef<string[]>([]); // copy of the state version, actually used as data package
@@ -89,7 +92,8 @@ function TagList() {
     setTagPathToRename(null);
   }
 
-  useLayoutEffect(() => {
+  // fallback when loader fails
+  useEffect(() => {
     if (TagList) return;
     (async () => {
       setTagList(await ListAllTags());
@@ -98,6 +102,26 @@ function TagList() {
 
   // Bind to data changing events
   useEffect(() => {
+    const unbindTagListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED, async _ => {
+      const TagData = await ListAllTags();
+      setTagList(TagData);
+    });
+
+    // search result update
+    const unbindFilteredTagListingChange = IPCRenderSide.on(
+      IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED,
+      async (_, payload: TSearchFilteredData) => {
+        if (payload.TagList) setFilteredTagList(payload.TagList);
+      },
+    );
+
+    const unbindTagEditingChange = IPCRenderSide.on(
+      IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
+      (_, payload: TTagsInMemory | null) => {
+        setEditingTag(payload);
+      },
+    );
+
     const unbindRenamingTag = IPCRenderSide.on(
       IPCActions.FILES.PUSH.RENAMING_SELECTED_TAG,
       async (_, renameTargetPath) => {
@@ -108,22 +132,11 @@ function TagList() {
       },
     );
 
-    const unbindTagListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED, async _ => {
-      const TagData = await ListAllTags();
-      setTagList(TagData);
-    });
-
-    const unbindFilteredTagListingChange = IPCRenderSide.on(
-      IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED,
-      async (_, payload: TSearchFilteredData) => {
-        if (payload.TagList) setFilteredTagList(payload.TagList);
-      },
-    );
-
     return () => {
       unbindTagListingChange();
-      unbindRenamingTag();
       unbindFilteredTagListingChange();
+      unbindRenamingTag();
+      unbindTagEditingChange();
     };
   }, []);
 
@@ -133,13 +146,13 @@ function TagList() {
         ev.preventDefault();
         ShowTagContextMenu();
       }}
-      className={'TagFrame-root h-full bg-gray-50 px-4 py-8 dark:bg-slate-800'}
+      className={'TagFrame-root h-full bg-gray-50 px-4 py-8 dark:bg-slate-700'}
     >
       {/*all-in-one Search bar component*/}
       <SearchBar
         MDList={null}
         TagsList={TagList}
-        AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-0'}
+        AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'}
         SearchOptions={{ ShowResult: false, LockSearchType: ESearchTypes.Tag, ShowActions: true, DisplayMode: 'block' }}
       />
       {/*Tags grid*/}
@@ -157,7 +170,7 @@ function TagList() {
               className={`relative cursor-default text-ellipsis rounded-xl py-2 pl-4 pr-4 hover:bg-gray-200 dark:text-gray-100 dark:hover:bg-slate-400 ${selectedTagsPaths.includes(tagInfo.tagPath) ? 'bg-gray-300 dark:bg-slate-300' : 'bg-gray-100 dark:bg-slate-600'}`}
             >
               <div className={'flex h-full w-full items-center'}>
-                {selectedTagsPaths.includes(tagInfo.tagPath) ? (
+                {EditingTag && EditingTag.tagPath === tagInfo.tagPath ? (
                   <TagIconSolid className={'z-10 min-w-14 max-w-14'} />
                 ) : (
                   <TagIcon className={'z-10 min-w-14 max-w-14'} />
@@ -210,4 +223,16 @@ async function ListAllTags() {
   }
 
   return AllTags;
+}
+
+async function GetEditingTags(): Promise<TTagsInMemory> {
+  let EditingTag;
+
+  try {
+    EditingTag = await IPCRenderSide.invoke(IPCActions.DATA.GET_EDITING_TAG);
+  } catch (e) {
+    console.log(e);
+  }
+
+  return EditingTag;
 }
