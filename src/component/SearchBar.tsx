@@ -149,7 +149,7 @@ export default function SearchBar({
 
   return (
     <nav
-      className={`light:border-b h-18 relative z-50 w-full px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
+      className={`light:border-b h-18 relative z-50 w-full bg-gray-50 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
       onClick={_ => {
         if (InputRef.current) (InputRef.current as HTMLInputElement).focus();
       }}
@@ -200,13 +200,16 @@ export default function SearchBar({
       {/*  the search result list*/}
       {isSearching && (
         <div
-          className={` ${Options.DisplayMode === 'dropdown' ? 'absolute' : 'block'} left-2 top-14 h-fit max-h-96 w-11/12 cursor-default select-none overflow-y-auto overflow-x-hidden bg-gray-50 px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-lg shadow-xl' : ''} dark:bg-slate-700 dark:text-blue-50`}
+          className={` ${Options.DisplayMode === 'dropdown' ? 'absolute w-11/12' : 'block'} left-2 top-14 h-fit max-h-96 cursor-default select-none overflow-y-auto overflow-x-hidden bg-inherit px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-lg shadow-xl' : ''} dark:text-blue-50`}
           ref={WrapperElementRef}
         >
           {/*additional actions*/}
           {Options.ShowActions && (
             <ul className={'mt-2 cursor-pointer pb-2'}>
-              <li className={`rounded px-4 py-2 hover:bg-blue-100`} onClick={() => CreateNewFile()}>
+              <li
+                className={`rounded px-4 py-2 hover:bg-blue-100 dark:hover:bg-blue-400`}
+                onClick={() => CreateNewFile()}
+              >
                 <span>Create New {searchType || ''} </span>
                 <span className={'font-semibold text-blue-500'}>{searchString || ''}</span>
               </li>
@@ -220,7 +223,7 @@ export default function SearchBar({
                 {filteredMDList.map((item, index) => (
                   <li
                     key={item.path}
-                    className={`flex rounded px-4 py-2 hover:bg-gray-200 ${activeResultIndex === index ? 'bg-gray-100' : ''}`}
+                    className={`flex rounded px-4 py-2 hover:bg-gray-200 dark:hover:bg-slate-600 ${activeResultIndex === index ? 'bg-gray-100 dark:bg-slate-500' : ''}`}
                   >
                     <span className={'grow'}>{path.parse(item.name).name}</span>
                     {/*<span className={'px-6'}>{item.path}</span>*/}
@@ -238,7 +241,7 @@ export default function SearchBar({
                 {filteredTagList.map((item, index) => (
                   <li
                     key={item.tagPath}
-                    className={`flex rounded px-4 py-2 hover:bg-gray-200 ${activeResultIndex === index ? 'bg-gray-100' : ''}`}
+                    className={`flex rounded px-4 py-2 hover:bg-gray-200 dark:hover:bg-slate-600 ${activeResultIndex === index ? 'bg-gray-100 dark:bg-slate-500' : ''}`}
                   >
                     <span className={'pr-3 font-semibold text-gray-600 dark:text-slate-600'}>Tag:</span>
                     <span className={'grow'}>{path.parse(item.tagFileName).name.split('.')[0]}</span>
