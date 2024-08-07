@@ -14,11 +14,18 @@
     "chokidar": "^3.6.0",
     "flexsearch": "^0.7.43",
     "framer-motion": "^11.3.2",
+    "hastscript": "^9.0.0",
     "lodash": "^4.17.21",
     "path-browserify": "^1.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-magic-draft": "link:.yalc/react-magic-draft"
+    "react-magic-draft": "link:.yalc/react-magic-draft",
+    "remark-directive": "^3.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
+    "unist-builder": "^4.0.0",
+    "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
     "@electron/remote": "^2.1.2",

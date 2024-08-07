@@ -217,7 +217,7 @@ export function SearchAndRemoveFromTag(TagFileName: string, FromFilePath: string
       const updatedLine = rawContentLines[lineNum as number].replace(GetFileLinkSyntax(FromFilePath), '');
       rawContentLines[lineNum as number] = updatedLine;
       if (updatedLine.trim() === '') {
-        rawContentLines.splice(lineNum as number);
+        rawContentLines.splice(lineNum as number, 1);
       }
     }
 

@@ -209,7 +209,7 @@ export function SetEditingTagAndPush(_Event: IpcMainInvokeEvent, tagPath: string
   }
 
   SetEditingTag(cachedTag);
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.EDITING_TAG_CHANGED, cachedTag);
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.EDITING_TAG_CHANGED, GetEditingTag());
   return cachedTag;
 }
 
