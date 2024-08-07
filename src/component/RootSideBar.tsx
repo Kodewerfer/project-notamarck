@@ -11,7 +11,7 @@ export function RootSideBar() {
 
   // Event Binding
   useEffect(() => {
-    const unbindOpenedFileChange = IPCRenderSide.on(
+    const unbindTagEditingChange = IPCRenderSide.on(
       IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
       (_, payload: TTagsInMemory | null) => {
         setEditingTag(payload);
@@ -19,7 +19,7 @@ export function RootSideBar() {
     );
 
     return () => {
-      unbindOpenedFileChange();
+      unbindTagEditingChange();
     };
   }, []);
 
@@ -34,24 +34,21 @@ export function RootSideBar() {
     <aside className={'fixed left-0 top-0 z-50 h-full w-14 bg-gray-50 dark:bg-gray-900'}>
       {/*side buttons*/}
       <ul className="relative flex h-full w-14 flex-col align-middle">
-        <li className="is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
+        <li className="group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
           <Link className="block grow pl-1.5" to="/FileFrame/edit">
-            {/* mind the group-[.is-active] */}
-            <ArchiveBoxIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
+            <WalletIcon className="size-10 group-hover:size-10" />
           </Link>
         </li>
-        <li className="is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
+        <li className="group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
           <Link className="block grow pl-1.5" to="/TagFrame">
-            {/* mind the group-[.is-active] */}
-            <WalletIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
+            <ArchiveBoxIcon className="size-10 group-hover:size-10" />
           </Link>
         </li>
         {/*the Tag detail page*/}
         {editingTag && (
-          <li className="is-active group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
+          <li className="group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
             <Link className="block grow pl-1.5" to="/TagFrame/$tagPath" params={{ tagPath: editingTag.tagPath }}>
-              {/* mind the group-[.is-active] */}
-              <TagIcon className="size-8 group-hover:size-10 group-[.is-active]:size-10" />
+              <TagIcon className="size-10 group-hover:size-10" />
             </Link>
           </li>
         )}
@@ -59,7 +56,7 @@ export function RootSideBar() {
         {/*the "setting button"*/}
         <li className="group absolute bottom-0 left-0 flex w-full justify-center py-4 font-semibold dark:text-blue-50">
           <Link className="block grow pl-1.5" to="/settings">
-            <Cog6ToothIcon className={'size-8 group-hover:size-10'} />
+            <Cog6ToothIcon className={'size-10 group-hover:size-10'} />
           </Link>
         </li>
       </ul>

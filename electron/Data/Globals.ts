@@ -14,6 +14,55 @@ export function GetAppMainWindowID() {
 }
 
 /**
+ * the working directory
+ */
+let _Current_Workspace: string = ''; //main process will load or create folder.
+
+let _Recent_Workspaces: string[] = [];
+
+/**
+ * Changes the current working directory of the workspace.
+ *
+ * @param {string} directory - The new working directory.
+ * @returns {string} The old working directory.
+ */
+export function SetCurrentWorkspace(directory: string) {
+  if (path.normalize(directory) === path.normalize(_Current_Workspace)) {
+    console.log('same workspace dir');
+    return null;
+  }
+  let oldWorkspace = _Current_Workspace;
+  _Current_Workspace = String(directory);
+  return oldWorkspace;
+}
+
+export function SyncWorkspaceAndRecents() {
+  let recentPathMap = new Map(_Recent_Workspaces.map(item => [item, true]));
+
+  if (!recentPathMap.get(_Current_Workspace)) return;
+
+  // remove from "recent" if present
+  recentPathMap.delete(_Current_Workspace);
+
+  _Recent_Workspaces = Array.from(recentPathMap, ([key]) => key);
+}
+
+export function GetCurrentWorkspace(): Readonly<string> {
+  return _Current_Workspace;
+}
+
+export function GetRecentWorkspace(): Readonly<string[]> {
+  return [..._Recent_Workspaces];
+}
+
+export function AddToRecentWorkspace(lastestWorkspace: string) {
+  let recentWorkspaceMap = new Map(_Recent_Workspaces.map(item => [item, true]));
+  if (recentWorkspaceMap.get(lastestWorkspace)) return; //duplicated
+  _Recent_Workspaces.push(lastestWorkspace);
+  return [..._Recent_Workspaces];
+}
+
+/**
  * Array, matches the order of tabs in tabframe component
  */
 let _Opened_Files: TFileInMemory[] = [];
@@ -90,55 +139,6 @@ export function ChangeActiveFile(NewTargetFile: TFileInMemory | null) {
   }
   if (!NewTargetFile.fullPath) return;
   _Active_File = Object.assign({}, NewTargetFile);
-}
-
-/**
- * the working directory
- */
-let _Current_Workspace: string = ''; //main process will load or create folder.
-
-let _Recent_Workspaces: string[] = [];
-
-/**
- * Changes the current working directory of the workspace.
- *
- * @param {string} directory - The new working directory.
- * @returns {string} The old working directory.
- */
-export function SetCurrentWorkspace(directory: string) {
-  if (path.normalize(directory) === path.normalize(_Current_Workspace)) {
-    console.log('same workspace dir');
-    return null;
-  }
-  let oldWorkspace = _Current_Workspace;
-  _Current_Workspace = String(directory);
-  return oldWorkspace;
-}
-
-export function SyncWorkspaceAndRecents() {
-  let recentPathMap = new Map(_Recent_Workspaces.map(item => [item, true]));
-
-  if (!recentPathMap.get(_Current_Workspace)) return;
-
-  // remove from "recent" if present
-  recentPathMap.delete(_Current_Workspace);
-
-  _Recent_Workspaces = Array.from(recentPathMap, ([key]) => key);
-}
-
-export function GetCurrentWorkspace(): Readonly<string> {
-  return _Current_Workspace;
-}
-
-export function GetRecentWorkspace(): Readonly<string[]> {
-  return [..._Recent_Workspaces];
-}
-
-export function AddToRecentWorkspace(lastestWorkspace: string) {
-  let recentWorkspaceMap = new Map(_Recent_Workspaces.map(item => [item, true]));
-  if (recentWorkspaceMap.get(lastestWorkspace)) return; //duplicated
-  _Recent_Workspaces.push(lastestWorkspace);
-  return [..._Recent_Workspaces];
 }
 
 /**

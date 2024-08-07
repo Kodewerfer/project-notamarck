@@ -22,6 +22,9 @@ export const Route = createFileRoute('/FileFrame')({
       Tags: await ListAllTags(),
     };
   },
+  gcTime: 0,
+  staleTime: 0,
+  shouldReload: true,
   component: FileFrame,
 });
 

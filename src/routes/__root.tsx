@@ -23,13 +23,21 @@ function RootComponent() {
       opacity: 1,
       x: 0,
     },
+    // initial: {
+    //   opacity: 0,
+    //   x: '100vw',
+    // },
+    // exit: {
+    //   opacity: 0,
+    //   x: '-100vw',
+    // },
     initial: {
       opacity: 0,
-      x: '100vw',
+      x: 0,
     },
     exit: {
       opacity: 0,
-      x: '-100vw',
+      x: 0,
     },
     transition: {
       duration: 0.25,

@@ -9,4 +9,7 @@ export const Route = createFileRoute('/FileFrame/_tabFrame/edit/$filepath')({
     IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, OpenedFile);
     return OpenedFile;
   },
+  gcTime: 0,
+  staleTime: 0,
+  shouldReload: true,
 });
