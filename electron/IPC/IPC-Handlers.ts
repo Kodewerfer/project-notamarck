@@ -7,9 +7,9 @@ import { app, BrowserWindow, dialog } from 'electron';
 import {
   AddToRecentWorkspace,
   ChangeActiveFile,
-  SetCurrentWorkspace,
   FindInOpenedFilesByFullPath,
   GetActiveFile,
+  GetAppMainWindowID,
   GetCurrentWorkspace,
   GetMDFilesList,
   GetOpenedFiles,
@@ -17,14 +17,14 @@ import {
   GetSelectionStatusCache,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
+  SetCurrentWorkspace,
   SetSelectionStatusCache,
   SyncWorkspaceAndRecents,
-  GetAppMainWindowID,
 } from '../Data/Globals.ts';
 import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
-import { ReadTag, RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
+import { ReadTagRaw, RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
 import {
   GetEditingTag,
   GetTagCache,
@@ -35,6 +35,7 @@ import {
 } from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { GetAllFilteredData, GetLastSearchTargetToken } from '../Data/Seach.ts';
+import { TagFileReader } from '../Utils/TagFileConvertor.ts';
 
 /************
  * - APP -
@@ -209,7 +210,10 @@ export function SetEditingTagAndPush(_Event: IpcMainInvokeEvent, tagPath: string
   }
 
   SetEditingTag(cachedTag);
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.EDITING_TAG_CHANGED, GetEditingTag());
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+    IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
+    GetEditingTag(),
+  );
   return cachedTag;
 }
 
@@ -383,7 +387,7 @@ export function RenameTagAndPush(_Event: IpcMainInvokeEvent, OldTagPath: string,
   try {
     const newFilePath = RenameTagKeepDup(OldTagPath, NewTagName); // will be pick up by file monitor and add to map cache
     // immediately re-read the file and add to editing
-    const newTagInfo = ReadTag(newFilePath);
+    const newTagInfo = ReadTagRaw(newFilePath);
     if (bRenamingEditingTag && newTagInfo) SetEditingTag(newTagInfo);
   } catch (e) {
     throw e;
@@ -414,6 +418,20 @@ export function CreateNewTag(_Event: IpcMainInvokeEvent, TagFileName: string) {
   }
 
   SaveTagFileRenameOnDup(TagFileName);
+}
+
+/*****************
+ * - CONVERSION -
+ *****************/
+
+const { CONVERT_TAG_RAW_FROM_NAME } = IPCActions.CONVERSION; //receiving
+// This version of function convert cached tag content using tag's filename as index, to avoid passing around potentially large content
+export function ConvertTagRawFromCache(_Event: IpcMainInvokeEvent, TagFileName: string) {
+  const tagCache = GetTagCache(TagFileName);
+  if (!tagCache || !tagCache.tagContentRaw) return;
+
+  const fileReader = TagFileReader(tagCache.tagContentRaw);
+  return fileReader;
 }
 
 /**
@@ -447,4 +465,5 @@ export const IPCHandlerMappings = [
   { trigger: GET_FILTERED_DATA, handler: ReturnAllFilteredData },
   { trigger: SET_TAG_AS_EDITING, handler: SetEditingTagAndPush },
   { trigger: GET_EDITING_TAG, handler: ReturnEditingTag },
+  { trigger: CONVERT_TAG_RAW_FROM_NAME, handler: ConvertTagRawFromCache },
 ];

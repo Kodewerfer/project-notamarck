@@ -97,7 +97,7 @@ export async function FetchAllTagsAsync() {
   const targetPath = GetTagFolderFullPath();
 
   const dirContent = await fs.promises.readdir(targetPath);
-  const tagList = [];
+  const tagList: TTagsInMemory[] = [];
 
   for (const file of dirContent) {
     const fileStats = await fs.promises.stat(path.join(targetPath, file));
@@ -106,7 +106,7 @@ export async function FetchAllTagsAsync() {
       tagList.push({
         tagFileName: file,
         tagPath: path.join(targetPath, file),
-        tagFileContentRaw: tagFileContentRaw,
+        tagContentRaw: tagFileContentRaw,
       });
     }
   }
@@ -114,32 +114,32 @@ export async function FetchAllTagsAsync() {
   return tagList;
 }
 
-export async function ReadTagAsync(tagPath: string): Promise<TTagsInMemory> {
+export async function ReadTagRawAsync(tagPath: string): Promise<TTagsInMemory> {
   await fs.promises.access(tagPath); // will throw on error;
 
-  const tagFileContentRaw = await fs.promises.readFile(tagPath, 'utf8');
+  const tagContentRaw = await fs.promises.readFile(tagPath, 'utf8');
 
   const baseName = path.basename(tagPath);
 
   return {
     tagFileName: baseName,
     tagPath: tagPath,
-    tagContentRaw: tagFileContentRaw,
+    tagContentRaw: tagContentRaw,
   };
 }
 
 // Sync function to avoid unnecessary concurrency issue, only used internally.
-export function ReadTag(tagPath: string): TTagsInMemory {
+export function ReadTagRaw(tagPath: string): TTagsInMemory {
   if (!fs.existsSync(tagPath)) throw new Error('tagPath does not exist');
 
-  const tagFileContentRaw = fs.readFileSync(tagPath, 'utf8');
+  const tagContentRaw = fs.readFileSync(tagPath, 'utf8');
 
   const baseName = path.basename(tagPath);
 
   return {
     tagFileName: baseName,
     tagPath: tagPath,
-    tagContentRaw: tagFileContentRaw,
+    tagContentRaw: tagContentRaw,
   };
 }
 
@@ -191,7 +191,7 @@ export function SearchAndAppendToTag(TagFileName: string, FromFilePath: string) 
   FromFilePath = path.basename(FromFilePath);
   const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
   try {
-    const tagContent = ReadTag(tagFilePath);
+    const tagContent = ReadTagRaw(tagFilePath);
     const searchResult = SearchTagForLink(tagContent, GetFileLinkSyntax(FromFilePath));
 
     if (searchResult) return;
@@ -207,7 +207,7 @@ export function SearchAndRemoveFromTag(TagFileName: string, FromFilePath: string
   FromFilePath = path.basename(FromFilePath);
   const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
   try {
-    const tagContent = ReadTag(tagFilePath);
+    const tagContent = ReadTagRaw(tagFilePath);
     const searchResult = SearchTagForLink(tagContent, GetFileLinkSyntax(FromFilePath));
 
     if (!searchResult) return;

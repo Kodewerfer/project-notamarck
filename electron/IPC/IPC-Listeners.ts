@@ -15,6 +15,7 @@ import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
 import {
+  SaveTagFileOverrideOnDup,
   SaveTagFileRenameOnDup,
   SearchAndAppendToTag,
   SearchAndRemoveFromTag,
@@ -23,6 +24,8 @@ import {
 } from '../Utils/TagOperations.ts';
 import { GetAllFilteredData, GetLastSearchTargetToken, SetFilteredData, SetSearchTargetToken } from '../Data/Seach.ts';
 import { ESearchTypes, TSearchFilteredData, TSearchTarget } from '../Types/Search.ts';
+import { TagObjectToMD } from '../Utils/TagFileConvertor.ts';
+import { Compatible } from 'unified/lib';
 
 /************
  * - MENU -
@@ -31,6 +34,7 @@ const { SHOW_FILE_OPERATION_MENU } = IPCActions.MENU; //receiving channel
 // Pushing channels: multiple, check code
 function ShowFileOperationMenu(_event: IpcMainEvent, selectedFilesPath: string[]) {
   if (!selectedFilesPath) return;
+  // todo: add "new file" option
   const menu = Menu.buildFromTemplate([
     {
       label: 'Rename',
@@ -190,6 +194,7 @@ function SetFilteredDataAndPush(_event: IpcMainEvent, NewFilteredData: TSearchFi
  * - FILE -
  ************/
 
+// --tags
 const { SYNC_TO_TAG } = IPCActions.FILES; // Receiving
 
 function SyncToTag(_event: IpcMainEvent, targetTag: string, FromFile: string) {
@@ -215,6 +220,13 @@ function RemoveFromTag(_event: IpcMainEvent, targetTag: string, FromFile: string
   SearchAndRemoveFromTag(targetTag, FromFile);
 }
 
+const { UPDATE_TARGET_TAG_CONTENT } = IPCActions.FILES; // Receiving
+function UpdateTagContentAndPush(_event: IpcMainEvent, tagPath: string, Content: Compatible) {
+  if (!Content || !tagPath || tagPath === '') return;
+  const content = TagObjectToMD(Content);
+  if (content) SaveTagFileOverrideOnDup(tagPath, content);
+}
+
 // Bind to ipcMain.handle, one-way communications
 export const IPCListenerMappings = [
   {
@@ -230,4 +242,5 @@ export const IPCListenerMappings = [
   { trigger: SET_FILTERED_DATA, listener: SetFilteredDataAndPush },
   { trigger: SYNC_TO_TAG, listener: SyncToTag },
   { trigger: REMOVE_FROM_TAG, listener: RemoveFromTag },
+  { trigger: UPDATE_TARGET_TAG_CONTENT, listener: UpdateTagContentAndPush },
 ];

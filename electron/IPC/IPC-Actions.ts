@@ -19,6 +19,7 @@ export const IPCActions = {
     SHOW_TAG_OPERATION_MENU: 'MENU:SHOW_TAG_OPERATION_MENU',
   },
   DATA: {
+    //internal data or caching
     //app data
     // Search bar
     SET_NEW_SEARCH_TARGET: 'DATA:SET_NEW_SEARCH_TARGET',
@@ -63,6 +64,7 @@ export const IPCActions = {
     // tags
     LIST_ALL_TAGS: 'FILES:LIST_ALL_TAGS',
     CREATE_NEW_TAG: 'FILES:CREATE_NEW_TAG',
+    UPDATE_TARGET_TAG_CONTENT: 'FILES:UPDATE_TARGET_TAG_CONTENT',
     SYNC_TO_TAG: 'FILES:SYNC_TO_TAGS',
     REMOVE_FROM_TAG: 'FILES:REMOVE_FROM_TAG',
     // Files
@@ -70,7 +72,7 @@ export const IPCActions = {
     READ_MD_FROM_PATH: 'FILES:READ_MD_FROM_PATH',
     // renaming
     CHANGE_TARGET_FILE_NAME: 'FILE:CHANGE_TARGET_FILE_NAME', //generic interface that will be used by renderer
-    CHANGE_TARGET_TAG_NAME: 'FILE:CHANGE_TARGET_TAG_NAME', //generic interface that will be used by renderer
+    CHANGE_TARGET_TAG_NAME: 'FILE:CHANGE_TARGET_TAG_NAME',
     PUSH: {
       RENAMING_TARGET_FILE: 'FILE:RENAMING_TARGET_FILE', //send to renderer along with target file info
       RENAMING_SELECTED_TAG: 'MENU:PUSH:RENAMING_SELECTED_TAG', //push rename target's Path
@@ -80,5 +82,9 @@ export const IPCActions = {
       MD_LIST_CHANGED: 'FILES:SIGNAL:MD_LIST_CHANGED',
       TAG_LIST_CHANGED: 'FILES:SIGNAL:TAG_LIST_CHANGED',
     },
+  },
+  CONVERSION: {
+    //
+    CONVERT_TAG_RAW_FROM_NAME: 'CONVERSION:CONVERT_TAG_RAW_FROM_NAME',
   },
 };

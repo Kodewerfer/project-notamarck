@@ -1,5 +1,5 @@
 import chokidar, { FSWatcher } from 'chokidar';
-import { GetTagFolderFullPath, ReadTagAsync } from '../Utils/TagOperations.ts';
+import { GetTagFolderFullPath, ReadTagRawAsync } from '../Utils/TagOperations.ts';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { Stats } from 'node:fs';
 import { BrowserWindow } from 'electron';
@@ -7,6 +7,7 @@ import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { CheckForTagRenaming, GetEditingTag, RemoveFromTagMap, SetEditingTag, SetTagMap } from '../Data/Tags.ts';
 import path from 'node:path';
 import { GetAppMainWindowID } from '../Data/Globals.ts';
+import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 
 let TagsWatcher: FSWatcher;
 
@@ -30,7 +31,7 @@ export default function StartTagsWatcher() {
 async function addNewTagToCache(tagPath: string, _: Stats | undefined) {
   let NewTagData;
   try {
-    NewTagData = await ReadTagAsync(tagPath);
+    NewTagData = await ReadTagRawAsync(tagPath);
   } catch (e) {
     ShowErrorAlert('File Access Error', (e as Error)?.message);
     return;
@@ -56,16 +57,19 @@ async function removeTagFromCache(tagPath: string, _: Stats | undefined) {
 }
 
 async function ReloadTagContent(tagPath: string, _: Stats | undefined) {
-  let ChangedData;
+  let ChangedTag;
   try {
-    ChangedData = await ReadTagAsync(tagPath);
+    ChangedTag = await ReadTagRawAsync(tagPath);
   } catch (e) {
     ShowErrorAlert('File Access Error', (e as Error)?.message);
     return;
   }
 
-  SetTagMap(ChangedData);
+  SetTagMap(ChangedTag);
 
   //
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.DATA.PUSH.TAG_CONTENT_CHANGED, ChangedData);
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+    IPCActions.DATA.PUSH.TAG_CONTENT_CHANGED,
+    ChangedTag as TTagsInMemory,
+  );
 }
