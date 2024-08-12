@@ -8,7 +8,7 @@ import {
   SetOpenFiles,
   UpdateOpenedFile,
 } from '../Data/Globals.ts';
-import { BrowserWindow, Menu } from 'electron';
+import { BrowserWindow, Menu, Notification } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { UnlinkFile } from '../Utils/FileOperations.ts';
 import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
@@ -26,6 +26,21 @@ import { GetAllFilteredData, GetLastSearchTargetToken, SetFilteredData, SetSearc
 import { ESearchTypes, TSearchFilteredData, TSearchTarget } from '../Types/Search.ts';
 import { TagObjectToMD } from '../Utils/TagFileConvertor.ts';
 import { Compatible } from 'unified/lib';
+
+/*******************
+ * - NOTIFICATION -
+ *******************/
+
+const { SHOW_NOTIFICATION } = IPCActions.NOTIFICATION; //receiving channel
+// Pushing channels: multiple, check code
+
+function SendNotification(_event: IpcMainEvent, title: string, body: string) {
+  if (!title) return;
+  new Notification({
+    title: title,
+    body: body || '',
+  }).show();
+}
 
 /************
  * - MENU -
@@ -190,6 +205,28 @@ function SetFilteredDataAndPush(_event: IpcMainEvent, NewFilteredData: TSearchFi
   _event.sender.send(IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED, GetAllFilteredData());
 }
 
+/****************
+ * - EDITOR_MD -
+ ****************/
+
+const { INSERT_FILE_LINK } = IPCActions.EDITOR_MD; // Receiving
+
+const fileLinkSyntax = (target: string) => `:Link[${target}]`;
+
+function InsertLinkToCurrentEditorTab(_event: IpcMainEvent, InsertDataSource: any) {
+  if (!InsertDataSource) return;
+  let LinkTarget = '';
+  if (InsertDataSource.tagPath) {
+    // tag
+    LinkTarget = InsertDataSource.tagFileName;
+  } else {
+    // Main folder md files
+    LinkTarget = InsertDataSource.name;
+  }
+
+  _event.sender.send(IPCActions.EDITOR_MD.PUSH.TEXT_INSERT_REQUEST, fileLinkSyntax(LinkTarget));
+}
+
 /************
  * - FILE -
  ************/
@@ -198,6 +235,7 @@ function SetFilteredDataAndPush(_event: IpcMainEvent, NewFilteredData: TSearchFi
 const { SYNC_TO_TAG } = IPCActions.FILES; // Receiving
 
 function SyncToTag(_event: IpcMainEvent, targetTag: string, FromFile: string) {
+  if (!targetTag.includes('.tag')) return; //not a link to tag
   try {
     ValidateTag(targetTag);
   } catch (e) {
@@ -243,4 +281,6 @@ export const IPCListenerMappings = [
   { trigger: SYNC_TO_TAG, listener: SyncToTag },
   { trigger: REMOVE_FROM_TAG, listener: RemoveFromTag },
   { trigger: UPDATE_TARGET_TAG_CONTENT, listener: UpdateTagContentAndPush },
+  { trigger: INSERT_FILE_LINK, listener: InsertLinkToCurrentEditorTab },
+  { trigger: SHOW_NOTIFICATION, listener: SendNotification },
 ];

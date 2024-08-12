@@ -134,7 +134,7 @@ export default function SearchBar({
       });
     }
     // setSearchString('');
-    // setIsSearching(false);
+    setIsSearching(false);
   }
 
   function ActiveResultSelection(ctrlPressed: boolean = false) {
@@ -142,7 +142,10 @@ export default function SearchBar({
     const tagSource = DataSourceMap.get(searchType);
     if (!tagSource) return;
     const tagSourceElement = tagSource[activeResultIndex];
-    console.log(tagSourceElement, 'ctrl key:', ctrlPressed);
+    // single click/enter without holding ctrl, insert to current editor
+    if (ctrlPressed) IPCRenderSide.send(IPCActions.EDITOR_MD.INSERT_FILE_LINK, tagSourceElement);
+    // console.log(tagSourceElement, 'ctrl key:', ctrlPressed);
+    setIsSearching(false);
   }
 
   function ArrowKeyNavigation(Arrowkey: 'up' | 'down') {
@@ -248,7 +251,7 @@ export default function SearchBar({
                       <kbd className="rounded-lg border border-gray-200 bg-gray-100 px-2 py-1.5 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">
                         Ctrl
                       </kbd>{' '}
-                      to open
+                      to Link
                     </span>
                   </li>
                 ))}
@@ -275,7 +278,7 @@ export default function SearchBar({
                       <kbd className="rounded-lg border border-gray-200 bg-gray-100 px-2 py-1.5 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">
                         Ctrl
                       </kbd>{' '}
-                      to open
+                      to Link
                     </span>
                   </li>
                 ))}

@@ -44,7 +44,7 @@ export default function TabFrame() {
     })();
   }, []);
 
-  // ini the selected tab, set to the first tab if non-exist
+  // init the selected tab, set to the first tab if non-exist
   useEffect(() => {
     (async () => {
       if (SelectedTab || !Tabs || !Tabs.length) return;
@@ -115,10 +115,34 @@ export default function TabFrame() {
       },
     );
 
+    // after getting request of text insert to the current tab
+    const unbindEditorTextInsert = IPCRenderSide.on(
+      IPCActions.EDITOR_MD.PUSH.TEXT_INSERT_REQUEST,
+      (_, payload: string) => {
+        if (payload.trim() === '') return;
+        if (!SelectedTab) {
+          IPCRenderSide.send(IPCActions.NOTIFICATION.SHOW_NOTIFICATION, 'Cannot Insert Text', 'No editing file');
+          return;
+        }
+        // prevent self referencing
+        if (payload.includes(SelectedTab.filename)) {
+          IPCRenderSide.send(
+            IPCActions.NOTIFICATION.SHOW_NOTIFICATION,
+            'Cannot Insert File Link',
+            "File link can't link to self.",
+          );
+          return;
+        }
+        console.log(payload);
+        MDEditorRef.current?.InsertText(payload);
+      },
+    );
+
     return () => {
       unbindOpenedFileChange();
       unbindFileContentChange();
       unbindFileActivationChange();
+      unbindEditorTextInsert();
     };
   });
 
