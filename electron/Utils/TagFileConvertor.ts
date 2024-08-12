@@ -3,8 +3,7 @@ import { visit } from 'unist-util-visit';
 import { u } from 'unist-builder';
 import { remove } from 'unist-util-remove';
 import { toMarkdown } from 'mdast-util-to-markdown';
-import { directiveFromMarkdown, directiveToMarkdown } from 'mdast-util-directive';
-import remarkStringify from 'remark-stringify';
+import { directiveToMarkdown } from 'mdast-util-directive';
 import _ from 'lodash';
 
 import remarkParse from 'remark-parse';

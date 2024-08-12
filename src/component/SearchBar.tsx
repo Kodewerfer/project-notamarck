@@ -137,6 +137,14 @@ export default function SearchBar({
     // setIsSearching(false);
   }
 
+  function ActiveResultSelection(ctrlPressed: boolean = false) {
+    if (!searchType) return;
+    const tagSource = DataSourceMap.get(searchType);
+    if (!tagSource) return;
+    const tagSourceElement = tagSource[activeResultIndex];
+    console.log(tagSourceElement, 'ctrl key:', ctrlPressed);
+  }
+
   function ArrowKeyNavigation(Arrowkey: 'up' | 'down') {
     if (!searchType) return;
     const activeDataSet = DataSourceMap.get(searchType);
@@ -165,6 +173,11 @@ export default function SearchBar({
           onKeyUp={ev => {
             if (ev.key === 'ArrowUp') ArrowKeyNavigation('up');
             if (ev.key === 'ArrowDown') ArrowKeyNavigation('down');
+            if (ev.key === 'Escape') setIsSearching(false);
+            if (ev.key === 'Enter') {
+              if (!isSearching) return setIsSearching(true);
+              ActiveResultSelection(ev.ctrlKey);
+            }
           }}
           onChange={ev => {
             let inputValue = ev.target.value;
@@ -223,11 +236,20 @@ export default function SearchBar({
                 {filteredMDList.map((item, index) => (
                   <li
                     key={item.path}
-                    className={`flex rounded px-4 py-2 hover:bg-gray-200 dark:hover:bg-slate-600 ${activeResultIndex === index ? 'bg-gray-100 dark:bg-slate-500' : ''}`}
+                    onMouseEnter={() => setActiveResultIndex(index)}
+                    onMouseDown={() => setActiveResultIndex(index)}
+                    onMouseUp={ev => ActiveResultSelection(ev.ctrlKey)}
+                    className={`flex rounded px-4 py-2 ${activeResultIndex === index ? 'bg-gray-200 dark:bg-slate-500' : ''}`}
                   >
                     <span className={'grow'}>{path.parse(item.name).name}</span>
                     {/*<span className={'px-6'}>{item.path}</span>*/}
-                    <span className={'px-6'}>TODO:Operations</span>
+                    <span className={`px-6 sm:hidden ${activeResultIndex !== index ? 'hidden' : 'md:block'}`}>
+                      hold{' '}
+                      <kbd className="rounded-lg border border-gray-200 bg-gray-100 px-2 py-1.5 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">
+                        Ctrl
+                      </kbd>{' '}
+                      to open
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -241,11 +263,20 @@ export default function SearchBar({
                 {filteredTagList.map((item, index) => (
                   <li
                     key={item.tagPath}
-                    className={`flex rounded px-4 py-2 hover:bg-gray-200 dark:hover:bg-slate-600 ${activeResultIndex === index ? 'bg-gray-100 dark:bg-slate-500' : ''}`}
+                    onMouseEnter={() => setActiveResultIndex(index)}
+                    onMouseDown={() => setActiveResultIndex(index)}
+                    onMouseUp={ev => ActiveResultSelection(ev.ctrlKey)}
+                    className={`flex rounded px-4 py-2 ${activeResultIndex === index ? 'bg-gray-200 dark:bg-slate-500' : ''}`}
                   >
                     <span className={'pr-3 font-semibold text-gray-600 dark:text-slate-600'}>Tag:</span>
                     <span className={'grow'}>{path.parse(item.tagFileName).name.split('.')[0]}</span>
-                    <span className={'px-6'}>TODO:Operations</span>
+                    <span className={`px-6 sm:hidden ${activeResultIndex !== index ? 'hidden' : 'md:block'}`}>
+                      hold{' '}
+                      <kbd className="rounded-lg border border-gray-200 bg-gray-100 px-2 py-1.5 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">
+                        Ctrl
+                      </kbd>{' '}
+                      to open
+                    </span>
                   </li>
                 ))}
               </ul>

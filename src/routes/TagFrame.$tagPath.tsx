@@ -2,7 +2,7 @@ import { createFileRoute, Navigate } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
-import { AnimatePresence, Reorder, useAnimation, useDragControls } from 'framer-motion';
+import { Reorder, useAnimation, useDragControls } from 'framer-motion';
 import { Parent } from 'unist';
 import { u } from 'unist-builder';
 import { XMarkIcon } from '@heroicons/react/16/solid';
