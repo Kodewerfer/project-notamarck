@@ -30,6 +30,7 @@ export const IPCActions = {
     SET_FILTERED_DATA: 'DATA:SET_FILTERED_DATA',
     GET_FILTERED_DATA: 'DATA:GET_FILTERED_DATA',
     // opened files
+    CHECK_IN_OPENED_FILE: 'DATA:CHECK_IN_OPENED_FILE', //check to see if a path is still in opened files
     GET_ALL_OPENED_FILES: 'DATA:GET_ALL_OPENED_FILES',
     SET_OPENED_FILES: 'DATA:SET_OPENED_FILES', //DANGER, mainly used to reset the order of items
     PUSH_ALL_OPENED_FILES: 'DATA:PUSH_ALL_OPENED_FILES', //like the previous one but push to all listening component in the renderer
@@ -83,6 +84,8 @@ export const IPCActions = {
     // renaming
     CHANGE_TARGET_FILE_NAME: 'FILE:CHANGE_TARGET_FILE_NAME', //generic interface that will be used by renderer
     CHANGE_TARGET_TAG_NAME: 'FILE:CHANGE_TARGET_TAG_NAME',
+    // saving
+    CHANGE_TARGET_FILE_CONTENT: 'FILE:CHANGE_TARGET_FILE_CONTENT',
     PUSH: {
       RENAMING_TARGET_FILE: 'FILE:RENAMING_TARGET_FILE', //send to renderer along with target file info
       RENAMING_SELECTED_TAG: 'MENU:PUSH:RENAMING_SELECTED_TAG', //push rename target's Path

@@ -121,6 +121,7 @@ export function ShowDialogMessage(_Event: IpcMainInvokeEvent, Message: MessageBo
 /************
  * - DATA -
  ************/
+
 const { GET_LAST_SEARCH_TARGET } = IPCActions.DATA;
 
 export function ReturnLastSearchToken() {
@@ -132,6 +133,15 @@ const { GET_FILTERED_DATA } = IPCActions.DATA;
 
 export function ReturnAllFilteredData() {
   return GetAllFilteredData();
+}
+
+//
+const { CHECK_IN_OPENED_FILE } = IPCActions.DATA;
+
+export function CheckIfPathInOpenedFile(_Event: IpcMainInvokeEvent, FileFullPath: string) {
+  const targetFileResults = FindInOpenedFilesByFullPath(FileFullPath);
+  if (!targetFileResults || !Array.isArray(targetFileResults)) return false;
+  return targetFileResults.length > 0;
 }
 
 // Close an opened file or an array
@@ -466,4 +476,5 @@ export const IPCHandlerMappings = [
   { trigger: SET_TAG_AS_EDITING, handler: SetEditingTagAndPush },
   { trigger: GET_EDITING_TAG, handler: ReturnEditingTag },
   { trigger: CONVERT_TAG_RAW_FROM_NAME, handler: ConvertTagRawFromCache },
+  { trigger: CHECK_IN_OPENED_FILE, handler: CheckIfPathInOpenedFile },
 ];

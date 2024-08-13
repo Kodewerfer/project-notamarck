@@ -43,6 +43,24 @@ export function SaveContentToFileRenameOnDup(FileFullName: string, FileContent?:
 }
 
 /**
+ * Saves content to a file and renames the file if it already exists.
+ *
+ * @param {string} FileFullName - The full name (including path) of the file to save the content to.
+ * @param {string} [FileContent] - The content to be written to the file. If not provided, an empty string will be written.
+ *
+ * @throws {Error} Throws an error if there was an issue writing to the file.
+ */
+export function SaveContentToFileOverrideOnDup(FileFullName: string, FileContent?: string) {
+  fs.accessSync(FileFullName);
+
+  try {
+    fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Error writing to file ${FileFullName}, ${e}`);
+  }
+}
+
+/**
  * Renames a file while keeping any duplicate files if encountered.
  *
  * @param {string} OldFullPath - The full path of the file to be renamed.

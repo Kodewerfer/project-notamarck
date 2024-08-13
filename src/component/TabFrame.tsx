@@ -217,8 +217,18 @@ export default function TabFrame() {
 
     // save file content
     const extractedMdData = await extractedData?.mdData;
-    if (extractedMdData !== undefined && extractedMdData !== null)
+    if (!extractedMdData) return;
+
+    // still in opened files
+    if (await IPCRenderSide.invoke(IPCActions.DATA.CHECK_IN_OPENED_FILE, extractedData.fullPath)) {
       IPCRenderSide.send(IPCActions.DATA.UPDATE_OPENED_FILE_CONTENT, extractedData.fullPath, extractedMdData);
+      return;
+    }
+    // dealing with the situation when closing down the active file,
+    // closing action happens first before the newest content can be extracted
+    // file is already closed, save the latest content to file again.
+
+    IPCRenderSide.send(IPCActions.FILES.CHANGE_TARGET_FILE_CONTENT, extractedData.fullPath, extractedMdData); //generic fs API
   };
 
   return (

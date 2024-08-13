@@ -10,7 +10,7 @@ import {
 } from '../Data/Globals.ts';
 import { BrowserWindow, Menu, Notification } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
-import { UnlinkFile } from '../Utils/FileOperations.ts';
+import { SaveContentToFileOverrideOnDup, UnlinkFile } from '../Utils/FileOperations.ts';
 import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
@@ -26,6 +26,7 @@ import { GetAllFilteredData, GetLastSearchTargetToken, SetFilteredData, SetSearc
 import { ESearchTypes, TSearchFilteredData, TSearchTarget } from '../Types/Search.ts';
 import { TagObjectToMD } from '../Utils/TagFileConvertor.ts';
 import { Compatible } from 'unified/lib';
+import path from 'node:path';
 
 /*******************
  * - NOTIFICATION -
@@ -231,6 +232,23 @@ function InsertLinkToCurrentEditorTab(_event: IpcMainEvent, InsertDataSource: an
  * - FILE -
  ************/
 
+// --Files
+const { CHANGE_TARGET_FILE_CONTENT } = IPCActions.FILES; // Receiving
+
+function UpdateTargetFileOverrideOnDup(_event: IpcMainEvent, FileFullPath: string, FileContent: string) {
+  try {
+    path.resolve(FileFullPath);
+  } catch (e) {
+    ShowErrorAlert((e as Error).message);
+  }
+
+  try {
+    SaveContentToFileOverrideOnDup(FileFullPath, FileContent);
+  } catch (e) {
+    ShowErrorAlert((e as Error).message);
+  }
+}
+
 // --tags
 const { SYNC_TO_TAG } = IPCActions.FILES; // Receiving
 
@@ -283,4 +301,5 @@ export const IPCListenerMappings = [
   { trigger: UPDATE_TARGET_TAG_CONTENT, listener: UpdateTagContentAndPush },
   { trigger: INSERT_FILE_LINK, listener: InsertLinkToCurrentEditorTab },
   { trigger: SHOW_NOTIFICATION, listener: SendNotification },
+  { trigger: CHANGE_TARGET_FILE_CONTENT, listener: UpdateTargetFileOverrideOnDup },
 ];
