@@ -267,6 +267,7 @@ function SyncToTag(_event: IpcMainEvent, targetTag: string, FromFile: string) {
 const { REMOVE_FROM_TAG } = IPCActions.FILES; // Receiving
 
 function RemoveFromTag(_event: IpcMainEvent, targetTag: string, FromFile: string) {
+  if (!targetTag.includes('.tag')) return; //not a link to tag
   try {
     ValidateTag(targetTag);
   } catch (e) {

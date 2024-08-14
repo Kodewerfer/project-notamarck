@@ -32,6 +32,9 @@ const MarkdownEditor = forwardRef(
   ) => {
     const EditorRef = useRef<TEditorForwardRef>(null);
 
+    // cached caret position before FocusOut, or from SetSelection.
+    const selectionStatusCacheRef = useRef<TSelectionStatus | null | undefined>(null);
+
     useImperativeHandle(ref, () => {
       return {
         ExtractMD: async () => {
@@ -52,13 +55,38 @@ const MarkdownEditor = forwardRef(
             return;
           }
 
+          // cache
+          selectionStatusCacheRef.current = SelectionStatus as TSelectionStatus;
+          //
           if (EditorRef.current) return EditorRef.current.SetCaretData(SelectionStatus as TSelectionStatus);
         },
         InsertText: (TextContent: string, syncAfter: boolean = true) => {
-          if (EditorRef.current) return EditorRef.current.InsertText(TextContent, syncAfter);
+          if (!EditorRef.current) return;
+          const editor = EditorRef.current.GetDOM().editor;
+          if (!editor) return;
+
+          const cachedSelection = selectionStatusCacheRef.current;
+          if (editor !== document.activeElement && cachedSelection) {
+            EditorRef.current!.SetCaretData(cachedSelection, true);
+          }
+          EditorRef.current.InsertText(TextContent, syncAfter);
         },
       };
     });
+
+    // cache the caret position each time before focusout, this is so that InsertText can insert to correct location
+    useEffect(() => {
+      function CacheCaretPosition() {
+        console.warn('FOCUSOUT');
+        selectionStatusCacheRef.current = EditorRef.current?.ExtractCaretData();
+      }
+
+      EditorRef.current?.GetDOM()?.editor?.addEventListener('focusout', CacheCaretPosition);
+
+      return () => {
+        EditorRef.current?.GetDOM()?.editor?.removeEventListener('focusout', CacheCaretPosition);
+      };
+    }, []);
 
     // run parent passed functions, also pass info the parent before unmounting
     useLayoutEffect(() => {
@@ -77,6 +105,7 @@ const MarkdownEditor = forwardRef(
       };
     }, []);
 
+    // On mount callback
     useEffect(() => {
       (async () => {
         if (typeof onEditorMounted === 'function') await onEditorMounted();

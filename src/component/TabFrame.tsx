@@ -133,7 +133,6 @@ export default function TabFrame() {
           );
           return;
         }
-        console.log(payload);
         MDEditorRef.current?.InsertText(payload);
       },
     );
