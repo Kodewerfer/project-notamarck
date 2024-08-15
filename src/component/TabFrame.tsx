@@ -43,7 +43,7 @@ export default function TabFrame() {
       if (Array.isArray(AllOpenedFiles) && Tabs.length === 0) setTabs(AllOpenedFiles);
     })();
   }, []);
-
+  
   // init the selected tab, set to the first tab if non-exist
   useEffect(() => {
     (async () => {

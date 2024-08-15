@@ -1,11 +1,12 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLayoutEffect } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import path from 'path-browserify';
 import { TMDFile } from 'electron-src/Types/Files.ts';
 import { ESearchTypes, TSearchFilteredData, TSearchTarget } from 'electron-src/Types/Search.ts';
+import FlexSearch from 'flexsearch';
 
 const { IPCRenderSide } = window;
 
@@ -44,14 +45,48 @@ export default function SearchBar({
   const [searchString, setSearchString] = useState('');
   const [placeHolderText, setPlaceHolderText] = useState('Search');
   const [searchType, setSearchType] = useState<ESearchTypes | null>(
-    Options.LockSearchType ? Options.LockSearchType : ESearchTypes.Content,
+    Options.LockSearchType ? Options.LockSearchType : ESearchTypes.File,
+  );
+
+  const FilterFileLists = useCallback(
+    (targetList: TMDFile[] | TTagsInMemory[] | null | undefined, searchTerm: string) => {
+      if (!targetList || !Array.isArray(targetList)) return [];
+      if (searchTerm.trim() === '') return targetList;
+
+      const ListFileterer = new FlexSearch.Document({
+        tokenize: 'full',
+        cache: 100,
+        document: {
+          id: '',
+          index: ['name', 'tagFileName'], // fields to index
+          store: Object.keys(targetList[0]), // fields to store
+        },
+      });
+
+      for (let i = 0; i < targetList.length; i++) {
+        ListFileterer.add(i, targetList[i]);
+      }
+
+      const SearchResult = ListFileterer.search(searchTerm);
+      let FilteredArray = [];
+      if (Array.isArray(SearchResult) && SearchResult[0] && Array.isArray(SearchResult[0].result)) {
+        for (let indexNum of SearchResult[0].result) {
+          FilteredArray.push(targetList[indexNum as number]);
+        }
+      }
+
+      return FilteredArray;
+    },
+    [],
   );
 
   const DataSourceMap = useMemo(
     () =>
       new Map<ESearchTypes, any[]>([
-        [ESearchTypes.File, MDList?.filter(item => item.name.startsWith(searchString)) || []],
-        [ESearchTypes.Tag, TagsList?.filter(item => item.tagFileName.startsWith(searchString)) || []],
+        // [ESearchTypes.File, MDList?.filter(item => item.name.startsWith(searchString)) || []],
+        [ESearchTypes.File, FilterFileLists(MDList, searchString)],
+        // [ESearchTypes.Tag, TagsList?.filter(item => item.tagFileName.startsWith(searchString)) || []],
+        [ESearchTypes.Tag, FilterFileLists(TagsList, searchString)],
       ]),
     [MDList, TagsList, searchString],
   );
@@ -218,7 +253,7 @@ export default function SearchBar({
       {/*  the search result list for files and tags*/}
       {isSearching && searchType !== ESearchTypes.Content && (
         <div
-          className={` ${Options.DisplayMode === 'dropdown' ? 'absolute w-11/12' : 'block'} left-2 top-14 h-fit max-h-96 cursor-default select-none overflow-y-auto overflow-x-hidden bg-inherit px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-lg shadow-xl' : ''} dark:text-blue-50`}
+          className={` ${Options.DisplayMode === 'dropdown' ? 'absolute w-11/12' : 'block'} left-2 top-14 h-fit max-h-96 cursor-default select-none overflow-y-auto overflow-x-hidden bg-inherit px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-b-lg shadow-xl' : ''} dark:text-blue-50`}
           ref={ResultListRef}
         >
           {/*additional actions*/}
