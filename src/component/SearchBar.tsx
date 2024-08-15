@@ -29,7 +29,8 @@ export default function SearchBar({
 }) {
   const [isSearching, setIsSearching] = useState(false);
   const InputRef = useRef(null);
-  const WrapperElementRef = useRef<HTMLDivElement | null>(null);
+  const ResultListRef = useRef<HTMLDivElement | null>(null);
+  const ContentActionsRef = useRef<HTMLDivElement | null>(null);
 
   // Merge "default options" and the parent passed options
   const Options: TSearchOptions = {
@@ -43,7 +44,7 @@ export default function SearchBar({
   const [searchString, setSearchString] = useState('');
   const [placeHolderText, setPlaceHolderText] = useState('Search');
   const [searchType, setSearchType] = useState<ESearchTypes | null>(
-    Options.LockSearchType ? Options.LockSearchType : ESearchTypes.File,
+    Options.LockSearchType ? Options.LockSearchType : ESearchTypes.Content,
   );
 
   const DataSourceMap = useMemo(
@@ -70,7 +71,8 @@ export default function SearchBar({
   function CloseSearch(ev: HTMLElementEventMap['click']) {
     if (
       ev.target === InputRef.current ||
-      (WrapperElementRef.current && WrapperElementRef.current.contains(ev.target as Node))
+      (ResultListRef.current && ResultListRef.current.contains(ev.target as Node)) ||
+      (ContentActionsRef.current && ContentActionsRef.current.contains(ev.target as Node))
     )
       return;
     setIsSearching(false);
@@ -213,11 +215,11 @@ export default function SearchBar({
           {searchType ? searchType : ''}:
         </label>
       </section>
-      {/*  the search result list*/}
-      {isSearching && (
+      {/*  the search result list for files and tags*/}
+      {isSearching && searchType !== ESearchTypes.Content && (
         <div
           className={` ${Options.DisplayMode === 'dropdown' ? 'absolute w-11/12' : 'block'} left-2 top-14 h-fit max-h-96 cursor-default select-none overflow-y-auto overflow-x-hidden bg-inherit px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-lg shadow-xl' : ''} dark:text-blue-50`}
-          ref={WrapperElementRef}
+          ref={ResultListRef}
         >
           {/*additional actions*/}
           {Options.ShowActions && (
@@ -285,6 +287,14 @@ export default function SearchBar({
               </ul>
             </>
           )}
+        </div>
+      )}
+      {isSearching && searchType === ESearchTypes.Content && (
+        <div
+          ref={ContentActionsRef}
+          className={`flex h-12 cursor-default select-none flex-row overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
+        >
+          <div>Result:</div>
         </div>
       )}
     </nav>

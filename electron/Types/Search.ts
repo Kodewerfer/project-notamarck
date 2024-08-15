@@ -2,6 +2,7 @@ import { TMDFile } from './Files.ts';
 import { TTagsInMemory } from './Tags.ts';
 
 export enum ESearchTypes {
+  Content="Content",
   File = 'File',
   Tag = 'Tag',
 }
