@@ -111,7 +111,7 @@ export default function SearchBar({
 
   const filteredContentLines = useMemo(() => {
     if (!contentNodeExtraction.current || !contentNodeExtraction.current.length) return [];
-    if (!searchString || searchString.trim() === '') return [...Object.keys(contentNodeExtraction)]; // no search string, return all the index, indicating that all children are valid result.
+    if (!searchString || searchString.trim() === '') return []; //meaningless result
 
     const TextContentIndexer = new FlexSearch.Index('performance');
     for (let index = 0; index < contentNodeExtraction.current.length; index++) {
@@ -119,9 +119,8 @@ export default function SearchBar({
     }
 
     const searchResult = TextContentIndexer.search(searchString);
-    console.log(searchResult);
     return searchResult as number[];
-  }, [searchString]);
+  }, [searchString, contentNodeExtraction.current]);
 
   // when FileContent prop changes, convert it to a usable format async
   useEffect(() => {
@@ -172,22 +171,22 @@ export default function SearchBar({
     };
   }, []);
 
-  // Send the filtered list data to main process
+  // use the callback, send the filtered data to parent.
   useEffect(() => {
     if (!SearchCallbacks) return;
 
-    if (typeof SearchCallbacks.MdList === 'function') {
+    if (typeof SearchCallbacks.MdList === 'function' && searchType === ESearchTypes.File) {
       SearchCallbacks.MdList(filteredMDList);
     }
 
-    if (typeof SearchCallbacks.TagList === 'function') {
+    if (typeof SearchCallbacks.TagList === 'function' && searchType === ESearchTypes.Tag) {
       SearchCallbacks.TagList(filteredTagList);
     }
 
-    if (typeof SearchCallbacks.Content === 'function') {
-      // SearchCallbacks.Content(filteredContentLines);
+    if (typeof SearchCallbacks.Content === 'function' && searchType === ESearchTypes.Content) {
+      SearchCallbacks.Content(filteredContentLines);
     }
-  }, [searchString, TagsList, MDList, FileContent]);
+  }, [searchString, TagsList, MDList, FileContent, contentNodeExtraction.current]);
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {
@@ -395,9 +394,15 @@ export default function SearchBar({
       {isSearching && searchType === ESearchTypes.Content && (
         <div
           ref={ContentActionsRef}
-          className={`flex h-12 cursor-default select-none flex-row overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
+          className={`flex h-12 w-full cursor-default select-none flex-row overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
         >
-          <div>Result:</div>
+          <div>
+            <span className={'text-sm font-semibold'}>Result: </span>
+            <span className={'text-sm font-semibold'}> {filteredContentLines.length} </span>
+          </div>
+          {/*spacer*/}
+          <div className={"grow"}></div>
+          {filteredContentLines.length > 0 && <div className={""}>Move to:</div>}
         </div>
       )}
     </nav>

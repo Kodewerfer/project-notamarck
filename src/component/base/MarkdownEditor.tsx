@@ -4,6 +4,7 @@ import Editor, { TEditorForwardRef } from 'react-magic-draft';
 import { TSelectionStatus } from 'react-magic-draft/dist/hooks/useEditorDaemon';
 
 export type TEditorComponentRef = {
+  GetDOM: () => { root: HTMLElement | null; editor: HTMLElement | null; mask: HTMLElement | null } | null;
   ExtractMD: () => Promise<string>;
   ExtractSelection: () => Object | null | undefined;
   SetSelection: (SelectionStatus: Object) => void;
@@ -42,6 +43,10 @@ const MarkdownEditor = forwardRef(
 
     useImperativeHandle(ref, () => {
       return {
+        GetDOM: () => {
+          if (!EditorRef.current) return null;
+          return EditorRef.current.GetDOM();
+        },
         ExtractMD: async () => {
           if (EditorRef.current) return await EditorRef.current.ExtractMD();
           return Promise.resolve('');

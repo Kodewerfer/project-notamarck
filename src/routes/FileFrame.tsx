@@ -5,7 +5,7 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 
 import { FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
-import MainFrameContext from '@/context/MainFrameContext.ts';
+import { ScrollableElementContext } from '@/context/MainFrameContext.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
 import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
@@ -32,9 +32,12 @@ function FileFrame() {
   const navigate = useNavigate();
 
   const [currentFolder, setCurrentFolder] = useState('');
+
   const [MDFiles, setMDFiles] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
   const [TagList, setTagList] = useState<TTagsInMemory[] | null | undefined>(Route.useLoaderData()?.Tags);
+
   const [ActiveFileContent, setActiveFileContent] = useState<string>('');
+
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 
@@ -278,7 +281,14 @@ function FileFrame() {
         {/*Main editor area*/}
         <div className="flex h-full w-full flex-col dark:bg-slate-200">
           {/*all-in-one Search bar component*/}
-          <SearchBar MDList={MDFiles} TagsList={TagList} FileContent={ActiveFileContent} />
+          <SearchBar
+            MDList={MDFiles}
+            TagsList={TagList}
+            FileContent={ActiveFileContent}
+            SearchCallbacks={{
+              Content: result => IPCRenderSide.send(IPCActions.EDITOR_MD.SET_CONTENT_SEARCH_RESULT, result),
+            }}
+          />
           {/*the main display area*/}
           <div
             ref={ScrollAreaRef}
@@ -286,9 +296,9 @@ function FileFrame() {
               'mainframe-display h-full w-full overflow-auto scroll-smooth focus:scroll-auto dark:bg-slate-600 dark:text-blue-50'
             }
           >
-            <MainFrameContext.Provider value={ScrollAreaRef}>
+            <ScrollableElementContext.Provider value={ScrollAreaRef}>
               <Outlet />
-            </MainFrameContext.Provider>
+            </ScrollableElementContext.Provider>
           </div>
         </div>
       </div>

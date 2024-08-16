@@ -1,12 +1,14 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import { useLayoutEffect } from '@tanstack/react-router';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
-import MainFrameContext from '@/context/MainFrameContext.ts';
+import { ScrollableElementContext } from '@/context/MainFrameContext';
 import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
 import { TChangedFilesPayload } from 'electron-src/Types/IPC.ts';
+import _ from 'lodash';
+
+import './css/TabFrame.css';
 
 // Identifying info a tab holds, in addition to fs related props, add selection cache
 export type TTabItems = TFileInMemory & {
@@ -19,11 +21,13 @@ export default function TabFrame() {
   // NOTE: active tab/SelectedTab is not fetched from main, when the frame init and tabs has data, SelectedTab will be the first in order and send to main
   const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null);
 
+  const lastSearchResultElements = useRef<HTMLElement[] | null>(null);
+
   const MDEditorRef = useRef<TEditorComponentRef | null>(null);
   const TabBarRef = useRef<HTMLElement | null>(null);
 
   // Passed down from main frame context
-  const mainFrameScrollable = useContext(MainFrameContext);
+  const mainFrameScrollable = useContext(ScrollableElementContext);
 
   // Old implementation, saving for reference todo: remove later
   // extract editor's content then send it to main process, mainly used when SelectedTab changed
@@ -36,8 +40,36 @@ export default function TabFrame() {
   //   );
   // }
 
+  // Handles the content search result, debounced to avoid excessive function calls
+  const contentSearchHandler = useCallback(
+    _.debounce((payload: number[]) => {
+      if (!Array.isArray(payload)) return;
+
+      const editorDOM = MDEditorRef.current?.GetDOM()?.editor;
+      if (!editorDOM || !editorDOM.children) return;
+
+      let resultLines: HTMLElement[] = [];
+      payload.forEach(lineNumber => {
+        resultLines.push(editorDOM.children[lineNumber] as HTMLElement);
+      });
+
+      // remove the result effect from last time
+      lastSearchResultElements.current?.forEach(lastResult => {
+        lastResult.classList.remove('search-result');
+      });
+
+      lastSearchResultElements.current = [...resultLines];
+
+      // add result effect
+      resultLines.forEach(resultElement => {
+        resultElement.classList.add('search-result');
+      });
+    }, 500),
+    [], // Add any dependencies here
+  );
+
   // init component
-  useLayoutEffect(() => {
+  useEffect(() => {
     (async () => {
       const AllOpenedFiles: TTabItems[] = await IPCRenderSide.invoke(IPCActions.DATA.GET_ALL_OPENED_FILES);
       if (Array.isArray(AllOpenedFiles) && Tabs.length === 0) setTabs(AllOpenedFiles);
@@ -67,7 +99,16 @@ export default function TabFrame() {
   }, [Tabs]);
 
   // Critical: Bind to main process' push events, sync tab's data to main
-  useLayoutEffect(() => {
+  useEffect(() => {
+    // when new search result arrives, new result is received in fileframe, then pushed through main
+    const unbindSearchResultChanged = IPCRenderSide.on(
+      IPCActions.EDITOR_MD.PUSH.NEW_CONTENT_SEARCH_RESULT,
+      (_, payload: number[]) => {
+        if (!payload || !Array.isArray(payload)) return;
+        contentSearchHandler(payload);
+      },
+    );
+
     // whenever a new file is opened/closed on main
     const unbindOpenedFileChange = IPCRenderSide.on(
       IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
@@ -138,6 +179,7 @@ export default function TabFrame() {
     );
 
     return () => {
+      unbindSearchResultChanged();
       unbindOpenedFileChange();
       unbindFileContentChange();
       unbindFileActivationChange();

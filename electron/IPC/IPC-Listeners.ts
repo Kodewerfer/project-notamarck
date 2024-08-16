@@ -55,6 +55,17 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFilesPath: string[]
   // todo: add "new file" option
   const menu = Menu.buildFromTemplate([
     {
+      label: 'New File',
+      click: () => {
+        const NewFileSearch: TSearchTarget = {
+          placeHolder: 'New File',
+          searchType: ESearchTypes.File,
+        };
+        SetNewSearchAndPush(_event, NewFileSearch);
+      },
+    },
+    { type: 'separator' },
+    {
       label: 'Rename',
       enabled: selectedFilesPath.length > 0,
       click: () => {
@@ -209,9 +220,15 @@ function SetNewSearchAndPush(_event: IpcMainEvent, NewSearch: TSearchTarget) {
 /****************
  * - EDITOR_MD -
  ****************/
+const { SET_CONTENT_SEARCH_RESULT } = IPCActions.EDITOR_MD; // Receiving
+
+// A simple server forwarding for result so that component structure won't matter
+function PushNewContentSearchResult(_event: IpcMainEvent, newSearchResult: number[]) {
+  _event.sender.send(IPCActions.EDITOR_MD.PUSH.NEW_CONTENT_SEARCH_RESULT, newSearchResult);
+}
 
 const { INSERT_FILE_LINK } = IPCActions.EDITOR_MD; // Receiving
-
+// md syntax for the
 const fileLinkSyntax = (target: string) => `:Link[${target}]`;
 
 function InsertLinkToCurrentEditorTab(_event: IpcMainEvent, InsertDataSource: any) {
@@ -303,4 +320,5 @@ export const IPCListenerMappings = [
   { trigger: SHOW_NOTIFICATION, listener: SendNotification },
   { trigger: CHANGE_TARGET_FILE_CONTENT, listener: UpdateTargetFileOverrideOnDup },
   { trigger: SET_ACTIVE_FILE_CONTENT, listener: ChangeActiveFileContentAndPush },
+  { trigger: SET_CONTENT_SEARCH_RESULT, listener: PushNewContentSearchResult },
 ];
