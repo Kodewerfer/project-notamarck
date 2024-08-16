@@ -20,11 +20,13 @@ export type TSearchOptions = {
 export default function SearchBar({
   MDList,
   TagsList,
+  FileContent,
   AdditionalClasses,
   SearchOptions,
 }: {
   MDList?: TMDFile[] | null;
   TagsList?: TTagsInMemory[] | null;
+  FileContent?: string;
   AdditionalClasses?: string;
   SearchOptions?: Partial<TSearchOptions>;
 }) {
@@ -48,7 +50,8 @@ export default function SearchBar({
     Options.LockSearchType ? Options.LockSearchType : ESearchTypes.File,
   );
 
-  const FilterFileLists = useCallback(
+  // Use flex search to properly filter list datas, tokenize is set to full so that filenames can be fuzzy searched
+  const FilterListData = useCallback(
     (targetList: TMDFile[] | TTagsInMemory[] | null | undefined, searchTerm: string) => {
       if (!targetList || !Array.isArray(targetList)) return [];
       if (searchTerm.trim() === '') return targetList;
@@ -84,23 +87,92 @@ export default function SearchBar({
     () =>
       new Map<ESearchTypes, any[]>([
         // [ESearchTypes.File, MDList?.filter(item => item.name.startsWith(searchString)) || []],
-        [ESearchTypes.File, FilterFileLists(MDList, searchString)],
+        [ESearchTypes.File, FilterListData(MDList, searchString)],
         // [ESearchTypes.Tag, TagsList?.filter(item => item.tagFileName.startsWith(searchString)) || []],
-        [ESearchTypes.Tag, FilterFileLists(TagsList, searchString)],
+        [ESearchTypes.Tag, FilterListData(TagsList, searchString)],
       ]),
-    [MDList, TagsList, searchString],
+    [MDList, TagsList, searchString, FilterListData],
   );
   // shortcuts
   const filteredMDList = DataSourceMap.get(ESearchTypes.File) as TMDFile[];
   const filteredTagList = DataSourceMap.get(ESearchTypes.Tag) as TTagsInMemory[];
 
-  // Arrow keys navigated index
+  // Stores the pure text content from each lines of the editor DOM
+  // each index represent a top-level child element(like p or ul) from the original content
+  const contentNodeExtraction = useRef<string[]>([]);
+
+  const filteredContentLines = useMemo(() => {
+    if (!contentNodeExtraction.current || !contentNodeExtraction.current.length) return [];
+    if (!searchString || searchString.trim() === '') return [...Object.keys(contentNodeExtraction)]; // no search string, return all the index, indicating that all children are valid result.
+
+    const TextContentIndexer = new FlexSearch.Index('performance');
+    for (let index = 0; index < contentNodeExtraction.current.length; index++) {
+      TextContentIndexer.add(index, contentNodeExtraction.current[index]);
+    }
+
+    const searchResult = TextContentIndexer.search(searchString);
+    console.log(searchResult);
+    return searchResult;
+  }, [searchString]);
+
+  // when FileContent prop changes, convert it to a usable format async
+  useEffect(() => {
+    // first reset the ref
+    contentNodeExtraction.current = [];
+    // convert html string to Dom elements
+    if (!FileContent || FileContent.trim() === '') return;
+    const template = document.createElement('template');
+    template.innerHTML = FileContent;
+    // console.warn('New content', template.content);
+    if (!template.content || !template.content.children.length) return;
+
+    const LinesOfContent = Array.from(template.content.children);
+
+    // Extract all text nodes, but keep them in an array identical to the original
+    LinesOfContent.forEach(line => {
+      const walker = document.createTreeWalker(
+        line,
+        NodeFilter.SHOW_TEXT,
+        null, // No filter function
+      );
+
+      let currentNode;
+      let currentTextNodesResult = '';
+      while ((currentNode = walker.nextNode())) {
+        if (currentNode.textContent && currentNode.textContent.trim() !== '')
+          currentTextNodesResult += currentNode.textContent + ' ';
+      }
+      contentNodeExtraction.current.push(currentTextNodesResult);
+    });
+  }, [FileContent]);
+
+  // the high lighted search result for list items, this is used in arrow key navigation as well as mouse hover selection
   const [activeResultIndex, setActiveResultIndex] = useState(0);
 
-  // reset the index when data or state changes
+  // bind to main process push BEGIN_NEW_SEARCH, happens when there is search initiated from outside(like file adding menu)
   useEffect(() => {
-    setActiveResultIndex(0);
-  }, [MDList, TagsList, isSearching]);
+    const UnbindEvent = IPCRenderSide.on(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, (_, searchPayload) => {
+      if (!searchPayload) return console.warn('Search bar: Received empty payload');
+      setPlaceHolderText((searchPayload as TSearchTarget).placeHolder || '');
+      setIsSearching(true);
+      if (!Options.LockSearchType) setSearchType((searchPayload as TSearchTarget).searchType || null);
+      if (InputRef.current) (InputRef.current as HTMLInputElement).focus();
+    });
+
+    return () => {
+      UnbindEvent();
+    };
+  }, []);
+
+  // Send the filtered list data to main process
+  useEffect(() => {
+    const newData: TSearchFilteredData = {
+      MDList: filteredMDList,
+      TagList: filteredTagList,
+    };
+
+    IPCRenderSide.send(IPCActions.DATA.SET_FILTERED_DATA, newData);
+  }, [searchString, TagsList, MDList]);
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {
@@ -113,26 +185,12 @@ export default function SearchBar({
     setIsSearching(false);
   }
 
+  // bind to click event to close the search result
   useLayoutEffect(() => {
     document.addEventListener('click', CloseSearch);
 
     return () => {
       document.removeEventListener('click', CloseSearch);
-    };
-  }, []);
-
-  // bind to main process push
-  useEffect(() => {
-    const UnbindEvent = IPCRenderSide.on(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, (_, searchPayload) => {
-      if (!searchPayload) return console.warn('Search bar: Received empty payload');
-      setPlaceHolderText((searchPayload as TSearchTarget).placeHolder || '');
-      setIsSearching(true);
-      setSearchType((searchPayload as TSearchTarget).searchType || null);
-      if (InputRef.current) (InputRef.current as HTMLInputElement).focus();
-    });
-
-    return () => {
-      UnbindEvent();
     };
   }, []);
 
@@ -142,15 +200,10 @@ export default function SearchBar({
     setPlaceHolderText('Search');
   }, [isSearching]);
 
-  // Send the filtered data to main process
+  // reset the index when data or state changes
   useEffect(() => {
-    const newData: TSearchFilteredData = {
-      MDList: filteredMDList,
-      TagList: filteredTagList,
-    };
-
-    IPCRenderSide.send(IPCActions.DATA.SET_FILTERED_DATA, newData);
-  }, [searchString, TagsList, MDList]);
+    setActiveResultIndex(0);
+  }, [MDList, TagsList, isSearching]);
 
   // create new file
   async function CreateNewFile() {

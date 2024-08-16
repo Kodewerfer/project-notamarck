@@ -43,7 +43,7 @@ export default function TabFrame() {
       if (Array.isArray(AllOpenedFiles) && Tabs.length === 0) setTabs(AllOpenedFiles);
     })();
   }, []);
-  
+
   // init the selected tab, set to the first tab if non-exist
   useEffect(() => {
     (async () => {
@@ -269,6 +269,12 @@ export default function TabFrame() {
                 MDSource={SelectedTab.content || ''}
                 onEditorMounted={onSubEditorMounted}
                 onEditorUnmounted={onSubEditorUnmounted}
+                EditorCallBacks={{
+                  OnInit: SourceHTMLString =>
+                    IPCRenderSide.send(IPCActions.DATA.SET_ACTIVE_FILE_CONTENT, SourceHTMLString),
+                  OnReload: SourceHTMLString =>
+                    IPCRenderSide.send(IPCActions.DATA.SET_ACTIVE_FILE_CONTENT, SourceHTMLString),
+                }}
                 FileLinks={{
                   removeCallback: linkTarget => {
                     IPCRenderSide.send(IPCActions.FILES.REMOVE_FROM_TAG, linkTarget, SelectedTab?.fullPath);

@@ -46,6 +46,8 @@ export const IPCActions = {
     // active file
     CHANGE_ACTIVE_FILE: 'DATA:CHANGE_ACTIVE_FILE',
     GET_ACTIVE_FILE: 'DATA:GET_ACTIVE_FILE',
+    SET_ACTIVE_FILE_CONTENT: 'DATA:SET_ACTIVE_FILE_CONTENT', // after editor is loaded with a file, cache it's HTML string content for searching
+    GET_ACTIVE_FILE_CONTENT: 'DATA:GET_ACTIVE_FILE_CONTENT', // after editor is loaded with a file, cache it's HTML string content for searching
     // saving
     SAVE_ACTIVE_FILE: 'DATA:SAVE_ACTIVE_FILE',
     SAVE_ALL_OPENED_FILES: 'DATA:SAVE_ALL_OPENED_FILES',
@@ -53,6 +55,7 @@ export const IPCActions = {
     // Deleting - currently no IPC interface, only context memu
     PUSH: {
       ACTIVE_FILE_CHANGED: 'DATA:PUSH:ACTIVE_FILE_CHANGED', //push the current active file
+      ACTIVE_FILE_CONTENT_CHANGED: 'DATA:PUSH:ACTIVE_FILE_CONTENT_CHANGED', //push the current active file
       OPENED_FILE_CONTENT_CHANGED: 'DATA:PUSH:OPENED_FILE_CONTENT_CHANGED', //push payload in TChangedFilesPayload
       OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, pushes all opened files in TFileInMemory
       BEGIN_NEW_SEARCH: 'DATA:PUSH:FOCUS_SEARCH_BAR', // push the target type for search bar

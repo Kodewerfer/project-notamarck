@@ -17,12 +17,17 @@ const MarkdownEditor = forwardRef(
       MDSource,
       onEditorUnmounted,
       onEditorMounted,
+      EditorCallBacks,
       FileLinks,
     }: {
       fullPath: string; //used as an id when passing up data to parent
       MDSource: string;
       onEditorMounted?: () => Promise<void> | void;
       onEditorUnmounted?: (extractedData: Object) => Promise<void> | void;
+      EditorCallBacks?: {
+        OnInit?: (SourceHTMLString: string) => void;
+        OnReload?: (SourceHTMLString: string) => void;
+      };
       FileLinks?: {
         initCallback?: (linkTarget: string) => void | Promise<void>;
         removeCallback?: (linkTarget: string) => void | Promise<void>;
@@ -77,7 +82,6 @@ const MarkdownEditor = forwardRef(
     // cache the caret position each time before focusout, this is so that InsertText can insert to correct location
     useEffect(() => {
       function CacheCaretPosition() {
-        console.warn('FOCUSOUT');
         selectionStatusCacheRef.current = EditorRef.current?.ExtractCaretData();
       }
 
@@ -117,6 +121,11 @@ const MarkdownEditor = forwardRef(
         <Editor
           SourceData={MDSource}
           ref={EditorRef}
+          DaemonShouldLog={false}
+          EditorCallBacks={{
+            OnInit: EditorCallBacks?.OnInit,
+            OnReload: EditorCallBacks?.OnReload,
+          }}
           ComponentCallbacks={{
             FileLinks: FileLinks,
           }}

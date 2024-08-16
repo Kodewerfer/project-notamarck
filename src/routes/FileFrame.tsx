@@ -34,6 +34,7 @@ function FileFrame() {
   const [currentFolder, setCurrentFolder] = useState('');
   const [MDFiles, setMDFiles] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
   const [TagList, setTagList] = useState<TTagsInMemory[] | null | undefined>(Route.useLoaderData()?.Tags);
+  const [ActiveFileContent, setActiveFileContent] = useState<string>('');
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
 
@@ -58,6 +59,9 @@ function FileFrame() {
       // fetch tags
       const allTags = await ListAllTags();
       setTagList(allTags);
+
+      const FileContent = await IPCRenderSide.invoke(IPCActions.DATA.GET_ACTIVE_FILE_CONTENT);
+      setActiveFileContent(FileContent);
     })();
   }, []);
 
@@ -86,11 +90,20 @@ function FileFrame() {
       setTagList(tagData);
     });
 
+    // file content changed in editor
+    const unbindActiveFileContentChange = IPCRenderSide.on(
+      IPCActions.DATA.PUSH.ACTIVE_FILE_CONTENT_CHANGED,
+      (_, payload: string) => {
+        setActiveFileContent(payload);
+      },
+    );
+
     return () => {
       unbindFileActivationChange();
       unbindMDListingChange();
       unbindRenamingFile();
       unbindTagListingChange();
+      unbindActiveFileContentChange();
     };
   }, []);
 
@@ -265,7 +278,7 @@ function FileFrame() {
         {/*Main editor area*/}
         <div className="flex h-full w-full flex-col dark:bg-slate-200">
           {/*all-in-one Search bar component*/}
-          <SearchBar MDList={MDFiles} TagsList={TagList} />
+          <SearchBar MDList={MDFiles} TagsList={TagList} FileContent={ActiveFileContent} />
           {/*the main display area*/}
           <div
             ref={ScrollAreaRef}

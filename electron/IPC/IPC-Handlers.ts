@@ -9,6 +9,7 @@ import {
   ChangeActiveFile,
   FindInOpenedFilesByFullPath,
   GetActiveFile,
+  GetActiveFileContent,
   GetAppMainWindowID,
   GetCurrentWorkspace,
   GetMDFilesList,
@@ -250,6 +251,12 @@ export function ReturnCurrentActiveFile(_Event: IpcMainInvokeEvent) {
   return GetActiveFile();
 }
 
+const { GET_ACTIVE_FILE_CONTENT } = IPCActions.DATA;
+
+export function ReturnCurrentActiveFileContent(_Event: IpcMainInvokeEvent) {
+  return GetActiveFileContent();
+}
+
 // Save the current active file, return true or false, can throw
 const { SAVE_ACTIVE_FILE } = IPCActions.DATA;
 
@@ -477,4 +484,5 @@ export const IPCHandlerMappings = [
   { trigger: GET_EDITING_TAG, handler: ReturnEditingTag },
   { trigger: CONVERT_TAG_RAW_FROM_NAME, handler: ConvertTagRawFromCache },
   { trigger: CHECK_IN_OPENED_FILE, handler: CheckIfPathInOpenedFile },
+  { trigger: GET_ACTIVE_FILE_CONTENT, handler: ReturnCurrentActiveFileContent },
 ];

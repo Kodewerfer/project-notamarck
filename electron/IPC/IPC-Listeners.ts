@@ -4,7 +4,9 @@ import {
   ChangeActiveFile,
   FindInOpenedFilesByFullPath,
   GetActiveFile,
+  GetActiveFileContent,
   GetOpenedFiles,
+  SetActiveFileContent,
   SetOpenFiles,
   UpdateOpenedFile,
 } from '../Data/Globals.ts';
@@ -139,6 +141,14 @@ function ShowTagOperationMenu(_event: IpcMainEvent, selectedTagsPath: string[]) 
 /************
  * - DATA -
  ************/
+
+const { SET_ACTIVE_FILE_CONTENT } = IPCActions.DATA; //receiving channel
+
+function ChangeActiveFileContentAndPush(_event: IpcMainEvent, newContent: string) {
+  SetActiveFileContent(newContent);
+
+  _event.sender.send(IPCActions.DATA.PUSH.ACTIVE_FILE_CONTENT_CHANGED, GetActiveFileContent());
+}
 
 const { PUSH_ALL_OPENED_FILES } = IPCActions.DATA; //receiving channel
 
@@ -303,4 +313,5 @@ export const IPCListenerMappings = [
   { trigger: INSERT_FILE_LINK, listener: InsertLinkToCurrentEditorTab },
   { trigger: SHOW_NOTIFICATION, listener: SendNotification },
   { trigger: CHANGE_TARGET_FILE_CONTENT, listener: UpdateTargetFileOverrideOnDup },
+  { trigger: SET_ACTIVE_FILE_CONTENT, listener: ChangeActiveFileContentAndPush },
 ];

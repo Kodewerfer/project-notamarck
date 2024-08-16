@@ -146,6 +146,17 @@ export function ChangeActiveFile(NewTargetFile: TFileInMemory | null) {
   _Active_File = Object.assign({}, NewTargetFile);
 }
 
+// the HTML string for the current active content, it will be updated when editor opened up a new file
+let _Active_File_Content: string = '';
+
+export function SetActiveFileContent(newContent: string) {
+  _Active_File_Content = newContent;
+}
+
+export function GetActiveFileContent() {
+  return _Active_File_Content;
+}
+
 /**
  * Cached caret positions
  */
