@@ -6,7 +6,7 @@ import { TagIcon } from '@heroicons/react/24/outline';
 import { TagIcon as TagIconSolid } from '@heroicons/react/24/solid';
 import path from 'path-browserify';
 import SearchBar from 'component/SearchBar.tsx';
-import { ESearchTypes, TSearchFilteredData } from 'electron-src/Types/Search.ts';
+import { ESearchTypes } from 'electron-src/Types/Search.ts';
 
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/')({
@@ -107,14 +107,6 @@ function TagList() {
       setTagList(TagData);
     });
 
-    // search result update
-    const unbindFilteredTagListingChange = IPCRenderSide.on(
-      IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED,
-      async (_, payload: TSearchFilteredData) => {
-        if (payload.TagList) setFilteredTagList(payload.TagList);
-      },
-    );
-
     const unbindTagEditingChange = IPCRenderSide.on(
       IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
       (_, payload: TTagsInMemory | null) => {
@@ -134,7 +126,6 @@ function TagList() {
 
     return () => {
       unbindTagListingChange();
-      unbindFilteredTagListingChange();
       unbindRenamingTag();
       unbindTagEditingChange();
     };
@@ -151,6 +142,9 @@ function TagList() {
       {/*all-in-one Search bar component*/}
       <SearchBar
         MDList={null}
+        SearchCallbacks={{
+          TagList: result => setFilteredTagList(result),
+        }}
         TagsList={TagList}
         AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'}
         SearchOptions={{ ShowResult: false, LockSearchType: ESearchTypes.Tag, ShowActions: true, DisplayMode: 'block' }}

@@ -35,7 +35,7 @@ import {
   SetEditingTag,
 } from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
-import { GetAllFilteredData, GetLastSearchTargetToken } from '../Data/Seach.ts';
+import { GetLastSearchTargetToken } from '../Data/Seach.ts';
 import { TagFileReader } from '../Utils/TagFileConvertor.ts';
 
 /************
@@ -107,10 +107,9 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
 const { SHOW_SELECTION_DIR } = IPCActions.DIALOG;
 
 export function ShowDialogDIR(_Event: IpcMainInvokeEvent) {
-  const dialogReturn = dialog.showOpenDialogSync({
+  return dialog.showOpenDialogSync({
     properties: ['openDirectory'],
   });
-  return dialogReturn;
 }
 
 const { SHOW_MESSAGE_DIALOG } = IPCActions.DIALOG;
@@ -128,12 +127,6 @@ const { GET_LAST_SEARCH_TARGET } = IPCActions.DATA;
 export function ReturnLastSearchToken() {
   //unused for now
   return GetLastSearchTargetToken();
-}
-
-const { GET_FILTERED_DATA } = IPCActions.DATA;
-
-export function ReturnAllFilteredData() {
-  return GetAllFilteredData();
 }
 
 //
@@ -447,8 +440,7 @@ export function ConvertTagRawFromCache(_Event: IpcMainInvokeEvent, TagFileName: 
   const tagCache = GetTagCache(TagFileName);
   if (!tagCache || !tagCache.tagContentRaw) return;
 
-  const fileReader = TagFileReader(tagCache.tagContentRaw);
-  return fileReader;
+  return TagFileReader(tagCache.tagContentRaw);
 }
 
 /**
@@ -479,7 +471,6 @@ export const IPCHandlerMappings = [
   { trigger: LIST_ALL_TAGS, handler: ReturnAllTags },
   { trigger: CHANGE_TARGET_TAG_NAME, handler: RenameTagAndPush },
   { trigger: GET_LAST_SEARCH_TARGET, handler: ReturnLastSearchToken },
-  { trigger: GET_FILTERED_DATA, handler: ReturnAllFilteredData },
   { trigger: SET_TAG_AS_EDITING, handler: SetEditingTagAndPush },
   { trigger: GET_EDITING_TAG, handler: ReturnEditingTag },
   { trigger: CONVERT_TAG_RAW_FROM_NAME, handler: ConvertTagRawFromCache },

@@ -27,8 +27,6 @@ export const IPCActions = {
     // Search bar
     SET_NEW_SEARCH_TARGET: 'DATA:SET_NEW_SEARCH_TARGET',
     GET_LAST_SEARCH_TARGET: 'DATA:GET_LAST_SEARCH_TARGET', //unused for now
-    SET_FILTERED_DATA: 'DATA:SET_FILTERED_DATA',
-    GET_FILTERED_DATA: 'DATA:GET_FILTERED_DATA',
     // opened files
     CHECK_IN_OPENED_FILE: 'DATA:CHECK_IN_OPENED_FILE', //check to see if a path is still in opened files
     GET_ALL_OPENED_FILES: 'DATA:GET_ALL_OPENED_FILES',
@@ -59,7 +57,6 @@ export const IPCActions = {
       OPENED_FILE_CONTENT_CHANGED: 'DATA:PUSH:OPENED_FILE_CONTENT_CHANGED', //push payload in TChangedFilesPayload
       OPENED_FILES_CHANGED: 'DATA:PUSH:OPENED_FILES_CHANGED', // main to rendered, pushes all opened files in TFileInMemory
       BEGIN_NEW_SEARCH: 'DATA:PUSH:FOCUS_SEARCH_BAR', // push the target type for search bar
-      FILTERED_DATA_CHANGED: 'DATA:FILTERED_DATA_CHANGED', //push all filtered data
       TAG_CONTENT_CHANGED: 'DATA:TAG_CONTENT_CHANGED', //push the changed tag as TTagsInMemory
       EDITING_TAG_CHANGED: 'DATA:EDITING_TAG_CHANGED', //push TTagsInMemory or null
     },

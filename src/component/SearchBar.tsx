@@ -5,7 +5,7 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import path from 'path-browserify';
 import { TMDFile } from 'electron-src/Types/Files.ts';
-import { ESearchTypes, TSearchFilteredData, TSearchTarget } from 'electron-src/Types/Search.ts';
+import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
 import FlexSearch from 'flexsearch';
 
 const { IPCRenderSide } = window;
@@ -17,16 +17,24 @@ export type TSearchOptions = {
   LockSearchType?: ESearchTypes | null;
 };
 
+export type TSearchCallbacks = {
+  MdList?: (Result: TMDFile[]) => void;
+  TagList?: (Result: TTagsInMemory[]) => void;
+  Content?: (Result: number[]) => void;
+};
+
 export default function SearchBar({
   MDList,
   TagsList,
   FileContent,
+  SearchCallbacks,
   AdditionalClasses,
   SearchOptions,
 }: {
   MDList?: TMDFile[] | null;
   TagsList?: TTagsInMemory[] | null;
   FileContent?: string;
+  SearchCallbacks?: TSearchCallbacks;
   AdditionalClasses?: string;
   SearchOptions?: Partial<TSearchOptions>;
 }) {
@@ -112,7 +120,7 @@ export default function SearchBar({
 
     const searchResult = TextContentIndexer.search(searchString);
     console.log(searchResult);
-    return searchResult;
+    return searchResult as number[];
   }, [searchString]);
 
   // when FileContent prop changes, convert it to a usable format async
@@ -166,13 +174,20 @@ export default function SearchBar({
 
   // Send the filtered list data to main process
   useEffect(() => {
-    const newData: TSearchFilteredData = {
-      MDList: filteredMDList,
-      TagList: filteredTagList,
-    };
+    if (!SearchCallbacks) return;
 
-    IPCRenderSide.send(IPCActions.DATA.SET_FILTERED_DATA, newData);
-  }, [searchString, TagsList, MDList]);
+    if (typeof SearchCallbacks.MdList === 'function') {
+      SearchCallbacks.MdList(filteredMDList);
+    }
+
+    if (typeof SearchCallbacks.TagList === 'function') {
+      SearchCallbacks.TagList(filteredTagList);
+    }
+
+    if (typeof SearchCallbacks.Content === 'function') {
+      // SearchCallbacks.Content(filteredContentLines);
+    }
+  }, [searchString, TagsList, MDList, FileContent]);
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {

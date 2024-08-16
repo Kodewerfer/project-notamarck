@@ -24,8 +24,8 @@ import {
   UnlinkTag,
   ValidateTag,
 } from '../Utils/TagOperations.ts';
-import { GetAllFilteredData, GetLastSearchTargetToken, SetFilteredData, SetSearchTargetToken } from '../Data/Seach.ts';
-import { ESearchTypes, TSearchFilteredData, TSearchTarget } from '../Types/Search.ts';
+import { GetLastSearchTargetToken, SetSearchTargetToken } from '../Data/Seach.ts';
+import { ESearchTypes, TSearchTarget } from '../Types/Search.ts';
 import { TagObjectToMD } from '../Utils/TagFileConvertor.ts';
 import { Compatible } from 'unified/lib';
 import path from 'node:path';
@@ -206,16 +206,6 @@ function SetNewSearchAndPush(_event: IpcMainEvent, NewSearch: TSearchTarget) {
   _event.sender.send(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, GetLastSearchTargetToken());
 }
 
-const { SET_FILTERED_DATA } = IPCActions.DATA; // Receiving
-
-function SetFilteredDataAndPush(_event: IpcMainEvent, NewFilteredData: TSearchFilteredData) {
-  if (!NewFilteredData) return;
-
-  SetFilteredData(NewFilteredData);
-
-  _event.sender.send(IPCActions.DATA.PUSH.FILTERED_DATA_CHANGED, GetAllFilteredData());
-}
-
 /****************
  * - EDITOR_MD -
  ****************/
@@ -306,7 +296,6 @@ export const IPCListenerMappings = [
   { trigger: SHOW_FILE_OPERATION_MENU, listener: ShowFileOperationMenu },
   { trigger: SET_NEW_SEARCH_TARGET, listener: SetNewSearchAndPush },
   { trigger: SHOW_TAG_OPERATION_MENU, listener: ShowTagOperationMenu },
-  { trigger: SET_FILTERED_DATA, listener: SetFilteredDataAndPush },
   { trigger: SYNC_TO_TAG, listener: SyncToTag },
   { trigger: REMOVE_FROM_TAG, listener: RemoveFromTag },
   { trigger: UPDATE_TARGET_TAG_CONTENT, listener: UpdateTagContentAndPush },
