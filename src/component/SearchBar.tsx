@@ -7,6 +7,8 @@ import path from 'path-browserify';
 import { TMDFile } from 'electron-src/Types/Files.ts';
 import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
 import FlexSearch from 'flexsearch';
+import { ArrowLeftIcon } from '@heroicons/react/20/solid';
+import { ArrowRightIcon } from '@heroicons/react/16/solid';
 
 const { IPCRenderSide } = window;
 
@@ -39,9 +41,11 @@ export default function SearchBar({
   SearchOptions?: Partial<TSearchOptions>;
 }) {
   const [isSearching, setIsSearching] = useState(false);
-  const InputRef = useRef(null);
-  const ResultListRef = useRef<HTMLDivElement | null>(null);
-  const ContentActionsRef = useRef<HTMLDivElement | null>(null);
+  const SearchInputRef = useRef(null);
+
+  // result refs
+  const ListResultRef = useRef<HTMLDivElement | null>(null);
+  const ContentResultRef = useRef<HTMLDivElement | null>(null);
 
   // Merge "default options" and the parent passed options
   const Options: TSearchOptions = {
@@ -52,6 +56,7 @@ export default function SearchBar({
     ...SearchOptions,
   };
 
+  // Key search params
   const [searchString, setSearchString] = useState('');
   const [placeHolderText, setPlaceHolderText] = useState('Search');
   const [searchType, setSearchType] = useState<ESearchTypes | null>(
@@ -109,7 +114,8 @@ export default function SearchBar({
   // each index represent a top-level child element(like p or ul) from the original content
   const contentNodeExtraction = useRef<string[]>([]);
 
-  const filteredContentLines = useMemo(() => {
+  // index for each top-level element that contains the searched string
+  const contentSearchResults = useMemo(() => {
     if (!contentNodeExtraction.current || !contentNodeExtraction.current.length) return [];
     if (!searchString || searchString.trim() === '') return []; //meaningless result
 
@@ -122,6 +128,12 @@ export default function SearchBar({
     return searchResult as number[];
   }, [searchString, contentNodeExtraction.current]);
 
+  // when searching content got results, send to main process to jump the editor to result location
+  useEffect(() => {
+    if (!contentSearchResults.length || searchType !== ESearchTypes.Content) return;
+    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[activeResultIndex]);
+  }, [searchString, searchType, contentSearchResults]);
+
   // when FileContent prop changes, convert it to a usable format async
   useEffect(() => {
     // first reset the ref
@@ -130,7 +142,6 @@ export default function SearchBar({
     if (!FileContent || FileContent.trim() === '') return;
     const template = document.createElement('template');
     template.innerHTML = FileContent;
-    // console.warn('New content', template.content);
     if (!template.content || !template.content.children.length) return;
 
     const LinesOfContent = Array.from(template.content.children);
@@ -163,7 +174,7 @@ export default function SearchBar({
       setPlaceHolderText((searchPayload as TSearchTarget).placeHolder || '');
       setIsSearching(true);
       if (!Options.LockSearchType) setSearchType((searchPayload as TSearchTarget).searchType || null);
-      if (InputRef.current) (InputRef.current as HTMLInputElement).focus();
+      if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
     });
 
     return () => {
@@ -184,16 +195,16 @@ export default function SearchBar({
     }
 
     if (typeof SearchCallbacks.Content === 'function' && searchType === ESearchTypes.Content) {
-      SearchCallbacks.Content(filteredContentLines);
+      SearchCallbacks.Content(contentSearchResults);
     }
   }, [searchString, TagsList, MDList, FileContent, contentNodeExtraction.current]);
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {
     if (
-      ev.target === InputRef.current ||
-      (ResultListRef.current && ResultListRef.current.contains(ev.target as Node)) ||
-      (ContentActionsRef.current && ContentActionsRef.current.contains(ev.target as Node))
+      ev.target === SearchInputRef.current ||
+      (ListResultRef.current && ListResultRef.current.contains(ev.target as Node)) ||
+      (ContentResultRef.current && ContentResultRef.current.contains(ev.target as Node))
     )
       return;
     setIsSearching(false);
@@ -266,14 +277,14 @@ export default function SearchBar({
     <nav
       className={`light:border-b h-18 relative z-50 w-full bg-gray-50 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
       onClick={_ => {
-        if (InputRef.current) (InputRef.current as HTMLInputElement).focus();
+        if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
       }}
     >
       <section className={'flex'}>
         <MagnifyingGlassIcon className={'order-1 size-6 self-center'} />
         <input
           id={'main-search-bar'}
-          ref={InputRef}
+          ref={SearchInputRef}
           type={'text'}
           placeholder={placeHolderText}
           value={searchString}
@@ -299,7 +310,8 @@ export default function SearchBar({
             setSearchString(inputValue);
             if (!isSearching && inputValue !== '') setIsSearching(true);
           }}
-          onClick={_ => setIsSearching(!isSearching)}
+          onClick={_ => setIsSearching(true)}
+          onDoubleClick={_ => setIsSearching(true)}
           className={
             'peer order-3 grow border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-gray-900' +
             ' placeholder:text-gray-400 focus:border-gray-300 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
@@ -321,7 +333,7 @@ export default function SearchBar({
       {isSearching && searchType !== ESearchTypes.Content && (
         <div
           className={` ${Options.DisplayMode === 'dropdown' ? 'absolute w-11/12' : 'block'} left-2 top-14 h-fit max-h-96 cursor-default select-none overflow-y-auto overflow-x-hidden bg-inherit px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-b-lg shadow-xl' : ''} dark:text-blue-50`}
-          ref={ResultListRef}
+          ref={ListResultRef}
         >
           {/*additional actions*/}
           {Options.ShowActions && (
@@ -393,16 +405,37 @@ export default function SearchBar({
       )}
       {isSearching && searchType === ESearchTypes.Content && (
         <div
-          ref={ContentActionsRef}
-          className={`flex h-12 w-full cursor-default select-none flex-row overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
+          ref={ContentResultRef}
+          className={`flex h-12 w-full cursor-default select-none flex-row items-center justify-center overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
         >
           <div>
             <span className={'text-sm font-semibold'}>Result: </span>
-            <span className={'text-sm font-semibold'}> {filteredContentLines.length} </span>
+            <span className={'text-sm font-semibold'}> {contentSearchResults.length} </span>
           </div>
           {/*spacer*/}
-          <div className={"grow"}></div>
-          {filteredContentLines.length > 0 && <div className={""}>Move to:</div>}
+          <div className={'grow'}></div>
+          {contentSearchResults.length > 0 && (
+            <div className={'flex items-center justify-center'}>
+              <span className={'pr-2'}>Move to:</span>
+              <ArrowLeftIcon
+                className={'size-4 cursor-pointer'}
+                onClick={_ => {
+                  const newIndex = activeResultIndex > 0 ? activeResultIndex - 1 : contentSearchResults.length - 1;
+                  IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
+                  setActiveResultIndex(newIndex);
+                }}
+              />
+              <span className={'p-2'}>{activeResultIndex + 1}</span>
+              <ArrowRightIcon
+                className={'size-4 cursor-pointer'}
+                onClick={_ => {
+                  const newIndex = activeResultIndex < contentSearchResults.length - 1 ? activeResultIndex + 1 : 0;
+                  IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
+                  setActiveResultIndex(newIndex);
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
     </nav>

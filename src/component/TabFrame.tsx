@@ -55,18 +55,36 @@ export default function TabFrame() {
 
       // remove the result effect from last time
       lastSearchResultElements.current?.forEach(lastResult => {
-        lastResult.classList.remove('search-result');
+        lastResult?.classList.remove('search-result');
       });
 
       lastSearchResultElements.current = [...resultLines];
 
       // add result effect
       resultLines.forEach(resultElement => {
-        resultElement.classList.add('search-result');
+        resultElement?.classList.add('search-result');
       });
     }, 500),
     [], // Add any dependencies here
   );
+
+  // scroll the editor to a top-level element(a line), debounced to avoid excessive function calls
+  const handleJumpToLineNum = _.debounce((lineNum: number) => {
+    const editorDOM = MDEditorRef.current?.GetDOM()?.editor;
+    if (!editorDOM || !editorDOM.children || !editorDOM.children[lineNum]) return;
+
+    setTimeout(() => {
+      const { top } = editorDOM.children[lineNum].getBoundingClientRect();
+
+      if (mainFrameScrollable?.current) {
+        const divTop = mainFrameScrollable.current.getBoundingClientRect().top;
+        const tabBarHeight = (TabBarRef?.current && TabBarRef.current.scrollHeight) || 0;
+        mainFrameScrollable.current.scrollTop = top - divTop - tabBarHeight * 3;
+      }
+    }, 0);
+
+    // console.log(editorDOM.children[lineNum].getBoundingClientRect());
+  }, 450);
 
   // init component
   useEffect(() => {
@@ -101,6 +119,13 @@ export default function TabFrame() {
   // Critical: Bind to main process' push events, sync tab's data to main
   useEffect(() => {
     // when new search result arrives, new result is received in fileframe, then pushed through main
+    const unbindNewJumpToLine = IPCRenderSide.on(
+      IPCActions.EDITOR_MD.PUSH.NEW_JUMP_TO_LINE_TARGET,
+      (_, payload: number) => {
+        handleJumpToLineNum(payload);
+      },
+    );
+
     const unbindSearchResultChanged = IPCRenderSide.on(
       IPCActions.EDITOR_MD.PUSH.NEW_CONTENT_SEARCH_RESULT,
       (_, payload: number[]) => {
@@ -179,11 +204,12 @@ export default function TabFrame() {
     );
 
     return () => {
-      unbindSearchResultChanged();
+      unbindNewJumpToLine();
       unbindOpenedFileChange();
       unbindFileContentChange();
       unbindFileActivationChange();
       unbindEditorTextInsert();
+      unbindSearchResultChanged();
     };
   });
 
@@ -231,6 +257,7 @@ export default function TabFrame() {
     MDEditorRef.current?.SetSelection(cachedSelection);
 
     // force the code to run at the end of the even loop
+    // scroll it to the element
     setTimeout(() => {
       const selection = window.getSelection();
       if (!selection) return;

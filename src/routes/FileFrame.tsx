@@ -124,6 +124,7 @@ function FileFrame() {
     selectedFilesPathRef.current = [...selectedFilesPaths];
   }, [selectedFilesPaths]);
 
+  // On renaming, focus on the input
   useEffect(() => {
     if (filepathToRename) {
       RenamingInputRef.current?.focus();

@@ -220,8 +220,13 @@ function SetNewSearchAndPush(_event: IpcMainEvent, NewSearch: TSearchTarget) {
 /****************
  * - EDITOR_MD -
  ****************/
-const { SET_CONTENT_SEARCH_RESULT } = IPCActions.EDITOR_MD; // Receiving
 
+const { SET_JUMP_TO_LINE } = IPCActions.EDITOR_MD; // Receiving
+function PushNewLineNum(_event: IpcMainEvent, lineNum: number) {
+  _event.sender.send(IPCActions.EDITOR_MD.PUSH.NEW_JUMP_TO_LINE_TARGET, lineNum);
+}
+
+const { SET_CONTENT_SEARCH_RESULT } = IPCActions.EDITOR_MD; // Receiving
 // A simple server forwarding for result so that component structure won't matter
 function PushNewContentSearchResult(_event: IpcMainEvent, newSearchResult: number[]) {
   _event.sender.send(IPCActions.EDITOR_MD.PUSH.NEW_CONTENT_SEARCH_RESULT, newSearchResult);
@@ -321,4 +326,5 @@ export const IPCListenerMappings = [
   { trigger: CHANGE_TARGET_FILE_CONTENT, listener: UpdateTargetFileOverrideOnDup },
   { trigger: SET_ACTIVE_FILE_CONTENT, listener: ChangeActiveFileContentAndPush },
   { trigger: SET_CONTENT_SEARCH_RESULT, listener: PushNewContentSearchResult },
+  { trigger: SET_JUMP_TO_LINE, listener: PushNewLineNum },
 ];
