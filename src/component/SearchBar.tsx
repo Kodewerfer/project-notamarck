@@ -109,35 +109,12 @@ export default function SearchBar({
   // shortcuts
   const filteredMDList = DataSourceMap.get(ESearchTypes.File) as TMDFile[];
   const filteredTagList = DataSourceMap.get(ESearchTypes.Tag) as TTagsInMemory[];
-
   // Stores the pure text content from each lines of the editor DOM
   // each index represent a top-level child element(like p or ul) from the original content
-  const contentNodeExtraction = useRef<string[]>([]);
-
-  // index for each top-level element that contains the searched string
-  const contentSearchResults = useMemo(() => {
-    if (!contentNodeExtraction.current || !contentNodeExtraction.current.length) return [];
-    if (!searchString || searchString.trim() === '') return []; //meaningless result
-
-    const TextContentIndexer = new FlexSearch.Index('performance');
-    for (let index = 0; index < contentNodeExtraction.current.length; index++) {
-      TextContentIndexer.add(index, contentNodeExtraction.current[index]);
-    }
-
-    const searchResult = TextContentIndexer.search(searchString);
-    return searchResult as number[];
-  }, [searchString, contentNodeExtraction.current]);
-
-  // when searching content got results, send to main process to jump the editor to result location
-  useEffect(() => {
-    if (!contentSearchResults.length || searchType !== ESearchTypes.Content) return;
-    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[activeResultIndex]);
-  }, [searchString, searchType, contentSearchResults]);
-
-  // when FileContent prop changes, convert it to a usable format async
+  const [contentTextExtraction, setContentTextExtraction] = useState<string[]>([]); //since it's a state, it may cause interruption
   useEffect(() => {
     // first reset the ref
-    contentNodeExtraction.current = [];
+    setContentTextExtraction([]);
     // convert html string to Dom elements
     if (!FileContent || FileContent.trim() === '') return;
     const template = document.createElement('template');
@@ -147,6 +124,7 @@ export default function SearchBar({
     const LinesOfContent = Array.from(template.content.children);
 
     // Extract all text nodes, but keep them in an array identical to the original
+    let textNodeArray: string[] = [];
     LinesOfContent.forEach(line => {
       const walker = document.createTreeWalker(
         line,
@@ -160,9 +138,30 @@ export default function SearchBar({
         if (currentNode.textContent && currentNode.textContent.trim() !== '')
           currentTextNodesResult += currentNode.textContent + ' ';
       }
-      contentNodeExtraction.current.push(currentTextNodesResult);
+      textNodeArray.push(currentTextNodesResult);
     });
-  }, [FileContent]);
+    setContentTextExtraction([...textNodeArray]);
+  }, [FileContent]); // load contentTextExtraction, convert from FileContent
+
+  // index for each top-level element that contains the searched string
+  const contentSearchResults = useMemo(() => {
+    if (!contentTextExtraction || !contentTextExtraction.length) return [];
+    if (!searchString || searchString.trim() === '') return []; //meaningless result
+
+    const TextContentIndexer = new FlexSearch.Index('performance');
+    for (let index = 0; index < contentTextExtraction.length; index++) {
+      TextContentIndexer.add(index, contentTextExtraction[index]);
+    }
+
+    const searchResult = TextContentIndexer.search(searchString);
+    return searchResult as number[];
+  }, [searchString, contentTextExtraction]);
+
+  // when content searching got results, send to main process to jump the editor to result location
+  useEffect(() => {
+    if (!contentSearchResults.length || searchType !== ESearchTypes.Content) return;
+    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[activeResultIndex]);
+  }, [searchString, searchType, contentSearchResults]);
 
   // the high lighted search result for list items, this is used in arrow key navigation as well as mouse hover selection
   const [activeResultIndex, setActiveResultIndex] = useState(0);
@@ -197,7 +196,7 @@ export default function SearchBar({
     if (typeof SearchCallbacks.Content === 'function' && searchType === ESearchTypes.Content) {
       SearchCallbacks.Content(contentSearchResults);
     }
-  }, [searchString, TagsList, MDList, FileContent, contentNodeExtraction.current]);
+  }, [searchString, TagsList, MDList, contentSearchResults]); //FileContent is not included because it is processed in useEffect
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {
