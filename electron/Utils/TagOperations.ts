@@ -6,8 +6,14 @@ import { TTagsInMemory } from '../Types/Tags.ts';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 
 import FlexSearch from 'flexsearch';
+import { Parent } from 'unist';
 
 const _Tag_Folder_Name = 'tags';
+
+export function GetFileLinkSyntax(fromFile: string) {
+  if (!fromFile || fromFile === '') throw new Error('file name is required');
+  return `:Link[${fromFile}]`;
+}
 
 export function GetTagFolderFullPath() {
   const tagFolderFullPath = path.join(GetCurrentWorkspace(), _Tag_Folder_Name).normalize();
@@ -20,11 +26,6 @@ export function GetTagFolderFullPath() {
   }
 
   return tagFolderFullPath;
-}
-
-export function GetFileLinkSyntax(fromFile: string) {
-  if (!fromFile || fromFile === '') throw new Error('file name is required');
-  return `:Link[${fromFile}]`;
 }
 
 export function ValidateTag(TagFileName: string) {
@@ -144,7 +145,6 @@ export function ReadTagRaw(tagPath: string): TTagsInMemory {
 }
 
 export function UnlinkTag(TagFullName: string) {
-  // TODO: may need to delete reference
   try {
     fs.unlinkSync(TagFullName);
   } catch (e) {
@@ -152,8 +152,15 @@ export function UnlinkTag(TagFullName: string) {
   }
 }
 
+/**
+ * Renames a tag while preserving any duplicates.
+ *
+ * @param {string} OldTagPath - The path of the tag file to be renamed.
+ * @param {string} NewName - The new name for the tag file.
+ * @return {string} The final name of the renamed tag file, including any duplicate handling.
+ * @throws {Error} If there is an error renaming the tag file.
+ */
 export function RenameTagKeepDup(OldTagPath: string, NewName: string) {
-  // TODO: may need to fix references
 
   const oldPathParse = path.parse(OldTagPath);
   const newNameParse = path.parse(NewName);
@@ -186,7 +193,48 @@ function SearchTagForLink(tagInfo: TTagsInMemory | null, searchFor: string) {
   return searchResult;
 }
 
-export function SearchAndAppendToTag(TagFileName: string, FromFilePath: string) {
+/**
+ * Opens and searches the files for a given tag.
+ *
+ * @param {string} FilePath - The path of the file to be opened and searched.
+ * @param {TTagsInMemory|null} targetTag - The target tag to search for. If null, returns null.
+ *
+ * @return {Array<number>} - An array of line numbers where the tag is found. If no matches are found, returns null.
+ *
+ * @throws - Throws an error if an exception occurs while reading the file.
+ */
+export function OpenAndSearchFilesForTag(FilePath: string, targetTag: TTagsInMemory | null) {
+  if (!targetTag) return null;
+  const tagLinkSyntax = GetFileLinkSyntax(targetTag.tagFileName);
+
+  const searchIndex = new FlexSearch.Index('performance');
+  try {
+    let MDFileContent = fs.readFileSync(FilePath, { encoding: 'utf8' });
+    const lines = MDFileContent.split('\n');
+
+    // Add data to the index
+    for (let i = 0; i < lines.length; i++) {
+      searchIndex.add(i, lines[i]);
+    }
+  } catch (e) {
+    throw e;
+  }
+
+  const searchResult = searchIndex.search(tagLinkSyntax);
+  if (!searchResult.length) return null;
+
+  return searchResult;
+}
+
+/**
+ * Searches for a file link in a tag file and appends it if not found.
+ *
+ * @param {string} TagFileName - The name of the tag file (without the extension).
+ * @param {string} FromFilePath - The path of the file to be searched and linked in the tag file.
+ *
+ * @return {void}
+ */
+export function SearchInTagAndAppend(TagFileName: string, FromFilePath: string) {
   TagFileName = TagFileName.split('.')[0];
   FromFilePath = path.basename(FromFilePath);
   const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
@@ -202,7 +250,15 @@ export function SearchAndAppendToTag(TagFileName: string, FromFilePath: string) 
   }
 }
 
-export function SearchAndRemoveFromTag(TagFileName: string, FromFilePath: string) {
+/**
+ * Searches for a file link within a tag file and removes it.
+ *
+ * @param {string} TagFileName - The name of the tag file (without extension).
+ * @param {string} FromFilePath - The path of the file from which the link is being removed.
+ *
+ * @return {void}
+ */
+export function SearchInTagAndRemoveFileLink(TagFileName: string, FromFilePath: string) {
   TagFileName = TagFileName.split('.')[0];
   FromFilePath = path.basename(FromFilePath);
   const tagFilePath = path.join(GetTagFolderFullPath(), `${TagFileName}.tag.md`);
@@ -225,4 +281,28 @@ export function SearchAndRemoveFromTag(TagFileName: string, FromFilePath: string
   } catch (e) {
     ShowErrorAlert((e as Error).message);
   }
+}
+
+/**
+ * Extracts file link names from a tag abstract syntax tree (AST) array.
+ *
+ * @param {Parent[]} tagASTArr - An array of ASTs representing the tag.
+ *
+ * @return {string[]} - An array of extracted file names.
+ */
+export function ExtractFileLinksNamesFromTagAST(tagASTArr: Parent[]) {
+  let ExtractedFileNames: string[] = [];
+
+  for (let paragraph of tagASTArr) {
+    if (paragraph.type !== 'paragraph') continue;
+
+    // only check the first child
+    if (!paragraph.children || paragraph.children[0].type !== 'textDirective') continue;
+
+    let linkDirective = paragraph.children[0];
+
+    ExtractedFileNames.push(((linkDirective as Parent).children[0] as any).value || '');
+  }
+
+  return ExtractedFileNames;
 }

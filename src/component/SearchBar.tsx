@@ -69,7 +69,7 @@ export default function SearchBar({
   // Use flex search to properly filter list datas, tokenize is set to full so that filenames can be fuzzy searched
   const FilterListData = useCallback(
     (targetList: TMDFile[] | TTagsInMemory[] | null | undefined, searchTerm: string) => {
-      if (!targetList || !Array.isArray(targetList)) return [];
+      if (!targetList || !Array.isArray(targetList) || !targetList[0]) return [];
       if (searchTerm.trim() === '') return targetList;
 
       const ListFileterer = new FlexSearch.Document({
@@ -407,7 +407,9 @@ export default function SearchBar({
                   >
                     <span className={'pr-3 font-semibold text-gray-600 dark:text-slate-600'}>Tag:</span>
                     <span className={'grow'}>{path.parse(item.tagFileName).name.split('.')[0]}</span>
-                    <span className={`px-6 sm:hidden ${activeResultIndex !== index ? 'hidden' : 'md:block'}`}>
+                    <span
+                      className={`text-ellipsis text-nowrap px-6 sm:hidden ${activeResultIndex !== index ? 'hidden' : 'md:block'}`}
+                    >
                       hold{' '}
                       <kbd className="rounded-lg border border-gray-200 bg-gray-100 px-2 py-1.5 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">
                         Ctrl

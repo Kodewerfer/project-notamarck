@@ -149,6 +149,15 @@ function TagList() {
         AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'}
         SearchOptions={{ ShowResult: false, LockSearchType: ESearchTypes.Tag, ShowActions: true, DisplayMode: 'block' }}
       />
+
+      {!FilteredTagList ||
+        (!FilteredTagList.length && (
+          <div className={'flex h-full w-full justify-center'}>
+            <div className={'select-none pt-20 font-semibold text-slate-500 drop-shadow dark:text-gray-300'}>
+              -- EMPTY --
+            </div>
+          </div>
+        ))}
       {/*Tags grid*/}
       <div className={'mt-4 grid select-none grid-cols-6 gap-4 sm:grid-cols-3 sm:gap-2 md:grid-cols-4'}>
         {FilteredTagList &&

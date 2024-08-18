@@ -5,6 +5,7 @@ import {
   FindInOpenedFilesByFullPath,
   GetActiveFile,
   GetActiveFileContent,
+  GetCurrentWorkspace,
   GetOpenedFiles,
   SetActiveFileContent,
   SetOpenFiles,
@@ -17,10 +18,13 @@ import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
 import {
+  ExtractFileLinksNamesFromTagAST,
+  GetFileLinkSyntax,
+  OpenAndSearchFilesForTag,
   SaveTagFileOverrideOnDup,
   SaveTagFileRenameOnDup,
-  SearchAndAppendToTag,
-  SearchAndRemoveFromTag,
+  SearchInTagAndAppend,
+  SearchInTagAndRemoveFileLink,
   UnlinkTag,
   ValidateTag,
 } from '../Utils/TagOperations.ts';
@@ -29,6 +33,8 @@ import { ESearchTypes, TSearchTarget } from '../Types/Search.ts';
 import { TagObjectToMD } from '../Utils/TagFileConvertor.ts';
 import { Compatible } from 'unified/lib';
 import path from 'node:path';
+import { Parent } from 'unist';
+import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 
 /***********
  * - Shell -
@@ -290,6 +296,18 @@ function UpdateTargetFileOverrideOnDup(_event: IpcMainEvent, FileFullPath: strin
   }
 }
 
+const { VALIDATE_TAG_IN_LINKED_FILES } = IPCActions.FILES; // Receiving
+
+function ValidateTagInFiles(_event: IpcMainEvent, EditingTag: TTagsInMemory, tagASTArr: Parent[]) {
+  if (!tagASTArr || !Array.isArray(tagASTArr)) return;
+
+  const FileNames = ExtractFileLinksNamesFromTagAST(tagASTArr);
+  FileNames.forEach(filename => {
+    const checkResult = OpenAndSearchFilesForTag(path.join(GetCurrentWorkspace(), filename), EditingTag);
+    if (!checkResult) SearchInTagAndRemoveFileLink(EditingTag.tagFileName, filename);
+  });
+}
+
 // --tags
 const { SYNC_TO_TAG } = IPCActions.FILES; // Receiving
 
@@ -302,7 +320,7 @@ function SyncToTag(_event: IpcMainEvent, targetTag: string, FromFile: string) {
     SaveTagFileRenameOnDup(targetTag);
   }
 
-  SearchAndAppendToTag(targetTag, FromFile);
+  SearchInTagAndAppend(targetTag, FromFile);
 }
 
 const { REMOVE_FROM_TAG } = IPCActions.FILES; // Receiving
@@ -315,7 +333,7 @@ function RemoveFromTag(_event: IpcMainEvent, targetTag: string, FromFile: string
     ShowErrorAlert(`Trying to remove link from a tag that cannot be accessed ${targetTag}`);
   }
 
-  SearchAndRemoveFromTag(targetTag, FromFile);
+  SearchInTagAndRemoveFileLink(targetTag, FromFile);
 }
 
 const { UPDATE_TARGET_TAG_CONTENT } = IPCActions.FILES; // Receiving
@@ -347,4 +365,5 @@ export const IPCListenerMappings = [
   { trigger: SET_CONTENT_SEARCH_RESULT, listener: PushNewContentSearchResult },
   { trigger: SET_JUMP_TO_LINE, listener: PushNewLineNum },
   { trigger: OPEN_EXTERNAL_HTTP, listener: OpenHTTPLinkFromOutside },
+  { trigger: VALIDATE_TAG_IN_LINKED_FILES, listener: ValidateTagInFiles },
 ];

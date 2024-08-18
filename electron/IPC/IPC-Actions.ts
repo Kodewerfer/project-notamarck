@@ -84,7 +84,8 @@ export const IPCActions = {
     CREATE_NEW_TAG: 'FILES:CREATE_NEW_TAG',
     UPDATE_TARGET_TAG_CONTENT: 'FILES:UPDATE_TARGET_TAG_CONTENT',
     SYNC_TO_TAG: 'FILES:SYNC_TO_TAGS',
-    REMOVE_FROM_TAG: 'FILES:REMOVE_FROM_TAG',
+    REMOVE_FROM_TAG: 'FILES:REMOVE_FROM_TAG', //when a tag link is deleted from file, remove the reference from tag
+    VALIDATE_TAG_IN_LINKED_FILES: 'FILES:VALIDATE_TAG_IN_LINKED_FILES', //check if a link to a tag still exists in the file
     // Files
     CREATE_NEW_FILE: 'FILES:CREATE_NEW_FILE',
     READ_MD_FROM_PATH: 'FILES:READ_MD_FROM_PATH',

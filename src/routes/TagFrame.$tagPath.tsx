@@ -32,6 +32,26 @@ function TagEdit() {
   const [TagRenderingSource, setTagRenderingSource] = useState<Parent[] | null>(null);
   const renderingSourceCache = useRef<any[] | null>(null);
 
+  // when editing tag changed, send the tagName to main to fetch converted content. NOTE: tagContentRaw from EditingTag is not sent directly
+  useEffect(() => {
+    if (!EditingTag) return;
+
+    console.log('editing tag');
+
+    (async () => {
+      const convertedContent = await IPCRenderSide.invoke(
+        IPCActions.CONVERSION.CONVERT_TAG_RAW_FROM_NAME,
+        EditingTag.tagFileName,
+      );
+
+      const ChildrenArr = Array.from(convertedContent.children);
+
+      IPCRenderSide.send(IPCActions.FILES.VALIDATE_TAG_IN_LINKED_FILES, EditingTag, ChildrenArr);
+
+      if (convertedContent && convertedContent.children) setTagRenderingSource(ChildrenArr as Parent[]);
+    })();
+  }, [EditingTag]);
+
   // save the tag file when component unmount
   useEffect(() => {
     return () => {
@@ -64,20 +84,6 @@ function TagEdit() {
       unbindTagContentChange();
     };
   }, []);
-
-  // when editing tag changed, send the tagName to main to fetch converted content. NOTE: tagContentRaw from EditingTag is not sent directly
-  useEffect(() => {
-    if (!EditingTag) return;
-
-    (async () => {
-      const convertedContent = await IPCRenderSide.invoke(
-        IPCActions.CONVERSION.CONVERT_TAG_RAW_FROM_NAME,
-        EditingTag.tagFileName,
-      );
-
-      if (convertedContent && convertedContent.children) setTagRenderingSource(Array.from(convertedContent.children));
-    })();
-  }, [EditingTag]);
 
   function ReOrderItems(newData: Parent[]) {
     setTagRenderingSource(newData);
@@ -137,7 +143,7 @@ function TagEdit() {
       <h1 className={'center mb-2 select-none px-6 py-2 text-center text-xl font-bold'}>
         {EditingTag?.tagFileName || ''}
       </h1>
-      {TagRenderingSource?.length && (
+      {TagRenderingSource && TagRenderingSource.length > 0 && (
         <Reorder.Group
           as={'div'}
           onReorder={ReOrderItems}
@@ -168,9 +174,11 @@ function TagEdit() {
             })}
         </Reorder.Group>
       )}
-      {!TagRenderingSource?.length && (
+      {(!TagRenderingSource || TagRenderingSource.length === 0) && (
         <div className={'flex h-full w-full justify-center'}>
-          <div className={'select-none pt-20 font-semibold text-gray-300 drop-shadow'}>-- EMPTY --</div>
+          <div className={'select-none pt-20 font-semibold text-slate-500 drop-shadow dark:text-gray-300'}>
+            -- EMPTY --
+          </div>
         </div>
       )}
     </div>
