@@ -196,7 +196,7 @@ export function SearchAndAppendToTag(TagFileName: string, FromFilePath: string) 
 
     if (searchResult) return;
 
-    fs.appendFileSync(tagFilePath, '\n' + GetFileLinkSyntax(FromFilePath));
+    fs.appendFileSync(tagFilePath, '\n' + GetFileLinkSyntax(FromFilePath) + '\n');
   } catch (e) {
     ShowErrorAlert((e as Error).message);
   }

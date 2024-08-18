@@ -1,6 +1,6 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLayoutEffect } from '@tanstack/react-router';
+import { useLayoutEffect, useNavigate } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import path from 'path-browserify';
@@ -40,6 +40,9 @@ export default function SearchBar({
   AdditionalClasses?: string;
   SearchOptions?: Partial<TSearchOptions>;
 }) {
+  // navigation for result items
+  const navigate = useNavigate();
+
   const [isSearching, setIsSearching] = useState(false);
   const SearchInputRef = useRef(null);
 
@@ -257,8 +260,24 @@ export default function SearchBar({
     if (!tagSource) return;
     const tagSourceElement = tagSource[activeResultIndex];
     // single click/enter without holding ctrl, insert to current editor
-    if (ctrlPressed) IPCRenderSide.send(IPCActions.EDITOR_MD.INSERT_FILE_LINK, tagSourceElement);
-    // console.log(tagSourceElement, 'ctrl key:', ctrlPressed);
+    if (ctrlPressed) {
+      IPCRenderSide.send(IPCActions.EDITOR_MD.INSERT_FILE_LINK, tagSourceElement);
+      setIsSearching(false);
+      return;
+    }
+
+    // jump to target file
+    switch (searchType) {
+      case ESearchTypes.Content:
+        break;
+      case ESearchTypes.File:
+        navigate({ to: '/FileFrame/edit/$filepath', params: { filepath: tagSourceElement.path } });
+        break;
+      case ESearchTypes.Tag:
+        navigate({ to: '/TagFrame/$tagPath', params: { tagPath: tagSourceElement.tagPath } });
+        break;
+    }
+
     setIsSearching(false);
   }
 

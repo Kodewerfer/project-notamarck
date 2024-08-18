@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router';
+import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
@@ -8,11 +8,15 @@ import { u } from 'unist-builder';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { motion } from 'framer-motion';
 import _ from 'lodash';
+import path from 'path-browserify';
 
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/$tagPath')({
   loader: async ({ params: { tagPath } }) => {
-    return await IPCRenderSide.invoke(IPCActions.DATA.SET_TAG_AS_EDITING, tagPath);
+    return {
+      tag: await IPCRenderSide.invoke(IPCActions.DATA.SET_TAG_AS_EDITING, tagPath),
+      workspacePath: await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE),
+    };
   },
   staleTime: 0,
   gcTime: 0,
@@ -22,9 +26,23 @@ export const Route = createFileRoute('/TagFrame/$tagPath')({
 
 function TagEdit() {
   // used as a reference only
-  const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData());
+  const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData().tag);
+  const workspacePath = Route.useLoaderData().workspacePath || '';
   // AST tree's first-level children nodes
   const [TagRenderingSource, setTagRenderingSource] = useState<Parent[] | null>(null);
+  const renderingSourceCache = useRef<any[]>([]);
+
+  // save the tag file when component unmount
+  useEffect(() => {
+    return () => {
+      if (EditingTag) UpdateTag(EditingTag.tagPath, renderingSourceCache.current);
+    };
+  }, []);
+
+  // cache the lasted rendering
+  useEffect(() => {
+    if (TagRenderingSource) renderingSourceCache.current = [...TagRenderingSource];
+  }, [TagRenderingSource]);
 
   // bind events
   useEffect(() => {
@@ -105,15 +123,14 @@ function TagEdit() {
     });
   }
 
-  function UpdateTag() {
-    if (!EditingTag || !TagRenderingSource) return;
-    const root = u('root', [...TagRenderingSource]);
-    IPCRenderSide.send(IPCActions.FILES.UPDATE_TARGET_TAG_CONTENT, EditingTag.tagPath, root);
+  function UpdateTag(targetPath: string, [...renderingSource]: Parent[]) {
+    console.log(renderingSource);
+    const root = u('root', [...renderingSource]);
+    IPCRenderSide.send(IPCActions.FILES.UPDATE_TARGET_TAG_CONTENT, targetPath, root);
   }
 
   return (
     <div className={'h-full bg-gray-50 dark:bg-slate-700 dark:text-blue-50'}>
-      <button onClick={UpdateTag}>test saving</button>
       {/*return to the listing page if the tag is invalid*/}
       {!EditingTag && <Navigate to={'/TagFrame'} />}
       {/*Editing page*/}
@@ -137,9 +154,21 @@ function TagEdit() {
                   />
                 );
 
-              return <LinkRenderer AddTitleCallback={OnAddNewTitle} data={paragraphData} key={paragraphData.uid} />;
+              return (
+                <LinkRenderer
+                  workspacePath={workspacePath}
+                  AddTitleCallback={OnAddNewTitle}
+                  data={paragraphData}
+                  key={paragraphData.uid}
+                />
+              );
             })}
         </Reorder.Group>
+      )}
+      {!TagRenderingSource?.length && (
+        <div className={'flex h-full w-full justify-center'}>
+          <div className={'select-none pt-20 font-semibold text-gray-300 drop-shadow'}>-- EMPTY --</div>
+        </div>
       )}
     </div>
   );
@@ -249,7 +278,17 @@ function HeaderRenderer({
   );
 }
 
-function LinkRenderer({ data, AddTitleCallback }: { data: any; AddTitleCallback: (data: any) => void }) {
+function LinkRenderer({
+  data,
+  AddTitleCallback,
+  workspacePath,
+}: {
+  data: any;
+  AddTitleCallback: (data: any) => void;
+  workspacePath: string;
+}) {
+  const navigate = useNavigate();
+
   if (!data.children || !data.children.length) return;
   const TextDirective = useMemo(() => data.children[0], [data.children]);
 
@@ -284,6 +323,12 @@ function LinkRenderer({ data, AddTitleCallback }: { data: any; AddTitleCallback:
     >
       {/* display block */}
       <div
+        onDoubleClick={() =>
+          navigate({
+            to: '/FileFrame/edit/$filepath',
+            params: { filepath: path.join(workspacePath, DirectiveText) },
+          })
+        }
         className={
           'relative z-20 w-2/3 min-w-80 cursor-default rounded-2xl bg-gray-100 px-4 py-6 text-center text-xl hover:rounded-lg dark:bg-slate-600 dark:hover:bg-slate-500'
         }
