@@ -389,7 +389,7 @@ export function RenameTagAndPush(_Event: IpcMainInvokeEvent, OldTagPath: string,
   MarkPathForRenaming(OldTagPath);
   // check if renaming active file
   let bRenamingEditingTag = false;
-  // TODO: active tag
+  // TODO: active tag renaming
   if (GetEditingTag()?.tagPath === OldTagPath) {
     bRenamingEditingTag = true;
   }

@@ -234,8 +234,14 @@ export default function SearchBar({
 
   // create new file
   async function CreateNewFile() {
-    // todo:prompt the user about invalid file names
-    if (!searchString || searchString.trim() === '' || searchString.indexOf('.') !== -1) return;
+    if (!searchString || searchString.trim() === '' || searchString.indexOf('.') !== -1) {
+      IPCRenderSide.send(
+        IPCActions.NOTIFICATION.SHOW_NOTIFICATION,
+        'Failed to create new file',
+        'Invalid new file name',
+      );
+      return;
+    }
     let currentWorkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
     try {
       // file creation
@@ -271,10 +277,12 @@ export default function SearchBar({
       case ESearchTypes.Content:
         break;
       case ESearchTypes.File:
-        navigate({ to: '/FileFrame/edit/$filepath', params: { filepath: tagSourceElement.path } });
+        if (tagSourceElement && tagSourceElement.path)
+          navigate({ to: '/FileFrame/edit/$filepath', params: { filepath: tagSourceElement.path } });
         break;
       case ESearchTypes.Tag:
-        navigate({ to: '/TagFrame/$tagPath', params: { tagPath: tagSourceElement.tagPath } });
+        if (tagSourceElement && tagSourceElement.tagPath)
+          navigate({ to: '/TagFrame/$tagPath', params: { tagPath: tagSourceElement.tagPath } });
         break;
     }
 

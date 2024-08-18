@@ -72,8 +72,8 @@ function RootComponent() {
           ref={outletRef}
         />
       </AnimatePresence>
-      {/*TODO: delete*/}
-      <TanStackRouterDevtools />
+      {/*TODO: TanStackRouter dev tool*/}
+      {/*<TanStackRouterDevtools />*/}
     </div>
   );
 }

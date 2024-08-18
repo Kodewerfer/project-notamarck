@@ -19,7 +19,6 @@ import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
 import {
   ExtractFileLinksNamesFromTagAST,
-  GetFileLinkSyntax,
   OpenAndSearchFilesForTag,
   SaveTagFileOverrideOnDup,
   SaveTagFileRenameOnDup,
@@ -77,7 +76,6 @@ const { SHOW_FILE_OPERATION_MENU } = IPCActions.MENU; //receiving channel
 // Pushing channels: multiple, check code
 function ShowFileOperationMenu(_event: IpcMainEvent, selectedFilesPath: string[]) {
   if (!selectedFilesPath) return;
-  // todo: add "new file" option
   const menu = Menu.buildFromTemplate([
     {
       label: 'New File',
@@ -304,7 +302,13 @@ function ValidateTagInFiles(_event: IpcMainEvent, EditingTag: TTagsInMemory, tag
   const FileNames = ExtractFileLinksNamesFromTagAST(tagASTArr);
   FileNames.forEach(filename => {
     const checkResult = OpenAndSearchFilesForTag(path.join(GetCurrentWorkspace(), filename), EditingTag);
-    if (!checkResult) SearchInTagAndRemoveFileLink(EditingTag.tagFileName, filename);
+    if (!checkResult) {
+      SearchInTagAndRemoveFileLink(EditingTag.tagFileName, filename);
+      new Notification({
+        title: 'File no longer have tag reference',
+        body: `Removed reference ${filename} from tag`,
+      });
+    }
   });
 }
 

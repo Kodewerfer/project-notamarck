@@ -124,7 +124,7 @@ const MarkdownEditor = forwardRef(
     });
 
     // handle Ctrl click on link or file links, calls the LinkElementClicked
-    // TODO: find a more permanent solution
+    // TODO: hacky, find a more better solution
     useEffect(() => {
       const editorDOM = EditorRef.current?.GetDOM()?.editor;
 

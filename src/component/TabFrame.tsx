@@ -33,17 +33,6 @@ export default function TabFrame() {
   // Passed down from main frame context
   const mainFrameScrollable = useContext(ScrollableElementContext);
 
-  // Old implementation, saving for reference todo: remove later
-  // extract editor's content then send it to main process, mainly used when SelectedTab changed
-  // async function SendCurrentTabContentToMain() {
-  // if (MDEditorRef.current && SelectedTab)
-  //   IPCRenderSide.send(
-  //     IPCActions.DATA.UPDATE_OPENED_FILE_CONTENT,
-  //     SelectedTab.fullPath,
-  //     await MDEditorRef.current.ExtractMD(),
-  //   );
-  // }
-
   // Handles the content search result, debounced to avoid excessive function calls
   const contentSearchHandler = useCallback(
     _.debounce((payload: number[]) => {
