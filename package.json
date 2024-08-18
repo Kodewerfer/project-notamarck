@@ -1,5 +1,5 @@
 {
-  "name": "project-notamarck-vite",
+  "name": "project-notamarck",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -12,6 +12,7 @@
   "dependencies": {
     "@heroicons/react": "^2.1.5",
     "chokidar": "^3.6.0",
+    "electron-store": "^10.0.0",
     "flexsearch": "^0.7.43",
     "framer-motion": "^11.3.2",
     "hastscript": "^9.0.0",
