@@ -26,6 +26,10 @@ export function GetTagList(): Readonly<TTagsInMemory[]> {
   return tagList;
 }
 
+export function CleanTagMap() {
+  return _Tags_Map.clear();
+}
+
 let _Editing_Tag: TTagsInMemory | null = null;
 
 export function SetEditingTag(newItem: TTagsInMemory | null) {

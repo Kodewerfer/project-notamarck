@@ -1,7 +1,10 @@
 import path from 'path-browserify';
 
+import Store from 'electron-store';
+
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TMDFile } from '../Types/Files.ts';
+import { AppData_Keys } from './Persistence.ts';
 
 let _App_MainWindow_ID = 0;
 
@@ -26,17 +29,22 @@ let _Recent_Workspaces: string[] = [];
  * @param {string} directory - The new working directory.
  * @returns {string} The old working directory.
  */
-export function SetCurrentWorkspace(directory: string) {
+export function SetCurrentWorkspaceThenStore(directory: string) {
   if (path.normalize(directory) === path.normalize(_Current_Workspace)) {
     console.log('same workspace dir');
     return null;
   }
   let oldWorkspace = _Current_Workspace;
   _Current_Workspace = String(directory);
+
+  // persist the data
+  const store = new Store();
+  store.set(AppData_Keys.currentWorkspace, _Current_Workspace);
+
   return oldWorkspace;
 }
 
-export function SyncWorkspaceAndRecents() {
+export function SyncWorkspaceAndRecentsThenStore() {
   let recentPathMap = new Map(_Recent_Workspaces.map(item => [item, true]));
 
   if (!recentPathMap.get(_Current_Workspace)) return;
@@ -45,6 +53,10 @@ export function SyncWorkspaceAndRecents() {
   recentPathMap.delete(_Current_Workspace);
 
   _Recent_Workspaces = Array.from(recentPathMap, ([key]) => key);
+
+  // persist the data
+  const store = new Store();
+  store.set(AppData_Keys.recentWorkspace, _Recent_Workspaces);
 }
 
 export function GetCurrentWorkspace(): Readonly<string> {
@@ -60,6 +72,11 @@ export function AddToRecentWorkspace(lastestWorkspace: string) {
   if (recentWorkspaceMap.get(lastestWorkspace)) return; //duplicated
   _Recent_Workspaces.push(lastestWorkspace);
   return [..._Recent_Workspaces];
+}
+
+// Override all, no checking for dups, used by init only
+export function SetRecentWorkSpace([...newArr]: string[]) {
+  _Recent_Workspaces = newArr;
 }
 
 /**

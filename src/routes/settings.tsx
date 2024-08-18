@@ -112,7 +112,7 @@ function Settings() {
       {/*wrapper*/}
       <div
         className={
-          'setting-wrapper h-full w-full cursor-pointer content-center justify-center gap-28 overflow-hidden bg-slate-800/75'
+          'select-none setting-wrapper h-full w-full cursor-pointer content-center justify-center gap-28 overflow-hidden bg-slate-800/75'
         }
       >
         {/*inner*/}

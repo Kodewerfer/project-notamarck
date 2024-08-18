@@ -3,21 +3,14 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { IPCHandlerMappings } from './IPC/IPC-Handlers.ts';
 import { IPCListenerMappings } from './IPC/IPC-Listeners.ts';
-import {
-  SetCurrentWorkspace,
-  GetAppMainWindowID,
-  GetCurrentWorkspace,
-  SetAppMainWindowID,
-  SetMDFilesList,
-} from './Data/Globals.ts';
+import { SetCurrentWorkspaceThenStore, SetAppMainWindowID, SetRecentWorkSpace } from './Data/Globals.ts';
 import * as fs from 'node:fs';
-import { FetchAllTagsAsync } from './Utils/TagOperations.ts';
-import { TTagsInMemory } from './Types/Tags.ts';
-import { SetTagMap } from './Data/Tags.ts';
-import { IPCActions } from './IPC/IPC-Actions.ts';
+import { ResetAndCacheTagsListAsync } from './Utils/TagOperations.ts';
 import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
-import { ListAllMDAsync } from './Utils/FileOperations.ts';
+import { ResetAndCacheMDFilesListAsync } from './Utils/FileOperations.ts';
 import StartFilesWatcher from './FSMonitor/FilesWatcher.ts';
+import { AppData_Keys } from './Data/Persistence.ts';
+import Store from 'electron-store';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -97,11 +90,11 @@ app.whenReady().then(_ => {
 
   // TODO: after adding app config with file persistence, load previous workspace info here
 
-  InitDefaultFolder();
+  InitWorkspace();
 
   // Cache the file list of both tags and main workspace MDs
-  CacheTagsListAsync();
-  CacheMDFilesListAsync();
+  ResetAndCacheTagsListAsync();
+  ResetAndCacheMDFilesListAsync();
 
   // create window
   createWindow();
@@ -112,39 +105,26 @@ app.whenReady().then(_ => {
 });
 
 // Init a default "workspace" folder under the app root
-function InitDefaultFolder() {
-  const currentWorkspace = GetCurrentWorkspace();
+function InitWorkspace() {
+  const store = new Store();
+  // try to get the workspace from last time
+  const storedPath = String(store.get(AppData_Keys.currentWorkspace)) || '';
   try {
-    fs.accessSync(currentWorkspace);
+    fs.accessSync(storedPath);
+    SetCurrentWorkspaceThenStore(storedPath);
   } catch (e) {
     //   problem accessing the workspace
     console.log('Workspace cannot be accessed, defaulting to AppFolder');
     try {
       const DefaultWorkSpace = `${app.getAppPath()}\\workspace`;
       if (!fs.existsSync(DefaultWorkSpace)) fs.mkdirSync(DefaultWorkSpace);
-      SetCurrentWorkspace(DefaultWorkSpace);
+      SetCurrentWorkspaceThenStore(DefaultWorkSpace);
     } catch (e) {
       console.log('error creating default workspace directory,', e);
     }
   }
-}
 
-async function CacheTagsListAsync() {
-  const allTags = await FetchAllTagsAsync();
-  if (!allTags || !allTags.length) return;
-
-  allTags.forEach((tag: TTagsInMemory) => {
-    SetTagMap(tag);
-  });
-
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
-}
-
-async function CacheMDFilesListAsync() {
-  const mdFiles = await ListAllMDAsync();
-  if (!mdFiles || !mdFiles.length) return;
-
-  SetMDFilesList(mdFiles);
-
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
+  //   get recent workspace from store
+  const recentWorkspaces = (store.get(AppData_Keys.recentWorkspace) as string[]) || [];
+  if (recentWorkspaces.length) SetRecentWorkSpace(recentWorkspaces);
 }

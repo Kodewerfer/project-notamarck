@@ -1,12 +1,15 @@
 import fs from 'node:fs';
 import { CheckFileRenameOnDup } from './FileOperations.ts';
-import { GetCurrentWorkspace } from '../Data/Globals.ts';
+import { GetAppMainWindowID, GetCurrentWorkspace } from '../Data/Globals.ts';
 import path from 'node:path';
 import { TTagsInMemory } from '../Types/Tags.ts';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 
 import FlexSearch from 'flexsearch';
 import { Parent } from 'unist';
+import { CleanTagMap, SetTagMap } from '../Data/Tags.ts';
+import { BrowserWindow } from 'electron';
+import { IPCActions } from '../IPC/IPC-Actions.ts';
 
 const _Tag_Folder_Name = 'tags';
 
@@ -161,7 +164,6 @@ export function UnlinkTag(TagFullName: string) {
  * @throws {Error} If there is an error renaming the tag file.
  */
 export function RenameTagKeepDup(OldTagPath: string, NewName: string) {
-
   const oldPathParse = path.parse(OldTagPath);
   const newNameParse = path.parse(NewName);
   let newBaseName =
@@ -305,4 +307,16 @@ export function ExtractFileLinksNamesFromTagAST(tagASTArr: Parent[]) {
   }
 
   return ExtractedFileNames;
+}
+
+export async function ResetAndCacheTagsListAsync() {
+  CleanTagMap();
+  const allTags = await FetchAllTagsAsync();
+  if (!allTags || !allTags.length) return;
+
+  allTags.forEach((tag: TTagsInMemory) => {
+    SetTagMap(tag);
+  });
+
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
 }

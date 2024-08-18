@@ -18,14 +18,24 @@ import {
   GetSelectionStatusCache,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
-  SetCurrentWorkspace,
+  SetCurrentWorkspaceThenStore,
   SetSelectionStatusCache,
-  SyncWorkspaceAndRecents,
+  SyncWorkspaceAndRecentsThenStore,
 } from '../Data/Globals.ts';
-import { ReadMDAndAddToOpenedFile, RenameFileKeepDup, SaveContentToFileRenameOnDup } from '../Utils/FileOperations.ts';
+import {
+  ReadMDAndAddToOpenedFile,
+  RenameFileKeepDup,
+  ResetAndCacheMDFilesListAsync,
+  SaveContentToFileRenameOnDup,
+} from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
-import { ReadTagRaw, RenameTagKeepDup, SaveTagFileRenameOnDup } from '../Utils/TagOperations.ts';
+import {
+  ReadTagRaw,
+  RenameTagKeepDup,
+  ResetAndCacheTagsListAsync,
+  SaveTagFileRenameOnDup,
+} from '../Utils/TagOperations.ts';
 import {
   GetEditingTag,
   GetTagCache,
@@ -78,8 +88,11 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
 
   // TODO: save all file contents in the renderer
   // change workspace and add old to recent
-  const oldDIrPath = SetCurrentWorkspace(NewDirPath);
+  const oldDIrPath = SetCurrentWorkspaceThenStore(NewDirPath);
   if (oldDIrPath === null) return; // new path is the same as the last one
+
+  ResetAndCacheTagsListAsync();
+  ResetAndCacheMDFilesListAsync();
 
   console.log('Setting workspace to :', NewDirPath);
   // push to renderer
@@ -91,7 +104,7 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
   // add to recent workspace
   if (oldDIrPath.trim() !== '') {
     AddToRecentWorkspace(oldDIrPath);
-    SyncWorkspaceAndRecents();
+    SyncWorkspaceAndRecentsThenStore();
     BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
       IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED,
       GetRecentWorkspace(),

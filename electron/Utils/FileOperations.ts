@@ -1,8 +1,10 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { AddToOpenedFiles, GetCurrentWorkspace } from '../Data/Globals.ts';
+import { AddToOpenedFiles, GetAppMainWindowID, GetCurrentWorkspace, SetMDFilesList } from '../Data/Globals.ts';
 import { FormatFileSize } from '../Helper.ts';
 import { TMDFile } from '../Types/Files.ts';
+import { BrowserWindow } from 'electron';
+import { IPCActions } from '../IPC/IPC-Actions.ts';
 
 /**
  * Reads the contents of a Markdown file specified by the targetPath and adds the information to the opened files.
@@ -155,4 +157,16 @@ export async function ListAllMDAsync(): Promise<TMDFile[]> {
   }
 
   return MDFiles;
+}
+
+export async function ResetAndCacheMDFilesListAsync() {
+  // reset the list
+  SetMDFilesList([]);
+
+  const mdFiles = await ListAllMDAsync();
+  if (!mdFiles || !mdFiles.length) return;
+
+  SetMDFilesList(mdFiles);
+
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }
