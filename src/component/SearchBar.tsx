@@ -293,7 +293,7 @@ export default function SearchBar({
 
   return (
     <nav
-      className={`light:border-b h-18 relative z-50 w-full bg-gray-50 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
+      className={`light:border-b h-18 relative z-40 w-full bg-gray-50 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
       onClick={_ => {
         if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
       }}
