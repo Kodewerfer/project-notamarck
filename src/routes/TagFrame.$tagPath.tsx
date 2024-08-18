@@ -30,12 +30,12 @@ function TagEdit() {
   const workspacePath = Route.useLoaderData().workspacePath || '';
   // AST tree's first-level children nodes
   const [TagRenderingSource, setTagRenderingSource] = useState<Parent[] | null>(null);
-  const renderingSourceCache = useRef<any[]>([]);
+  const renderingSourceCache = useRef<any[] | null>(null);
 
   // save the tag file when component unmount
   useEffect(() => {
     return () => {
-      if (EditingTag) UpdateTag(EditingTag.tagPath, renderingSourceCache.current);
+      if (EditingTag && renderingSourceCache.current) UpdateTag(EditingTag.tagPath, renderingSourceCache.current);
     };
   }, []);
 
@@ -124,7 +124,7 @@ function TagEdit() {
   }
 
   function UpdateTag(targetPath: string, [...renderingSource]: Parent[]) {
-    console.log(renderingSource);
+    console.log('Tag content saved');
     const root = u('root', [...renderingSource]);
     IPCRenderSide.send(IPCActions.FILES.UPDATE_TARGET_TAG_CONTENT, targetPath, root);
   }
@@ -134,6 +134,9 @@ function TagEdit() {
       {/*return to the listing page if the tag is invalid*/}
       {!EditingTag && <Navigate to={'/TagFrame'} />}
       {/*Editing page*/}
+      <h1 className={'center mb-2 select-none px-6 py-2 text-center text-xl font-bold'}>
+        {EditingTag?.tagFileName || ''}
+      </h1>
       {TagRenderingSource?.length && (
         <Reorder.Group
           as={'div'}

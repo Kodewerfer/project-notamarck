@@ -10,6 +10,9 @@ export const IPCActions = {
       RECENT_WORK_SPACES_CHANGED: 'APP:PUSH:RECENT_WORK_SPACES_CHANGED',
     },
   },
+  SHELL: { //using shell from electron to run outside command
+    OPEN_EXTERNAL_HTTP: 'SHELL:OPEN_EXTERNAL_HTTP',
+  },
   NOTIFICATION: {
     SHOW_NOTIFICATION: 'NOTIFICATION:SHOW_NOTIFICATION',
   },

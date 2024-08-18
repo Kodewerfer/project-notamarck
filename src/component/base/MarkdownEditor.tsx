@@ -16,6 +16,7 @@ const MarkdownEditor = forwardRef(
     {
       fullPath,
       MDSource,
+      LinkElementClicked,
       onEditorUnmounted,
       onEditorMounted,
       EditorCallBacks,
@@ -23,6 +24,7 @@ const MarkdownEditor = forwardRef(
     }: {
       fullPath: string; //used as an id when passing up data to parent
       MDSource: string;
+      LinkElementClicked?: (linkType: string, linkTarget: string) => void | Promise<void>;
       onEditorMounted?: () => Promise<void> | void;
       onEditorUnmounted?: (extractedData: Object) => Promise<void> | void;
       EditorCallBacks?: {
@@ -119,6 +121,40 @@ const MarkdownEditor = forwardRef(
       (async () => {
         if (typeof onEditorMounted === 'function') await onEditorMounted();
       })();
+    });
+
+    // handle Ctrl click on link or file links, calls the LinkElementClicked
+    // TODO: find a more permanent solution
+    useEffect(() => {
+      const editorDOM = EditorRef.current?.GetDOM()?.editor;
+
+      function LinkClickHandler(ev: HTMLElementEventMap['click']) {
+        if (!ev.ctrlKey) return; // must be holding down ctrl key
+
+        let linkType = '';
+        let target = '';
+
+        const clickTarget = ev.target as HTMLElement;
+        if (clickTarget.tagName.toLowerCase() === 'a') {
+          linkType = 'http';
+          // get href as text only, otherwise it will resolve according to current router's address
+          target = (clickTarget as HTMLLinkElement).getAttribute('href')||"";
+        }
+
+        const datasetElement = clickTarget?.parentElement?.dataset['fileLink'];
+        if (clickTarget.tagName.toLowerCase() === 'span' && datasetElement) {
+          linkType = 'file';
+          target = datasetElement;
+        }
+
+        if (typeof LinkElementClicked === 'function') LinkElementClicked(linkType, target);
+      }
+
+      editorDOM?.addEventListener('click', LinkClickHandler);
+
+      return () => {
+        editorDOM?.removeEventListener('click', LinkClickHandler);
+      };
     });
 
     return (

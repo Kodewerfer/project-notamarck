@@ -9,6 +9,8 @@ import { TChangedFilesPayload } from 'electron-src/Types/IPC.ts';
 import _ from 'lodash';
 
 import './css/TabFrame.css';
+import { useNavigate } from '@tanstack/react-router';
+import path from 'path-browserify';
 
 // Identifying info a tab holds, in addition to fs related props, add selection cache
 export type TTabItems = TFileInMemory & {
@@ -17,6 +19,8 @@ export type TTabItems = TFileInMemory & {
 
 const { IPCRenderSide } = window;
 export default function TabFrame() {
+  const navigate = useNavigate();
+
   const [Tabs, setTabs] = useState<TTabItems[]>([]);
   // NOTE: active tab/SelectedTab is not fetched from main, when the frame init and tabs has data, SelectedTab will be the first in order and send to main
   const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null);
@@ -338,6 +342,32 @@ export default function TabFrame() {
                 MDSource={SelectedTab.content || ''}
                 onEditorMounted={onSubEditorMounted}
                 onEditorUnmounted={onSubEditorUnmounted}
+                LinkElementClicked={async (linkType, linkTarget) => {
+                  if (linkType.trim() === '' || linkTarget.trim() === '') return;
+
+                  const workspacePath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
+
+                  switch (linkType) {
+                    case 'file':
+                      // target is a tag
+                      if (linkTarget.includes('.tag')) {
+                        navigate({
+                          to: '/TagFrame/$tagPath',
+                          params: { tagPath: path.join(workspacePath, linkTarget) },
+                        });
+                        break;
+                      }
+                      // file
+                      navigate({
+                        to: '/FileFrame/edit/$filepath',
+                        params: { filepath: path.join(workspacePath, linkTarget) },
+                      });
+                      break;
+                    case 'http':
+                      IPCRenderSide.send(IPCActions.SHELL.OPEN_EXTERNAL_HTTP, linkTarget);
+                      break;
+                  }
+                }}
                 EditorCallBacks={{
                   OnInit: SourceHTMLString =>
                     IPCRenderSide.send(IPCActions.DATA.SET_ACTIVE_FILE_CONTENT, SourceHTMLString),

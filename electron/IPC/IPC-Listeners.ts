@@ -10,7 +10,7 @@ import {
   SetOpenFiles,
   UpdateOpenedFile,
 } from '../Data/Globals.ts';
-import { BrowserWindow, Menu, Notification } from 'electron';
+import { BrowserWindow, Menu, Notification, shell } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { SaveContentToFileOverrideOnDup, UnlinkFile } from '../Utils/FileOperations.ts';
 import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
@@ -29,6 +29,25 @@ import { ESearchTypes, TSearchTarget } from '../Types/Search.ts';
 import { TagObjectToMD } from '../Utils/TagFileConvertor.ts';
 import { Compatible } from 'unified/lib';
 import path from 'node:path';
+
+/***********
+ * - Shell -
+ ***********/
+
+const { OPEN_EXTERNAL_HTTP } = IPCActions.SHELL; //receiving channel
+
+function OpenHTTPLinkFromOutside(_event: IpcMainEvent, httpLink: string) {
+  if (!httpLink || httpLink === '') return;
+
+  const protocolRegex = /^https?:\/\//i;
+
+  // If the text does not start with http:// or https://, prepend http://
+  if (!protocolRegex.test(httpLink)) {
+    httpLink = 'http://' + httpLink;
+  }
+
+  shell.openExternal(httpLink);
+}
 
 /*******************
  * - NOTIFICATION -
@@ -327,4 +346,5 @@ export const IPCListenerMappings = [
   { trigger: SET_ACTIVE_FILE_CONTENT, listener: ChangeActiveFileContentAndPush },
   { trigger: SET_CONTENT_SEARCH_RESULT, listener: PushNewContentSearchResult },
   { trigger: SET_JUMP_TO_LINE, listener: PushNewLineNum },
+  { trigger: OPEN_EXTERNAL_HTTP, listener: OpenHTTPLinkFromOutside },
 ];
