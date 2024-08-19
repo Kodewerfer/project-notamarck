@@ -1,9 +1,8 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
-import { ScrollableElementContext } from '@/context/MainFrameContext';
 import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
 import { TChangedFilesPayload } from 'electron-src/Types/IPC.ts';
 import _ from 'lodash';
@@ -31,7 +30,8 @@ export default function TabFrame() {
   const TabBarRef = useRef<HTMLElement | null>(null);
 
   // Passed down from main frame context
-  const mainFrameScrollable = useContext(ScrollableElementContext);
+  // const mainFrameScrollable = useContext(ScrollableElementContext);
+  const ScrollableArea = useRef<HTMLElement | null>(null);
 
   // Handles the content search result, debounced to avoid excessive function calls
   const contentSearchHandler = useCallback(
@@ -69,10 +69,10 @@ export default function TabFrame() {
     setTimeout(() => {
       const { top } = editorDOM.children[lineNum].getBoundingClientRect();
 
-      if (mainFrameScrollable?.current) {
-        const divTop = mainFrameScrollable.current.getBoundingClientRect().top;
+      if (ScrollableArea?.current) {
+        const divTop = ScrollableArea.current.getBoundingClientRect().top;
         const tabBarHeight = (TabBarRef?.current && TabBarRef.current.scrollHeight) || 0;
-        mainFrameScrollable.current.scrollTop = top - divTop - tabBarHeight * 3;
+        ScrollableArea.current.scrollTop = top - divTop - tabBarHeight * 3;
       }
     }, 0);
 
@@ -257,10 +257,10 @@ export default function TabFrame() {
       const range = selection.getRangeAt(0).cloneRange();
       const { top } = range.getBoundingClientRect();
 
-      if (mainFrameScrollable?.current) {
-        const divTop = mainFrameScrollable.current.getBoundingClientRect().top;
+      if (ScrollableArea?.current) {
+        const divTop = ScrollableArea.current.getBoundingClientRect().top;
         const tabBarHeight = (TabBarRef?.current && TabBarRef.current.scrollHeight) || 0;
-        mainFrameScrollable.current.scrollTop = top - divTop - tabBarHeight * 3;
+        ScrollableArea.current.scrollTop = top - divTop - tabBarHeight * 2;
       }
     }, 0);
   };
@@ -314,10 +314,13 @@ export default function TabFrame() {
         </Reorder.Group>
       </nav>
       {/* content for the tab */}
-      <section className={`z-10 px-2 pb-5 pl-4 pt-3 ${Tabs.length === 0 && 'hidden'}`}>
+      <section
+        ref={ScrollableArea}
+        className={`z-10 h-full overflow-x-auto overflow-y-hidden scroll-smooth text-nowrap px-2 pb-5 pl-4 pt-3 w-full focus:scroll-auto ${Tabs.length === 0 && 'hidden'}`}
+      >
         <AnimatePresence mode="wait">
           <motion.div
-            className={'animate-wrapper h-full'} //marking the usage, no real purpose
+            className={'animate-wrapper h-full w-fit'} //marking the usage, no real purpose
             key={SelectedTab ? SelectedTab.filename : 'empty'}
             animate={{ opacity: 1, y: 0, left: 0 }}
             initial={{ opacity: 0, y: 20 }}

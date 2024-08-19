@@ -5,7 +5,6 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 
 import { FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
-import { ScrollableElementContext } from '@/context/MainFrameContext.ts';
 import { getLastPartOfPath } from 'component/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
 import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
@@ -196,9 +195,9 @@ function FileFrame() {
   }
 
   return (
-    <div className={'Main-frame-root flex h-full w-full'}>
-      {/*Sidebar*/}
-      <div className="z-10 h-full w-80 border-r border-gray-200 dark:border-none dark:bg-slate-800">
+    <div className={'Main-frame-root flex h-full w-full max-w-full overflow-auto'}>
+      {/*File listing side bar*/}
+      <div className="file-list-block z-10 h-full w-80 min-w-80 border-r border-gray-200 dark:border-none dark:bg-slate-800">
         {/*file list*/}
         <div className="h-full bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
           <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
@@ -278,28 +277,22 @@ function FileFrame() {
           </ul>
         </div>
       </div>
-      <div className="grow bg-gray-50 antialiased dark:bg-gray-900">
+      <div className="editor-block overflow-hidden w-full bg-gray-50 antialiased dark:bg-gray-900">
+        {/*all-in-one Search bar component*/}
+        <SearchBar
+          MDList={MDFiles}
+          TagsList={TagList}
+          FileContent={ActiveFileContent}
+          SearchCallbacks={{
+            Content: result => IPCRenderSide.send(IPCActions.EDITOR_MD.SET_CONTENT_SEARCH_RESULT, result),
+          }}
+        />
         {/*Main editor area*/}
-        <div className="flex h-full w-full flex-col dark:bg-slate-200">
-          {/*all-in-one Search bar component*/}
-          <SearchBar
-            MDList={MDFiles}
-            TagsList={TagList}
-            FileContent={ActiveFileContent}
-            SearchCallbacks={{
-              Content: result => IPCRenderSide.send(IPCActions.EDITOR_MD.SET_CONTENT_SEARCH_RESULT, result),
-            }}
-          />
+        <div className="editor-backdrop h-full w-full dark:bg-slate-200">
+
           {/*the main display area*/}
-          <div
-            ref={ScrollAreaRef}
-            className={
-              'mainframe-display h-full w-full overflow-auto scroll-smooth focus:scroll-auto dark:bg-slate-600 dark:text-blue-50'
-            }
-          >
-            <ScrollableElementContext.Provider value={ScrollAreaRef}>
-              <Outlet />
-            </ScrollableElementContext.Provider>
+          <div ref={ScrollAreaRef} className={'mainframe-display h-full w-full dark:bg-slate-600 dark:text-blue-50'}>
+            <Outlet />
           </div>
         </div>
       </div>

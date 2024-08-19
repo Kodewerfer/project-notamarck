@@ -64,7 +64,7 @@ function RootComponent() {
       {/*side buttons*/}
       <RootSideBar />
 
-      <AnimatePresence mode={'popLayout'}>
+      <AnimatePresence mode={'wait'}>
         <AnimatedOutlet
           AnimationProps={RootLevelAnimationProps}
           AdditionalClassName={'ml-14 overflow-hidden h-screen'}
