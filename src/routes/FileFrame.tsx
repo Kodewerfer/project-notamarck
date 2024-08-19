@@ -11,6 +11,7 @@ import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import { TMDFile } from 'electron-src/Types/Files.ts';
 import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
+import _ from 'lodash';
 
 const { IPCRenderSide } = window;
 
@@ -35,6 +36,9 @@ function FileFrame() {
   const [MDFiles, setMDFiles] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
   const [TagList, setTagList] = useState<TTagsInMemory[] | null | undefined>(Route.useLoaderData()?.Tags);
 
+  const SearchBarDOM = useRef<HTMLElement | null>(null);
+  const [BackdropHeight, setBackdropHeight] = useState<number>(100);
+
   const [ActiveFileContent, setActiveFileContent] = useState<string>('');
 
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
@@ -46,9 +50,6 @@ function FileFrame() {
   const [filepathToRename, setFilepathToRename] = useState<string | null>('');
   const [newPendingName, setNewPendingName] = useState('');
   const RenamingInputRef = useRef<HTMLInputElement | null>(null);
-
-  // passing down to children
-  const ScrollAreaRef = useRef<HTMLDivElement | null>(null);
 
   // Initial loading
   useEffect(() => {
@@ -130,6 +131,31 @@ function FileFrame() {
     }
   }, [filepathToRename]);
 
+  // for scrolling to work, set height for Editor backdrop each time and on search bar re-sizing
+  useEffect(() => {
+    const searchBar = SearchBarDOM.current;
+    
+
+    const debounceResize = _.debounce(() => {
+      if (searchBar) setBackdropHeight(window.innerHeight - searchBar.clientHeight);
+    }, 50);
+
+    const resizeObserver = new ResizeObserver(debounceResize);
+
+    if (searchBar) {
+      resizeObserver.observe(searchBar);
+    }
+
+    window.addEventListener('resize', debounceResize);
+
+    return () => {
+      if (searchBar) {
+        resizeObserver.unobserve(searchBar);
+      }
+      window.removeEventListener('resize', debounceResize);
+    };
+  }, []);
+
   // Multi-file selection
   function selectFiles(ev: React.MouseEvent, item: TMDFile) {
     if (ev.ctrlKey) {
@@ -195,9 +221,9 @@ function FileFrame() {
   }
 
   return (
-    <div className={'Main-frame-root flex h-full w-full max-w-full overflow-auto'}>
+    <div className={'Main-frame-root flex h-screen w-full max-w-full overflow-auto'}>
       {/*File listing side bar*/}
-      <div className="file-list-block z-10 h-full w-80 min-w-80 border-r border-gray-200 dark:border-none dark:bg-slate-800">
+      <div className="file-list-block z-10 h-screen w-80 min-w-80 border-r border-gray-200 dark:border-none dark:bg-slate-600">
         {/*file list*/}
         <div className="h-full bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
           <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
@@ -277,9 +303,10 @@ function FileFrame() {
           </ul>
         </div>
       </div>
-      <div className="editor-block overflow-hidden w-full bg-gray-50 antialiased dark:bg-gray-900">
+      <div className="editor-block h-screen min-h-screen w-full overflow-hidden bg-gray-50 antialiased dark:bg-gray-900">
         {/*all-in-one Search bar component*/}
         <SearchBar
+          ref={SearchBarDOM}
           MDList={MDFiles}
           TagsList={TagList}
           FileContent={ActiveFileContent}
@@ -288,12 +315,9 @@ function FileFrame() {
           }}
         />
         {/*Main editor area*/}
-        <div className="editor-backdrop h-full w-full dark:bg-slate-200">
-
+        <div style={{ height: `${BackdropHeight}px` }} className={`editor-backdrop w-full grow dark:bg-slate-200`}>
           {/*the main display area*/}
-          <div ref={ScrollAreaRef} className={'mainframe-display h-full w-full dark:bg-slate-600 dark:text-blue-50'}>
-            <Outlet />
-          </div>
+          <Outlet />
         </div>
       </div>
     </div>

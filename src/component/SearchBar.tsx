@@ -306,7 +306,7 @@ const SearchBar = forwardRef(
     return (
       <nav
         ref={ref}
-        className={`light:border-b h-18 relative z-40 w-full bg-gray-50 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
+        className={`light:border-b relative z-40 h-fit w-full bg-gray-50 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
         onClick={_ => {
           if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
         }}
@@ -350,8 +350,14 @@ const SearchBar = forwardRef(
           />
           <label
             htmlFor={'main-search-bar'}
+            onClick={() => {
+              const availableTypes = Object.keys(ESearchTypes);
+              const oldIndex = availableTypes.findIndex(item => item === searchType);
+              const newIndex = oldIndex < availableTypes.length - 1 ? oldIndex + 1 : 0;
+              setSearchType(availableTypes[newIndex] as ESearchTypes);
+            }}
             className={
-              'order-2 self-center px-2 text-sm text-gray-500 duration-150' +
+              'order-2 select-none self-center px-2 text-sm text-gray-500 duration-150' +
               ' peer-placeholder-shown:scale-80 peer-placeholder-shown:text-gray-400' +
               ' peer-focus:scale-120 peer-focus:text-lg peer-focus:font-semibold peer-focus:text-blue-500' +
               ' rtl:peer-focus:translate-x-1/4 dark:text-gray-400'
@@ -439,36 +445,38 @@ const SearchBar = forwardRef(
         {isSearching && searchType === ESearchTypes.Content && (
           <div
             ref={ContentResultRef}
-            className={`flex h-12 w-full cursor-default select-none flex-row items-center justify-center overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
+            className={`absolute h-20 w-11/12 cursor-default select-none overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
           >
-            <div>
-              <span className={'text-sm font-semibold'}>Result: </span>
-              <span className={'text-sm font-semibold'}> {contentSearchResults.length} </span>
-            </div>
-            {/*spacer*/}
-            <div className={'grow'}></div>
-            {contentSearchResults.length > 0 && (
-              <div className={'flex items-center justify-center'}>
-                <span className={'pr-2'}>Move to:</span>
-                <ArrowLeftIcon
-                  className={'size-4 cursor-pointer'}
-                  onClick={_ => {
-                    const newIndex = activeResultIndex > 0 ? activeResultIndex - 1 : contentSearchResults.length - 1;
-                    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
-                    setActiveResultIndex(newIndex);
-                  }}
-                />
-                <span className={'p-2'}>{activeResultIndex + 1}</span>
-                <ArrowRightIcon
-                  className={'size-4 cursor-pointer'}
-                  onClick={_ => {
-                    const newIndex = activeResultIndex < contentSearchResults.length - 1 ? activeResultIndex + 1 : 0;
-                    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
-                    setActiveResultIndex(newIndex);
-                  }}
-                />
+            <div className={'flex w-full flex-row items-center justify-center'}>
+              <div>
+                <span className={'text-sm font-semibold'}>Result: </span>
+                <span className={'text-sm font-semibold'}> {contentSearchResults.length} </span>
               </div>
-            )}
+              {/*spacer*/}
+              <div className={'grow'}></div>
+              {contentSearchResults.length > 0 && (
+                <div className={'flex items-center justify-center'}>
+                  <span className={'pr-2'}>Move to:</span>
+                  <ArrowLeftIcon
+                    className={'size-4 cursor-pointer'}
+                    onClick={_ => {
+                      const newIndex = activeResultIndex > 0 ? activeResultIndex - 1 : contentSearchResults.length - 1;
+                      IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
+                      setActiveResultIndex(newIndex);
+                    }}
+                  />
+                  <span className={'p-2'}>{activeResultIndex + 1}</span>
+                  <ArrowRightIcon
+                    className={'size-4 cursor-pointer'}
+                    onClick={_ => {
+                      const newIndex = activeResultIndex < contentSearchResults.length - 1 ? activeResultIndex + 1 : 0;
+                      IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
+                      setActiveResultIndex(newIndex);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </nav>
