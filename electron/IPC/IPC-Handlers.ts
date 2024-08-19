@@ -47,6 +47,8 @@ import {
 import { TMDFile } from '../Types/Files.ts';
 import { GetLastSearchTargetToken } from '../Data/Seach.ts';
 import { TagFileReader } from '../Utils/TagFileConvertor.ts';
+import StartFilesWatcher from '../FSMonitor/FilesWatcher.ts';
+import StartTagsWatcher from '../FSMonitor/TagsWatcher.ts';
 
 /************
  * - APP -
@@ -93,6 +95,9 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
 
   ResetAndCacheTagsListAsync();
   ResetAndCacheMDFilesListAsync();
+
+  StartFilesWatcher();
+  StartTagsWatcher();
 
   console.log('Setting workspace to :', NewDirPath);
   // push to renderer

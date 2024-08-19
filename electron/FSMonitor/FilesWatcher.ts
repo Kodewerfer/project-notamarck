@@ -15,18 +15,21 @@ import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 
 let FilesWatcher: FSWatcher;
 
-function InitFilesWatcher() {
-  if (!FilesWatcher)
-    // only watches files in main folder
-    FilesWatcher = chokidar.watch(GetCurrentWorkspace() + '/*', {
-      ignored: /(^|[\/\\])\../,
-      persistent: true,
-      ignoreInitial: true, //no add handler firing immediately after binding
-    });
+async function InitFilesWatcher() {
+  if (FilesWatcher) {
+    await FilesWatcher.close();
+    console.log('Old FilesWatcher Closed');
+  }
+  // only watches files in main folder
+  FilesWatcher = chokidar.watch(GetCurrentWorkspace() + '/*', {
+    ignored: /(^|[\/\\])\../,
+    persistent: true,
+    ignoreInitial: true, //no add handler firing immediately after binding
+  });
 }
 
-export default function StartFilesWatcher() {
-  if (!FilesWatcher) InitFilesWatcher();
+export default async function StartFilesWatcher() {
+  await InitFilesWatcher();
   FilesWatcher.on('add', (path, stats) => OnNewFile(path, stats));
   FilesWatcher.on('unlink', (path: string, stats: Stats | undefined) => OnDeleteFile(path, stats));
 }

@@ -11,17 +11,21 @@ import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 
 let TagsWatcher: FSWatcher;
 
-function InitTagsWatcher() {
-  if (!TagsWatcher)
-    TagsWatcher = chokidar.watch(GetTagFolderFullPath(), {
-      ignored: /(^|[\/\\])\../,
-      persistent: true,
-      ignoreInitial: true, //no add handler firing immediately after binding
-    });
+async function InitTagsWatcher() {
+  if (TagsWatcher) {
+    await TagsWatcher.close();
+    console.log('Old TagsWatcher Closed');
+  }
+
+  TagsWatcher = chokidar.watch(GetTagFolderFullPath(), {
+    ignored: /(^|[\/\\])\../,
+    persistent: true,
+    ignoreInitial: true, //no add handler firing immediately after binding
+  });
 }
 
-export default function StartTagsWatcher() {
-  if (!TagsWatcher) InitTagsWatcher();
+export default async function StartTagsWatcher() {
+  await InitTagsWatcher();
   TagsWatcher.on('add', (path, stats) => addNewTagToCache(path, stats));
   TagsWatcher.on('unlink', (path: string, stats: Stats | undefined) => removeTagFromCache(path, stats));
   TagsWatcher.on('change', (path: string, stats: Stats | undefined) => ReloadTagContent(path, stats));
