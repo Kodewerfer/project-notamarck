@@ -69,7 +69,7 @@ function IDTransformer(ast: object) {
 
     rootNode.children.map((paragraphItem: any) => {
       Object.assign(paragraphItem, {
-        uid: ` ${paragraphItem.type ?? 'element'}_${_.random(1, 999)}`,
+        uid: ` ${paragraphItem.type ?? 'element'}_${_.random(1, 999)}_${_.random(1, 99999)}_${_.uniqueId()}`,
       });
     });
 

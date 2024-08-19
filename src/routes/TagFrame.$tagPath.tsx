@@ -136,11 +136,11 @@ function TagEdit() {
   }
 
   return (
-    <div className={'h-full bg-gray-50 dark:bg-slate-700 dark:text-blue-50'}>
+    <div className={'flex h-full flex-col bg-gray-50 dark:bg-slate-700 dark:text-blue-50'}>
       {/*return to the listing page if the tag is invalid*/}
       {!EditingTag && <Navigate to={'/TagFrame'} />}
       {/*Editing page*/}
-      <h1 className={'center mb-2 select-none px-6 py-2 text-center text-xl font-bold'}>
+      <h1 className={'center mb-2 h-12 select-none px-6 py-2 text-center text-xl font-bold'}>
         {EditingTag?.tagFileName || ''}
       </h1>
       {TagRenderingSource && TagRenderingSource.length > 0 && (
@@ -148,7 +148,7 @@ function TagEdit() {
           as={'div'}
           onReorder={ReOrderItems}
           values={TagRenderingSource}
-          className={'flex flex-col items-center px-10 py-12'}
+          className={'flex grow basis-full flex-col items-center overflow-auto scroll-smooth px-10 py-12'}
         >
           {TagRenderingSource &&
             TagRenderingSource.map((paragraphData: any) => {
