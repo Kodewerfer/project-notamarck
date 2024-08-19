@@ -12,6 +12,10 @@ export function SetUpGlobalShortCuts() {
   }
 }
 
+export function UnregisterGlobalShortcuts() {
+  globalShortcut.unregisterAll();
+}
+
 export const KeyMappingDescriptions = [
   {
     keyPress: 'CommandOrControl+S', //saving
