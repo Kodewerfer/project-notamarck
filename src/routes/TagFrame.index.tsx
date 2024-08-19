@@ -7,6 +7,7 @@ import { TagIcon as TagIconSolid } from '@heroicons/react/24/solid';
 import path from 'path-browserify';
 import SearchBar from 'component/SearchBar.tsx';
 import { ESearchTypes } from 'electron-src/Types/Search.ts';
+import _ from "lodash";
 
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/')({
@@ -28,6 +29,10 @@ function TagList() {
 
   const [selectedTagsPaths, setSelectedTagsPaths] = useState<string[]>([]); //used in styling elements
   const selectedTagsPathRef = useRef<string[]>([]); // copy of the state version, actually used as data package
+  
+  // dynamic resizing
+  const searchBarWrapperDom = useRef<HTMLDivElement | null>(null);
+  const [TagGridHeight, setTagGridHeight] = useState<number>(100);
 
   const RenamingInputRef = useRef<HTMLInputElement>(null);
   const [tagPathToRename, setTagPathToRename] = useState<string | null>(null);
@@ -130,6 +135,30 @@ function TagList() {
       unbindTagEditingChange();
     };
   }, []);
+  
+  // for scrolling to work, set height for Editor backdrop each time and on search bar re-sizing
+  useEffect(() => {
+    const searchBar = searchBarWrapperDom.current;
+    
+    const debounceResize = _.debounce(() => {
+      if (searchBar) setTagGridHeight(window.innerHeight - searchBar.clientHeight);
+    }, 50);
+    
+    const resizeObserver = new ResizeObserver(debounceResize);
+    
+    if (searchBar) {
+      resizeObserver.observe(searchBar);
+    }
+    
+    window.addEventListener('resize', debounceResize);
+    
+    return () => {
+      if (searchBar) {
+        resizeObserver.unobserve(searchBar);
+      }
+      window.removeEventListener('resize', debounceResize);
+    };
+  }, []);
 
   return (
     <div
@@ -137,19 +166,25 @@ function TagList() {
         ev.preventDefault();
         ShowTagContextMenu();
       }}
-      className={'TagFrame-root h-full bg-gray-50 px-4 py-8 dark:bg-slate-700'}
+      className={'TagFrame-root h-full bg-gray-50 px-4 dark:bg-slate-700'}
     >
-      {/*all-in-one Search bar component*/}
-      <SearchBar
-        MDList={null}
-        SearchCallbacks={{
-          TagList: result => setFilteredTagList(result),
-        }}
-        TagsList={TagList}
-        AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'}
-        SearchOptions={{ ShowResult: false, LockSearchType: ESearchTypes.Tag, ShowActions: true, DisplayMode: 'block' }}
-      />
+      {/*search bar wrapper, for easier height calculation*/}
+      <div
+        ref={searchBarWrapperDom}
+        className={"search-wrapper pt-8"}>
+        {/*all-in-one Search bar component*/}
+        <SearchBar
+          MDList={null}
+          SearchCallbacks={{
+            TagList: result => setFilteredTagList(result),
+          }}
+          TagsList={TagList}
+          AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'}
+          SearchOptions={{ ShowResult: false, LockSearchType: ESearchTypes.Tag, ShowActions: true, DisplayMode: 'block' }}
+        />
+      </div>
 
+      {/* when the list is empty */}
       {!FilteredTagList ||
         (!FilteredTagList.length && (
           <div className={'flex h-full w-full justify-center'}>
@@ -159,7 +194,9 @@ function TagList() {
           </div>
         ))}
       {/*Tags grid*/}
-      <div className={'mt-4 grid select-none grid-cols-6 gap-4 sm:grid-cols-3 sm:gap-2 md:grid-cols-4'}>
+      <div
+        style={{ height: `${TagGridHeight}px` }}
+        className={'mt-4 grid overflow-auto select-none grid-cols-6 gap-4 sm:grid-cols-3 sm:gap-2 md:grid-cols-4'}>
         {FilteredTagList &&
           FilteredTagList.map(tagInfo => (
             <div

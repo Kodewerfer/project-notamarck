@@ -447,7 +447,7 @@ const SearchBar = forwardRef(
             ref={ContentResultRef}
             className={`absolute h-20 w-11/12 cursor-default select-none overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
           >
-            <div className={'flex w-full flex-row items-center justify-center'}>
+            <div className={'flex w-full h-full flex-row items-center justify-center'}>
               <div>
                 <span className={'text-sm font-semibold'}>Result: </span>
                 <span className={'text-sm font-semibold'}> {contentSearchResults.length} </span>

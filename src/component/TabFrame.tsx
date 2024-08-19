@@ -293,11 +293,15 @@ export default function TabFrame() {
   };
 
   return (
-    <div className={"TabFrame-wrapper flex flex-col h-full w-full dark:bg-slate-600 dark:text-blue-50"}>
+    <div className={'TabFrame-wrapper flex h-full w-full flex-col dark:bg-slate-600 dark:text-blue-50'}>
       {/*the tab row*/}
       <nav
         ref={TabBarRef}
-        className={`sticky top-0 z-20 flex h-9 w-full overflow-hidden bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && "hidden"}`}
+        onWheel={ev => { //convert vertical scroll to horizontal
+          if (!ev.deltaY || !TabBarRef.current) return;
+          (TabBarRef.current as HTMLElement).scrollLeft = ev.deltaY + ev.deltaX;
+        }}
+        className={`tab-bar sticky top-0 z-20 flex h-9 w-full overflow-hidden overflow-x-auto scroll-smooth bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
       >
         <Reorder.Group as="ul" axis="x" onReorder={onReOrder} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
@@ -316,12 +320,12 @@ export default function TabFrame() {
       {/* content for the tab */}
       <section
         ref={ScrollableArea}
-        className={`z-10 h-full w-full overflow-auto scroll-smooth text-nowrap px-2 pb-5 pl-4 pt-3 focus:scroll-auto ${Tabs.length === 0 && "hidden"}`}
+        className={`z-10 h-full w-full overflow-auto scroll-smooth text-nowrap px-2 pb-5 pl-4 pt-3 focus:scroll-auto ${Tabs.length === 0 && 'hidden'}`}
       >
         <AnimatePresence mode="wait">
           <motion.div
-            className={"animate-wrapper"} //marking the usage, no real purpose
-            key={SelectedTab ? SelectedTab.filename : "empty"}
+            className={'animate-wrapper'} //marking the usage, no real purpose
+            key={SelectedTab ? SelectedTab.filename : 'empty'}
             animate={{ opacity: 1, y: 0, left: 0 }}
             initial={{ opacity: 0, y: 20 }}
             exit={{ opacity: 0, y: 40 }}
@@ -331,31 +335,31 @@ export default function TabFrame() {
               <MarkdownEditor
                 key={SelectedTab.fullPath}
                 fullPath={SelectedTab.fullPath}
-                MDSource={SelectedTab.content || ""}
+                MDSource={SelectedTab.content || ''}
                 onEditorMounted={onSubEditorMounted}
                 onEditorUnmounted={onSubEditorUnmounted}
                 LinkElementClicked={async (linkType, linkTarget) => {
-                  if (linkType.trim() === "" || linkTarget.trim() === "") return;
-                  
+                  if (linkType.trim() === '' || linkTarget.trim() === '') return;
+
                   const workspacePath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
-                  
+
                   switch (linkType) {
-                    case "file":
+                    case 'file':
                       // target is a tag
-                      if (linkTarget.includes(".tag")) {
+                      if (linkTarget.includes('.tag')) {
                         navigate({
-                          to: "/TagFrame/$tagPath",
-                          params: { tagPath: path.join(workspacePath, linkTarget) }
+                          to: '/TagFrame/$tagPath',
+                          params: { tagPath: path.join(workspacePath, linkTarget) },
                         });
                         break;
                       }
                       // file
                       navigate({
-                        to: "/FileFrame/edit/$filepath",
-                        params: { filepath: path.join(workspacePath, linkTarget) }
+                        to: '/FileFrame/edit/$filepath',
+                        params: { filepath: path.join(workspacePath, linkTarget) },
                       });
                       break;
-                    case "http":
+                    case 'http':
                       IPCRenderSide.send(IPCActions.SHELL.OPEN_EXTERNAL_HTTP, linkTarget);
                       break;
                   }
@@ -364,7 +368,7 @@ export default function TabFrame() {
                   OnInit: SourceHTMLString =>
                     IPCRenderSide.send(IPCActions.DATA.SET_ACTIVE_FILE_CONTENT, SourceHTMLString),
                   OnReload: SourceHTMLString =>
-                    IPCRenderSide.send(IPCActions.DATA.SET_ACTIVE_FILE_CONTENT, SourceHTMLString)
+                    IPCRenderSide.send(IPCActions.DATA.SET_ACTIVE_FILE_CONTENT, SourceHTMLString),
                 }}
                 FileLinks={{
                   removeCallback: linkTarget => {
@@ -372,7 +376,7 @@ export default function TabFrame() {
                   },
                   initCallback: linkTarget => {
                     IPCRenderSide.send(IPCActions.FILES.SYNC_TO_TAG, linkTarget, SelectedTab?.fullPath);
-                  }
+                  },
                 }}
                 ref={MDEditorRef}
               />

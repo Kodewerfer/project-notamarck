@@ -134,7 +134,6 @@ function FileFrame() {
   // for scrolling to work, set height for Editor backdrop each time and on search bar re-sizing
   useEffect(() => {
     const searchBar = SearchBarDOM.current;
-    
 
     const debounceResize = _.debounce(() => {
       if (searchBar) setBackdropHeight(window.innerHeight - searchBar.clientHeight);
@@ -225,27 +224,31 @@ function FileFrame() {
       {/*File listing side bar*/}
       <div className="file-list-block z-10 h-screen w-80 min-w-80 border-r border-gray-200 dark:border-none dark:bg-slate-600">
         {/*file list*/}
-        <div className="h-full bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
-          <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
-            <FolderIcon className="size-4 self-center" />
-            <span className="grow pl-1.5">{currentFolder}</span>
-          </section>
-          {/*Add new file button*/}
-          <section
-            className={'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'}
-            onClick={() => {
-              const NewFileSearch: TSearchTarget = {
-                placeHolder: 'New File',
-                searchType: ESearchTypes.File,
-              };
-              IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
-            }}
-          >
-            <PlusIcon className={'size-6'} />
-          </section>
+        <div className="flex h-full min-h-screen flex-col overflow-hidden bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
+          <div className={'h-20 max-h-20'}>
+            <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
+              <FolderIcon className="size-4 self-center" />
+              <span className="grow pl-1.5">{currentFolder}</span>
+            </section>
+            {/*Add new file button*/}
+            <section
+              className={
+                'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
+              }
+              onClick={() => {
+                const NewFileSearch: TSearchTarget = {
+                  placeHolder: 'New File',
+                  searchType: ESearchTypes.File,
+                };
+                IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
+              }}
+            >
+              <PlusIcon className={'size-6'} />
+            </section>
+          </div>
           {/*File listing, context menu is bind here, so it is for the best that this is fit to content*/}
           <ul
-            className="w-full px-1.5"
+            className="w-full flex-grow basis-full overflow-auto px-1.5"
             onContextMenu={ev => {
               ev.preventDefault();
               HandleFileContextMenu();
