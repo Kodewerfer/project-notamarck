@@ -112,13 +112,13 @@ function Settings() {
       {/*wrapper*/}
       <div
         className={
-          'select-none setting-wrapper h-full w-full cursor-pointer content-center justify-center gap-28 overflow-hidden bg-slate-800/75'
+          'setting-wrapper h-full w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden bg-slate-800/75'
         }
       >
         {/*inner*/}
         <div
           className={
-            'setting-window relative m-auto ms-auto flex h-5/6 w-11/12 cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-2xl'
+            'setting-window relative m-auto ms-auto flex h-5/6 w-11/12 cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-2xl dark:bg-slate-500 dark:text-blue-50'
           }
         >
           {/*close button*/}
@@ -139,7 +139,11 @@ function Settings() {
           </motion.div>
           {/*side bar*/}
           <aside className={'h-full w-48 overflow-hidden'}>
-            <div className={'m-auto mb-4 w-11/12 rounded-lg bg-gray-200 px-1.5 py-4 text-center tracking-wide'}>
+            <div
+              className={
+                'm-auto mb-4 w-11/12 rounded-lg bg-gray-200 px-1.5 py-4 text-center tracking-wide dark:bg-slate-600'
+              }
+            >
               <ul>
                 <li className={'line-clamp-2 overflow-hidden py-1.5 font-medium hover:rounded-lg hover:bg-gray-300'}>
                   Manage workspaces
@@ -150,12 +154,16 @@ function Settings() {
           {/*folder selection*/}
           <div className={'h-full grow overflow-y-auto overflow-x-clip pl-4'}>
             {/*current folder*/}
-            <div className={'mx-6 rounded-lg bg-gradient-to-l from-gray-100 to-gray-200 px-5 py-5'}>
+            <div
+              className={
+                'mx-6 rounded-lg bg-gradient-to-l from-gray-100 to-gray-200 px-5 py-5 dark:from-slate-500 dark:to-slate-700'
+              }
+            >
               <section className={'flex text-lg'}>
                 <FolderOpenIcon className={'size-6 min-h-6 min-w-6 self-center'} />
                 <div className={'grow'}>
                   <span className={'block truncate pl-2.5 font-semibold'}>{getLastPartOfPath(currentFolderPath)}</span>
-                  <span className={'block truncate pl-2.5 text-gray-500'}>{currentFolderPath}</span>
+                  <span className={'block truncate pl-2.5 text-gray-500 dark:text-gray-300 dark:drop-shadow'}>{currentFolderPath}</span>
                 </div>
               </section>
               <div className={'flex justify-center pt-5'}>
@@ -190,13 +198,13 @@ function Settings() {
                     key={item}
                     onClick={() => ClickedOnRecentFolders(item)}
                     className={
-                      'my-2.5 mb-2 flex cursor-pointer from-gray-200 to-gray-100 py-3.5 pl-2.5 hover:rounded-lg hover:bg-gradient-to-r'
+                      'my-2.5 mb-2 flex cursor-pointer from-gray-200 to-gray-100 dark:from-slate-600 dark:to-slate-500 py-3.5 pl-2.5 hover:rounded-lg hover:bg-gradient-to-r'
                     }
                   >
                     <FolderIcon className={'size-5 min-h-5 min-w-5 self-center'} />
                     <div className={'grow'}>
-                      <span className={'block truncate pl-2.5 font-semibold'}>{getLastPartOfPath(item)}</span>
-                      <span className={'block truncate pl-2.5 text-gray-500'}>{item}</span>
+                      <span className={'block truncate pl-2.5 font-semibold dark:drop-shadow'}>{getLastPartOfPath(item)}</span>
+                      <span className={'block truncate pl-2.5 text-gray-500 dark:text-gray-300'}>{item}</span>
                     </div>
                   </li>
                 ))}
