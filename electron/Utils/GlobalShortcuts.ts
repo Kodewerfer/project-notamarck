@@ -16,29 +16,6 @@ export function UnregisterGlobalShortcuts() {
   globalShortcut.unregisterAll();
 }
 
-export const KeyMappingDescriptions = [
-  {
-    keyPress: 'CommandOrControl+S', //saving
-    desc: 'Saving',
-  },
-  {
-    keyPress: 'CommandOrControl+N', //New item
-    desc: 'New file/tag',
-  },
-  {
-    keyPress: 'CommandOrControl+F', //content search
-    desc: 'Search in content',
-  },
-  {
-    keyPress: 'CommandOrControl+Alt+F', // file search
-    desc: 'Search in files',
-  },
-  {
-    keyPress: 'CommandOrControl+g', //tag search
-    desc: 'Search in tags',
-  },
-];
-
 export const KeyMappingConfig = [
   {
     keyPress: 'CommandOrControl+S', //saving
