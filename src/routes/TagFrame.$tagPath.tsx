@@ -79,9 +79,15 @@ function TagEdit() {
       },
     );
 
+    // on receiving saving signal from main
+    const unbindSaveSignal = IPCRenderSide.on(IPCActions.SHORT_CUT.SIGNAL.SAVE, async _ => {
+      if (EditingTag && renderingSourceCache.current) UpdateTag(EditingTag.tagPath, renderingSourceCache.current);
+    });
+
     return () => {
       unbindTagEditingChange();
       unbindTagContentChange();
+      unbindSaveSignal();
     };
   }, []);
 
@@ -130,7 +136,6 @@ function TagEdit() {
   }
 
   function UpdateTag(targetPath: string, [...renderingSource]: Parent[]) {
-    console.log('Tag content saved');
     const root = u('root', [...renderingSource]);
     IPCRenderSide.send(IPCActions.FILES.UPDATE_TARGET_TAG_CONTENT, targetPath, root);
   }

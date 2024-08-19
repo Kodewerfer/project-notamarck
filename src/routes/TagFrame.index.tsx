@@ -6,7 +6,7 @@ import { TagIcon } from '@heroicons/react/24/outline';
 import { TagIcon as TagIconSolid } from '@heroicons/react/24/solid';
 import path from 'path-browserify';
 import SearchBar from 'component/SearchBar.tsx';
-import { ESearchTypes } from 'electron-src/Types/Search.ts';
+import { ESearchTypes, TSearchTarget } from "electron-src/Types/Search.ts";
 import _ from "lodash";
 
 const { IPCRenderSide } = window;
@@ -128,11 +128,20 @@ function TagList() {
         }, 0);
       },
     );
+    
+    const unbindNewItemShortCut = IPCRenderSide.on(IPCActions.SHORT_CUT.SIGNAL.NEW_ITEM, _ => {
+      const NewFileSearch: TSearchTarget = {
+        placeHolder: 'New Tag',
+        searchType: ESearchTypes.Tag,
+      };
+      IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
+    });
 
     return () => {
       unbindTagListingChange();
       unbindRenamingTag();
       unbindTagEditingChange();
+      unbindNewItemShortCut();
     };
   }, []);
   

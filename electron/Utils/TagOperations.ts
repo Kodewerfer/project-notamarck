@@ -147,6 +147,7 @@ export function ReadTagRaw(tagPath: string): TTagsInMemory {
   };
 }
 
+// todo: remove from files
 export function UnlinkTag(TagFullName: string) {
   try {
     fs.unlinkSync(TagFullName);

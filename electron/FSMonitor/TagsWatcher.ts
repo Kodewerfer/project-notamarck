@@ -32,6 +32,7 @@ export default async function StartTagsWatcher() {
 }
 
 // Handlers
+// TODO: performance issue when large amount of tags add at the same time
 async function addNewTagToCache(tagPath: string, _: Stats | undefined) {
   let NewTagData;
   try {

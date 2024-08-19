@@ -196,6 +196,15 @@ export default function TabFrame() {
       },
     );
 
+    // on receiving saving signal from main
+    const unbindSaveSignal = IPCRenderSide.on(IPCActions.SHORT_CUT.SIGNAL.SAVE, async _ => {
+      if (!SelectedTab || !MDEditorRef) return;
+
+      const selectedTabContent = await MDEditorRef?.current?.ExtractMD();
+
+      IPCRenderSide.send(IPCActions.FILES.CHANGE_TARGET_FILE_CONTENT, SelectedTab.fullPath, selectedTabContent);
+    });
+
     return () => {
       unbindNewJumpToLine();
       unbindOpenedFileChange();
@@ -203,8 +212,9 @@ export default function TabFrame() {
       unbindFileActivationChange();
       unbindEditorTextInsert();
       unbindSearchResultChanged();
+      unbindSaveSignal();
     };
-  });
+  }, []);
 
   const onReOrder = (newArray: TTabItems[]) => {
     setTabs(newArray);
@@ -297,7 +307,8 @@ export default function TabFrame() {
       {/*the tab row*/}
       <nav
         ref={TabBarRef}
-        onWheel={ev => { //convert vertical scroll to horizontal
+        onWheel={ev => {
+          //convert vertical scroll to horizontal
           if (!ev.deltaY || !TabBarRef.current) return;
           (TabBarRef.current as HTMLElement).scrollLeft = ev.deltaY + ev.deltaX;
         }}

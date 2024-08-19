@@ -100,6 +100,14 @@ function FileFrame() {
         setActiveFileContent(payload);
       },
     );
+    // file content changed in editor
+    const unbindNewItemShortCut = IPCRenderSide.on(IPCActions.SHORT_CUT.SIGNAL.NEW_ITEM, _ => {
+      const NewFileSearch: TSearchTarget = {
+        placeHolder: 'New File',
+        searchType: ESearchTypes.File,
+      };
+      IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
+    });
 
     return () => {
       unbindFileActivationChange();
@@ -107,6 +115,7 @@ function FileFrame() {
       unbindRenamingFile();
       unbindTagListingChange();
       unbindActiveFileContentChange();
+      unbindNewItemShortCut();
     };
   }, []);
 
@@ -233,7 +242,7 @@ function FileFrame() {
             {/*Add new file button*/}
             <section
               className={
-                'flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
+                'group relative flex cursor-pointer content-center justify-center bg-slate-100/30 py-1.5 dark:bg-slate-500/20'
               }
               onClick={() => {
                 const NewFileSearch: TSearchTarget = {
@@ -243,7 +252,14 @@ function FileFrame() {
                 IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
               }}
             >
-              <PlusIcon className={'size-6'} />
+              <PlusIcon className={'size-6 group-hover:-translate-x-12 group-hover:transition'} />
+              <span
+                className={
+                  'absolute scale-0 pl-2 font-semibold group-hover:translate-x-4 group-hover:scale-100 group-hover:transition'
+                }
+              >
+                New File
+              </span>
             </section>
           </div>
           {/*File listing, context menu is bind here, so it is for the best that this is fit to content*/}

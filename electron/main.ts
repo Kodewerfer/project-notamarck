@@ -3,7 +3,11 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { IPCHandlerMappings } from './IPC/IPC-Handlers.ts';
 import { IPCListenerMappings } from './IPC/IPC-Listeners.ts';
-import { SetCurrentWorkspaceThenStore, SetAppMainWindowID, SetRecentWorkSpace } from './Data/Globals.ts';
+import {
+  SetCurrentWorkspaceThenStore,
+  SetAppMainWindowID,
+  SetRecentWorkSpace,
+} from './Data/Globals.ts';
 import * as fs from 'node:fs';
 import { ResetAndCacheTagsListAsync } from './Utils/TagOperations.ts';
 import { ResetAndCacheMDFilesListAsync } from './Utils/FileOperations.ts';
@@ -11,6 +15,7 @@ import { AppData_Keys } from './Data/Persistence.ts';
 import Store from 'electron-store';
 import StartFilesWatcher from './FSMonitor/FilesWatcher.ts';
 import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
+import { SetUpGlobalShortCuts } from "./Utils/Shortcuts.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -101,6 +106,8 @@ app.whenReady().then(_ => {
 
   StartFilesWatcher();
   StartTagsWatcher();
+
+  SetUpGlobalShortCuts();
 });
 
 // Init a default "workspace" folder under the app root
@@ -127,3 +134,5 @@ function InitWorkspace() {
   const recentWorkspaces = (store.get(AppData_Keys.recentWorkspace) as string[]) || [];
   if (recentWorkspaces.length) SetRecentWorkSpace(recentWorkspaces);
 }
+
+
