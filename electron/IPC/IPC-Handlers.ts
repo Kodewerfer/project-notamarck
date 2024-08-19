@@ -49,6 +49,7 @@ import { GetLastSearchTargetToken } from '../Data/Seach.ts';
 import { TagFileReader } from '../Utils/TagFileConvertor.ts';
 import StartFilesWatcher from '../FSMonitor/FilesWatcher.ts';
 import StartTagsWatcher from '../FSMonitor/TagsWatcher.ts';
+import { KeyMappingConfig } from '../Utils/GlobalShortcuts.ts';
 
 /************
  * - APP -
@@ -73,6 +74,21 @@ const { GET_RECENT_WORK_SPACES } = IPCActions.APP;
 
 export function ReturnRecentWorkspaces() {
   return GetRecentWorkspace();
+}
+
+const { GET_APP_KEY_BINDING } = IPCActions.APP;
+
+export function ReturnAllKeyBindings() {
+  let forDisplay: any[] = [];
+
+  KeyMappingConfig.map((item: any) => {
+    forDisplay.push({
+      keyPress: item.keyPress,
+      desc: item.desc,
+    });
+  });
+
+  return forDisplay;
 }
 
 // Change the active folder, save all files from the previous folder
@@ -494,4 +510,5 @@ export const IPCHandlerMappings = [
   { trigger: CONVERT_TAG_RAW_FROM_NAME, handler: ConvertTagRawFromCache },
   { trigger: CHECK_IN_OPENED_FILE, handler: CheckIfPathInOpenedFile },
   { trigger: GET_ACTIVE_FILE_CONTENT, handler: ReturnCurrentActiveFileContent },
+  { trigger: GET_APP_KEY_BINDING, handler: ReturnAllKeyBindings },
 ];

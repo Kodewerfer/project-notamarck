@@ -177,9 +177,13 @@ const SearchBar = forwardRef(
     useEffect(() => {
       const UnbindEvent = IPCRenderSide.on(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, (_, searchPayload) => {
         if (!searchPayload) return console.warn('Search bar: Received empty payload');
-        setPlaceHolderText((searchPayload as TSearchTarget).placeHolder || '');
         setIsSearching(true);
-        if (!Options.LockSearchType) setSearchType((searchPayload as TSearchTarget).searchType || null);
+        if (!Options.LockSearchType) setSearchType((searchPayload as TSearchTarget).searchType || ESearchTypes.File);
+
+        let placeHolderText = (searchPayload as TSearchTarget).placeHolder || '';
+        if (Options.LockSearchType) placeHolderText = `Search ${searchType}`;
+
+        setPlaceHolderText(placeHolderText);
         if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
       });
 
@@ -447,7 +451,7 @@ const SearchBar = forwardRef(
             ref={ContentResultRef}
             className={`absolute h-20 w-11/12 cursor-default select-none overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
           >
-            <div className={'flex w-full h-full flex-row items-center justify-center'}>
+            <div className={'flex h-full w-full flex-row items-center justify-center'}>
               <div>
                 <span className={'text-sm font-semibold'}>Result: </span>
                 <span className={'text-sm font-semibold'}> {contentSearchResults.length} </span>

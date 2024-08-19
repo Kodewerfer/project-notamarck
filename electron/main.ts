@@ -15,7 +15,7 @@ import { AppData_Keys } from './Data/Persistence.ts';
 import Store from 'electron-store';
 import StartFilesWatcher from './FSMonitor/FilesWatcher.ts';
 import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
-import { SetUpGlobalShortCuts } from "./Utils/Shortcuts.ts";
+import { SetUpGlobalShortCuts } from "./Utils/GlobalShortcuts.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

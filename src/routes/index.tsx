@@ -84,21 +84,21 @@ function IndexComponent() {
       {/*wrapper*/}
       <div
         className={
-          'index-wrapper h-full w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden bg-slate-800/75'
+          'index-wrapper h-screen w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden dark:bg-slate-800/75 bg-gray-50/75 py-6'
         }
       >
         {/*inner*/}
         <div
           className={
-            'index-inner relative m-auto ms-auto flex h-5/6 w-5/6 cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-2xl dark:bg-slate-500 dark:text-blue-50'
+            'index-inner relative m-auto ms-auto flex h-full w-5/6 cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-2xl dark:bg-slate-500 dark:text-blue-50'
           }
         >
           {/* recent folders */}
-          <div className={'w-full max-w-xl'}>
-            <h1 className={'mx-4 mb-2 border-b-2 pb-2 text-center text-lg font-semibold dark:border-slate-400'}>
+          <div className={'flex h-full w-full max-w-xl flex-col'}>
+            <h1 className={'mx-4 mb-2 h-12 border-b-2 pb-2 text-center text-lg font-semibold dark:border-slate-400'}>
               Recent Workspaces
             </h1>
-            <ul className={'text-right'}>
+            <ul className={'w-full grow basis-full overflow-auto text-right'}>
               {recentFolders.reverse().map(item => (
                 <li
                   key={item}
@@ -120,10 +120,7 @@ function IndexComponent() {
           </div>
 
           {/*folder selection*/}
-          <div className={'h-full w-full grow overflow-y-auto overflow-x-clip pl-4'}>
-            <h1 className={'mx-4 mb-2 border-b-2 pb-2 text-center text-lg font-semibold dark:border-slate-400'}>
-              Current Workspaces
-            </h1>
+          <div className={'h-full w-full grow overflow-y-auto overflow-x-hidden pl-4'}>
             {/*current folder*/}
             <div
               onClick={() => navigate({ to: '/FileFrame/edit' })}
