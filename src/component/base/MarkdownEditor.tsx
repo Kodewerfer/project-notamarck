@@ -138,7 +138,7 @@ const MarkdownEditor = forwardRef(
         if (clickTarget.tagName.toLowerCase() === 'a') {
           linkType = 'http';
           // get href as text only, otherwise it will resolve according to current router's address
-          target = (clickTarget as HTMLLinkElement).getAttribute('href')||"";
+          target = (clickTarget as HTMLLinkElement).getAttribute('href') || '';
         }
 
         const datasetElement = clickTarget?.parentElement?.dataset['fileLink'];
@@ -158,20 +158,18 @@ const MarkdownEditor = forwardRef(
     });
 
     return (
-      <>
-        <Editor
-          SourceData={MDSource}
-          ref={EditorRef}
-          DaemonShouldLog={false}
-          EditorCallBacks={{
-            OnInit: EditorCallBacks?.OnInit,
-            OnReload: EditorCallBacks?.OnReload,
-          }}
-          ComponentCallbacks={{
-            FileLinks: FileLinks,
-          }}
-        />
-      </>
+      <Editor
+        SourceData={MDSource}
+        ref={EditorRef}
+        DaemonShouldLog={false}
+        EditorCallBacks={{
+          OnInit: EditorCallBacks?.OnInit,
+          OnReload: EditorCallBacks?.OnReload,
+        }}
+        ComponentCallbacks={{
+          FileLinks: FileLinks,
+        }}
+      />
     );
   },
 );
