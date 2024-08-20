@@ -6,8 +6,8 @@ import { TagIcon } from '@heroicons/react/24/outline';
 import { TagIcon as TagIconSolid } from '@heroicons/react/24/solid';
 import path from 'path-browserify';
 import SearchBar from 'component/SearchBar.tsx';
-import { ESearchTypes, TSearchTarget } from "electron-src/Types/Search.ts";
-import _ from "lodash";
+import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
+import _ from 'lodash';
 
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/')({
@@ -23,13 +23,14 @@ function TagList() {
   // use to navigate to tag editing
   const navigate = useNavigate();
   const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData().list); //passed down to search bar
+
   const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData().editing); //passed down to search bar
   // for display, in sync with search bar
   const [FilteredTagList, setFilteredTagList] = useState<TTagsInMemory[]>(Route.useLoaderData().list); //default to the full list
 
   const [selectedTagsPaths, setSelectedTagsPaths] = useState<string[]>([]); //used in styling elements
   const selectedTagsPathRef = useRef<string[]>([]); // copy of the state version, actually used as data package
-  
+
   // dynamic resizing
   const searchBarWrapperDom = useRef<HTMLDivElement | null>(null);
   const [TagGridHeight, setTagGridHeight] = useState<number>(100);
@@ -37,6 +38,77 @@ function TagList() {
   const RenamingInputRef = useRef<HTMLInputElement>(null);
   const [tagPathToRename, setTagPathToRename] = useState<string | null>(null);
   const [newPendingName, setNewPendingName] = useState<string>('');
+
+  // Do an extra fetching for list If null or no length
+  useEffect(() => {
+    (async () => {
+      if (!TagList || !TagList.length) setTagList(await ListAllTags());
+    })();
+  }, []);
+
+  // Bind to data changing events
+  useEffect(() => {
+    const unbindTagListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED, async _ => {
+      const TagData = await ListAllTags();
+      setTagList(TagData);
+    });
+
+    const unbindTagEditingChange = IPCRenderSide.on(
+      IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
+      (_, payload: TTagsInMemory | null) => {
+        setEditingTag(payload);
+      },
+    );
+
+    const unbindRenamingTag = IPCRenderSide.on(
+      IPCActions.FILES.PUSH.RENAMING_SELECTED_TAG,
+      async (_, renameTargetPath) => {
+        setTagPathToRename(renameTargetPath);
+        setTimeout(() => {
+          if (RenamingInputRef.current) RenamingInputRef.current.focus();
+        }, 0);
+      },
+    );
+
+    const unbindNewItemShortCut = IPCRenderSide.on(IPCActions.SHORT_CUT.SIGNAL.NEW_ITEM, _ => {
+      const NewFileSearch: TSearchTarget = {
+        placeHolder: 'New Tag',
+        searchType: ESearchTypes.Tag,
+      };
+      IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
+    });
+
+    return () => {
+      unbindTagListingChange();
+      unbindRenamingTag();
+      unbindTagEditingChange();
+      unbindNewItemShortCut();
+    };
+  }, []);
+
+  // for scrolling to work, set height for Editor backdrop each time and on search bar re-sizing
+  useEffect(() => {
+    const searchBar = searchBarWrapperDom.current;
+
+    const debounceResize = _.debounce(() => {
+      if (searchBar) setTagGridHeight(window.innerHeight - searchBar.clientHeight);
+    }, 50);
+
+    const resizeObserver = new ResizeObserver(debounceResize);
+
+    if (searchBar) {
+      resizeObserver.observe(searchBar);
+    }
+
+    window.addEventListener('resize', debounceResize);
+
+    return () => {
+      if (searchBar) {
+        resizeObserver.unobserve(searchBar);
+      }
+      window.removeEventListener('resize', debounceResize);
+    };
+  }, []);
 
   // Multi-file selection
   function selectTags(ev: React.MouseEvent, item: TTagsInMemory) {
@@ -97,78 +169,6 @@ function TagList() {
     setTagPathToRename(null);
   }
 
-  // fallback when loader fails
-  useEffect(() => {
-    if (TagList) return;
-    (async () => {
-      setTagList(await ListAllTags());
-    })();
-  }, []);
-
-  // Bind to data changing events
-  useEffect(() => {
-    const unbindTagListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED, async _ => {
-      const TagData = await ListAllTags();
-      setTagList(TagData);
-    });
-
-    const unbindTagEditingChange = IPCRenderSide.on(
-      IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
-      (_, payload: TTagsInMemory | null) => {
-        setEditingTag(payload);
-      },
-    );
-
-    const unbindRenamingTag = IPCRenderSide.on(
-      IPCActions.FILES.PUSH.RENAMING_SELECTED_TAG,
-      async (_, renameTargetPath) => {
-        setTagPathToRename(renameTargetPath);
-        setTimeout(() => {
-          if (RenamingInputRef.current) RenamingInputRef.current.focus();
-        }, 0);
-      },
-    );
-    
-    const unbindNewItemShortCut = IPCRenderSide.on(IPCActions.SHORT_CUT.SIGNAL.NEW_ITEM, _ => {
-      const NewFileSearch: TSearchTarget = {
-        placeHolder: 'New Tag',
-        searchType: ESearchTypes.Tag,
-      };
-      IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
-    });
-
-    return () => {
-      unbindTagListingChange();
-      unbindRenamingTag();
-      unbindTagEditingChange();
-      unbindNewItemShortCut();
-    };
-  }, []);
-  
-  // for scrolling to work, set height for Editor backdrop each time and on search bar re-sizing
-  useEffect(() => {
-    const searchBar = searchBarWrapperDom.current;
-    
-    const debounceResize = _.debounce(() => {
-      if (searchBar) setTagGridHeight(window.innerHeight - searchBar.clientHeight);
-    }, 50);
-    
-    const resizeObserver = new ResizeObserver(debounceResize);
-    
-    if (searchBar) {
-      resizeObserver.observe(searchBar);
-    }
-    
-    window.addEventListener('resize', debounceResize);
-    
-    return () => {
-      if (searchBar) {
-        resizeObserver.unobserve(searchBar);
-      }
-      window.removeEventListener('resize', debounceResize);
-    };
-  }, []);
-
   return (
     <div
       onContextMenu={ev => {
@@ -178,9 +178,7 @@ function TagList() {
       className={'TagFrame-root h-full bg-gray-50 px-4 dark:bg-slate-700'}
     >
       {/*search bar wrapper, for easier height calculation*/}
-      <div
-        ref={searchBarWrapperDom}
-        className={"search-wrapper pt-8"}>
+      <div ref={searchBarWrapperDom} className={'search-wrapper pt-8'}>
         {/*all-in-one Search bar component*/}
         <SearchBar
           MDList={null}
@@ -189,7 +187,12 @@ function TagList() {
           }}
           TagsList={TagList}
           AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'}
-          SearchOptions={{ ShowResult: false, LockSearchType: ESearchTypes.Tag, ShowActions: true, DisplayMode: 'block' }}
+          SearchOptions={{
+            ShowResult: false,
+            LockSearchType: ESearchTypes.Tag,
+            ShowActions: true,
+            DisplayMode: 'block',
+          }}
         />
       </div>
 
@@ -205,7 +208,8 @@ function TagList() {
       {/*Tags grid*/}
       <div
         style={{ height: `${TagGridHeight}px` }}
-        className={'mt-4 grid overflow-auto select-none grid-cols-6 gap-4 sm:grid-cols-3 sm:gap-2 md:grid-cols-4'}>
+        className={'mt-4 grid select-none grid-cols-6 gap-4 overflow-auto sm:grid-cols-3 sm:gap-2 md:grid-cols-4'}
+      >
         {FilteredTagList &&
           FilteredTagList.map(tagInfo => (
             <div
