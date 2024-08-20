@@ -109,6 +109,11 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
   const oldDIrPath = SetCurrentWorkspaceThenStore(NewDirPath);
   if (oldDIrPath === null) return; // new path is the same as the last one
 
+  // close all opened files in the last folder
+  RemoveAllOpenFiles();
+  // remove active file
+  ChangeActiveFile(null);
+
   ResetAndCacheTagsListAsync();
   ResetAndCacheMDFilesListAsync();
 
