@@ -60,8 +60,6 @@ function IndexComponent() {
       console.error(e);
     }
 
-    await IPCRenderSide.invoke(IPCActions.DATA.CLOSE_ALL_OPENED_FILES);
-
     // Only one folder should be allowed to choose at a time
     try {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, DIRPath[0]);
@@ -84,7 +82,7 @@ function IndexComponent() {
       {/*wrapper*/}
       <div
         className={
-          'index-wrapper h-screen w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden dark:bg-slate-800/75 bg-gray-50/75 py-6'
+          'index-wrapper h-screen w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden bg-gray-50/75 py-6 dark:bg-slate-800/75'
         }
       >
         {/*inner*/}
@@ -139,10 +137,10 @@ function IndexComponent() {
                   </span>
                 </div>
               </section>
-              <div className={'flex justify-center pt-5'}>
+              <div className={'flex flex-col items-center justify-center pt-8'}>
                 <button
                   className={
-                    'mr-6 rounded-xl bg-gradient-to-tr from-purple-500 to-purple-600 px-5 py-2.5 text-center font-medium text-gray-50 shadow-md sm:text-xs lg:text-xl'
+                    'mb-6 w-1/5 min-w-32 max-w-48 rounded-xl bg-gradient-to-tr from-purple-500 to-purple-600 px-5 py-2.5 text-center font-medium text-gray-50 shadow-md sm:text-xs lg:text-xl'
                   }
                   onClick={() => navigate({ to: '/FileFrame/edit' })}
                 >
@@ -150,7 +148,7 @@ function IndexComponent() {
                 </button>
                 <button
                   className={
-                    'rounded-xl bg-gradient-to-tr from-emerald-500 to-emerald-600 px-5 py-2.5 text-center font-medium text-gray-50 shadow-md sm:text-xs lg:text-xl'
+                    'w-1/5 min-w-32 max-w-52 rounded-xl bg-gradient-to-tr from-emerald-500 to-emerald-600 px-5 py-2.5 text-center font-medium text-gray-50 shadow-md sm:text-xs lg:text-xl'
                   }
                   onClick={ev => {
                     ev.stopPropagation();
