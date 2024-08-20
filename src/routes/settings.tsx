@@ -19,13 +19,14 @@ export const Route = createFileRoute('/settings')({
 const { IPCRenderSide } = window;
 
 function Settings() {
+  const router = useRouter();
+
   const [currentSubPage, setCurrentSubPage] = useState<'workspace' | 'keyMap'>('workspace');
 
   const [keyMapping] = useState<any[]>(Route.useLoaderData());
 
   const [currentFolderPath, setCurrentFolderPath] = useState('');
   const [recentFolders, setRecentFolders] = useState<string[]>([]);
-  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -123,7 +124,7 @@ function Settings() {
       {/*wrapper*/}
       <div
         className={
-          'setting-wrapper h-full w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden dark:bg-slate-800/75 bg-gray-50/75'
+          'setting-wrapper h-full w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden bg-gray-50/75 dark:bg-slate-800/75'
         }
       >
         {/*inner*/}
