@@ -109,7 +109,7 @@ export default function TabFrame() {
     })();
   }, [Tabs]);
 
-  // Critical: Bind to main process' push events, sync tab's data to main
+  // Bind to main process' push events
   useEffect(() => {
     // when new search result arrives, new result is received in fileframe, then pushed through main
     const unbindNewJumpToLine = IPCRenderSide.on(
@@ -214,7 +214,7 @@ export default function TabFrame() {
       unbindSearchResultChanged();
       unbindSaveSignal();
     };
-  }, []);
+  }); // Critical!!: These events have to be bind and unbind each time,(no useEffect dep array ) so that when FileFrame._tabFrame.edit.$filepath is accessed, the references and info are correct
 
   const onReOrder = (newArray: TTabItems[]) => {
     setTabs(newArray);
@@ -312,7 +312,7 @@ export default function TabFrame() {
           if (!ev.deltaY || !TabBarRef.current) return;
           (TabBarRef.current as HTMLElement).scrollLeft = ev.deltaY + ev.deltaX;
         }}
-        className={`tab-bar sticky top-0 z-20 flex h-9 w-full overflow-hidden overflow-x-auto scroll-smooth bg-slate-300 text-slate-800 dark:bg-slate-400 ${Tabs.length === 0 && 'hidden'}`}
+        className={`tab-bar sticky top-0 z-20 flex h-10 w-full overflow-hidden overflow-x-auto scroll-smooth bg-zinc-400 text-slate-800  ${Tabs.length === 0 && 'hidden'}`}
       >
         <Reorder.Group as="ul" axis="x" onReorder={onReOrder} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
@@ -418,9 +418,9 @@ export const Tab = ({
   onClick,
   onRemove,
   isSelected,
-  TabsBGC = ['#fff', '#f3f3f3'],
+  TabsBGC = ['#a1a1aa', '#f3f4f6'], //unselect-selected
   TabsDraggingColor = '#e3e3e3',
-  CloseBtnBGColor = ['#fff', '#e3e3e3'],
+  CloseBtnBGColor = ['#fff', '#e3e3e3'], //background forgrounad
 }: TTabProps) => {
   return (
     <Reorder.Item
@@ -438,7 +438,10 @@ export const Tab = ({
       className={`flex px-2 py-1.5 ${isSelected ? 'is-selected' : ''}`}
       onPointerDown={onClick}
     >
-      <motion.span layout="position">{`${item.filename}`}</motion.span>
+      <motion.span
+        layout="position"
+        className={`${isSelected ? 'font-semibold drop-shadow-lg' : 'text-blue-50'} drop-shadow-md`}
+      >{`${item.filename}`}</motion.span>
       <motion.div className="ml-2.5 mt-0.5 flex items-center" layout>
         <motion.button
           onPointerDown={event => {
@@ -449,7 +452,7 @@ export const Tab = ({
           animate={{
             backgroundColor: isSelected ? CloseBtnBGColor[1] : CloseBtnBGColor[0],
           }}
-          className="size-4"
+          className="size-4 rounded-2xl hover:rounded"
         >
           <XMarkIcon className="" />
         </motion.button>
