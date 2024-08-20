@@ -33,13 +33,14 @@ function FileFrame() {
 
   const [currentFolder, setCurrentFolder] = useState('');
 
-  const [MDFiles, setMDFiles] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
+  // File Lists
+  const [MDList, setMDList] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
   const [TagList, setTagList] = useState<TTagsInMemory[] | null | undefined>(Route.useLoaderData()?.Tags);
+
+  const [ActiveFileContent, setActiveFileContent] = useState<string>('');
 
   const SearchBarDOM = useRef<HTMLElement | null>(null);
   const [BackdropHeight, setBackdropHeight] = useState<number>(100);
-
-  const [ActiveFileContent, setActiveFileContent] = useState<string>('');
 
   // currentEditingFile is not fetched, it depends on the tab frame and main process pushing
   const [currentEditingFile, setCurrentEditingFile] = useState<TFileInMemory | null>(null);
@@ -51,17 +52,19 @@ function FileFrame() {
   const [newPendingName, setNewPendingName] = useState('');
   const RenamingInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Initial loading
+  // Initial loading, do an extra fetching if there is no data or no length
   useEffect(() => {
-    if (MDFiles) return;
     (async () => {
-      console.log('Main Frame: No data from loader, re-fetching.');
-      const MDData = await ListMdInFolder();
-      setMDFiles(MDData);
+      if (!MDList||!MDList.length) {
+        const MDData = await ListMdInFolder();
+        setMDList(MDData);
+      }
 
-      // fetch tags
-      const allTags = await ListAllTags();
-      setTagList(allTags);
+      if (!TagList||!TagList.length) {
+        // fetch tags
+        const allTags = await ListAllTags();
+        setTagList(allTags);
+      }
 
       const FileContent = await IPCRenderSide.invoke(IPCActions.DATA.GET_ACTIVE_FILE_CONTENT);
       setActiveFileContent(FileContent);
@@ -84,8 +87,9 @@ function FileFrame() {
     });
 
     const unbindMDListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED, async _ => {
+      console.warn('MD LIST Changed');
       const MDData = await ListMdInFolder();
-      setMDFiles(MDData);
+      setMDList(MDData);
     });
 
     const unbindTagListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED, async _ => {
@@ -117,7 +121,7 @@ function FileFrame() {
       unbindActiveFileContentChange();
       unbindNewItemShortCut();
     };
-  }, []);
+  });
 
   // set folder name each time
   useEffect(() => {
@@ -271,8 +275,8 @@ function FileFrame() {
             }}
           >
             {/*File Listings*/}
-            {MDFiles &&
-              MDFiles.map(item => {
+            {MDList &&
+              MDList.map(item => {
                 // when renaming
                 if (filepathToRename === item.path)
                   return (
@@ -326,7 +330,7 @@ function FileFrame() {
         {/*all-in-one Search bar component*/}
         <SearchBar
           ref={SearchBarDOM}
-          MDList={MDFiles}
+          MDList={MDList}
           TagsList={TagList}
           FileContent={ActiveFileContent}
           SearchCallbacks={{
