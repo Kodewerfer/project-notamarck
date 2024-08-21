@@ -5,7 +5,7 @@ import { XMarkIcon } from '@heroicons/react/16/solid';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { FolderIcon } from '@heroicons/react/24/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
-import { getLastPartOfPath } from 'component/util/helper.ts';
+import { getLastPartOfPath } from '@/util/helper.ts';
 import _ from 'lodash';
 
 export const Route = createFileRoute('/settings')({

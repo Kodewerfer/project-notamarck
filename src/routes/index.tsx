@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
-import { getLastPartOfPath } from 'component/util/helper.ts';
+import { getLastPartOfPath } from '@/util/helper.ts';
 import { FolderIcon } from '@heroicons/react/24/solid';
 import { useEffect, useState } from 'react';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
