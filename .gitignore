@@ -25,9 +25,7 @@ release
 *.sln
 *.sw?
 
-# NPM package mocking
-.yalc
-yalc.lock
+/workspace
 
 #Generated file-based router
 routeTree.gen.ts
