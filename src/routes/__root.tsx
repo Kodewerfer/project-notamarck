@@ -23,14 +23,6 @@ function RootComponent() {
       opacity: 1,
       x: 0,
     },
-    // initial: {
-    //   opacity: 0,
-    //   x: '100vw',
-    // },
-    // exit: {
-    //   opacity: 0,
-    //   x: '-100vw',
-    // },
     initial: {
       opacity: 0,
       x: 0,
@@ -44,6 +36,7 @@ function RootComponent() {
     },
   };
 
+  // TODO: no effect, add different switching effects for each pages if appropriate
   const MainFrameOverride = {
     initial: {
       opacity: 0,
