@@ -167,6 +167,7 @@ const SearchBar = forwardRef(
     // when content searching got results, send to main process to jump the editor to result location
     useEffect(() => {
       if (!contentSearchResults.length || searchType !== ESearchTypes.Content) return;
+
       IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[activeResultIndex]);
     }, [searchString, searchType, contentSearchResults]);
 
@@ -238,7 +239,7 @@ const SearchBar = forwardRef(
     // reset the index when data or state changes
     useEffect(() => {
       setActiveResultIndex(0);
-    }, [MDList, TagsList, isSearching]);
+    }, [MDList, TagsList, contentSearchResults, searchType, isSearching]);
 
     // create new file
     async function CreateNewFile() {
