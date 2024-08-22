@@ -15,9 +15,9 @@ export const Route = createFileRoute('/FileFrame/_tabFrame/edit/$filepath')({
       });
       return;
     }
-    const OpenedFile = await IPCRenderSide.invoke(IPCActions.FILES.READ_MD_FROM_PATH, filepath);
-    IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, OpenedFile);
-    return OpenedFile;
+    const OpenedFile = await IPCRenderSide.invoke(IPCActions.FILES.READ_AND_ADD_TO_OPENED_FILE, filepath);
+
+    return IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, OpenedFile);
   },
   gcTime: 0,
   staleTime: 0,

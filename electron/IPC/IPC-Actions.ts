@@ -95,8 +95,8 @@ export const IPCActions = {
     REMOVE_FROM_TAG: 'FILES:REMOVE_FROM_TAG', //when a tag link is deleted from file, remove the reference from tag
     VALIDATE_TAG_IN_LINKED_FILES: 'FILES:VALIDATE_TAG_IN_LINKED_FILES', //check if a link to a tag still exists in the file
     // Files
+    READ_AND_ADD_TO_OPENED_FILE: 'FILES:READ_AND_ADD_TO_OPENED_FILE',
     CREATE_NEW_FILE: 'FILES:CREATE_NEW_FILE',
-    READ_MD_FROM_PATH: 'FILES:READ_MD_FROM_PATH',
     // renaming
     CHANGE_TARGET_FILE_NAME: 'FILE:CHANGE_TARGET_FILE_NAME', //generic interface that will be used by renderer
     CHANGE_TARGET_TAG_NAME: 'FILE:CHANGE_TARGET_TAG_NAME',

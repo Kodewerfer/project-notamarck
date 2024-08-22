@@ -21,9 +21,9 @@ const { IPCRenderSide } = window;
 export default function TabFrame() {
   const navigate = useNavigate();
 
-  const [Tabs, setTabs] = useState<TTabItems[]>([]);
+  const [AllTabs, setAllTabs] = useState<TTabItems[]>([]);
   // NOTE: active tab/SelectedTab is not fetched from main, when the frame init and tabs has data, SelectedTab will be the first in order and send to main
-  const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null);
+  const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null); //acts like a cache for file info, do not compare ref directly
 
   const lastSearchResultElements = useRef<HTMLElement[] | null>(null);
 
@@ -84,19 +84,19 @@ export default function TabFrame() {
   useEffect(() => {
     (async () => {
       const AllOpenedFiles: TTabItems[] = await IPCRenderSide.invoke(IPCActions.DATA.GET_ALL_OPENED_FILES);
-      if (Array.isArray(AllOpenedFiles) && Tabs.length === 0) setTabs(AllOpenedFiles);
+      if (Array.isArray(AllOpenedFiles) && AllTabs.length === 0) setAllTabs(AllOpenedFiles);
     })();
   }, []);
 
   // init the selected tab, set to the first tab if non-exist
   useEffect(() => {
     (async () => {
-      if (SelectedTab || !Tabs || !Tabs.length) return;
+      if (SelectedTab || !AllTabs || !AllTabs.length) return;
       const cachedActiveFile: TFileInMemory | null = await IPCRenderSide.invoke(IPCActions.DATA.GET_ACTIVE_FILE);
 
       const setToFirstTab = () => {
-        setSelectedTab(Tabs[0]);
-        IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, Tabs[0]);
+        setSelectedTab(AllTabs[0]);
+        IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, AllTabs[0]);
       };
 
       if (!cachedActiveFile) {
@@ -104,11 +104,11 @@ export default function TabFrame() {
         return;
       }
 
-      const foundTabIndex = Tabs.findIndex(loadedTab => loadedTab.fullPath === cachedActiveFile.fullPath);
-      if (foundTabIndex >= 0) setSelectedTab(Tabs[foundTabIndex]);
+      const foundTabIndex = AllTabs.findIndex(loadedTab => loadedTab.fullPath === cachedActiveFile.fullPath);
+      if (foundTabIndex >= 0) setSelectedTab(AllTabs[foundTabIndex]);
       else setToFirstTab();
     })();
-  }, [Tabs]);
+  }, [AllTabs]);
 
   // Bind to main process' push events
   useEffect(() => {
@@ -134,13 +134,13 @@ export default function TabFrame() {
       (_, payload: TTabItems[]) => {
         if (!payload || !Array.isArray(payload)) return;
 
-        const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
+        const TabsMap = new Map(AllTabs.map(tabItem => [tabItem.fullPath, tabItem]));
         const Added = payload.filter(fileItem => !TabsMap.has(fileItem.fullPath));
 
         const payloadPathMap = new Map(payload.map(fileItem => [fileItem.fullPath, fileItem]));
-        const FilteredTabs = Tabs.filter(tabItem => payloadPathMap.has(tabItem.fullPath));
+        const FilteredTabs = AllTabs.filter(tabItem => payloadPathMap.has(tabItem.fullPath));
 
-        setTabs(FilteredTabs.concat(Added));
+        setAllTabs(FilteredTabs.concat(Added));
       },
     );
 
@@ -148,7 +148,7 @@ export default function TabFrame() {
     const unbindFileContentChange = IPCRenderSide.on(
       IPCActions.DATA.PUSH.OPENED_FILE_CONTENT_CHANGED,
       (_, payload: TChangedFilesPayload[]) => {
-        const TabsMap = new Map(Tabs.map(tabItem => [tabItem.fullPath, tabItem]));
+        const TabsMap = new Map(AllTabs.map(tabItem => [tabItem.fullPath, tabItem]));
         payload.forEach(item => {
           if (TabsMap.get(item.TargetFilePath)) {
             TabsMap.set(item.TargetFilePath, item.NewFile);
@@ -156,7 +156,7 @@ export default function TabFrame() {
         });
         const TabsArrayFromArray = Array.from(TabsMap, ([_key, value]) => value);
 
-        setTabs(TabsArrayFromArray);
+        setAllTabs(TabsArrayFromArray);
       },
     );
 
@@ -165,13 +165,8 @@ export default function TabFrame() {
       IPCActions.DATA.PUSH.ACTIVE_FILE_CHANGED,
       (_, payload: TFileInMemory | null) => {
         if (!payload) return setSelectedTab(null);
-
-        if (payload.fullPath === SelectedTab?.fullPath) return;
-
-        const tabIndex = Tabs.findIndex(item => item.fullPath === payload.fullPath);
-        if (tabIndex === -1) return;
-        // SendCurrentTabContentToMain();
-        setSelectedTab(Tabs[tabIndex]);
+        // Since SelectedTab act more like a cache(not directly used in comparing references), add the value in directly
+        setSelectedTab(payload);
       },
     );
 
@@ -218,7 +213,7 @@ export default function TabFrame() {
   }); // Critical!!: These events have to be bind and unbind each time,(no useEffect dep array ) so that when FileFrame._tabFrame.edit.$filepath is accessed, the references and info are correct
 
   const onReOrder = (newArray: TTabItems[]) => {
-    setTabs(newArray);
+    setAllTabs(newArray);
     IPCRenderSide.send(IPCActions.DATA.SET_OPENED_FILES, newArray);
   };
 
@@ -231,14 +226,14 @@ export default function TabFrame() {
 
   const onCloseTab = async (item: TTabItems) => {
     // Notify backend
-    if (item === SelectedTab) {
+    if (item.fullPath === SelectedTab?.fullPath) {
       // await SendCurrentTabContentToMain();
-      const nextTab = closestItem(Tabs, item);
+      const nextTab = closestItem(AllTabs, item);
       setSelectedTab(nextTab);
       IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, nextTab);
     }
 
-    setTabs(removeItem(Tabs, item));
+    setAllTabs(removeItem(AllTabs, item));
     // save the file's content then close it in memory
     IPCRenderSide.invoke(IPCActions.DATA.SAVE_TARGET_OPENED_FILE, item.fullPath).catch((e: Error) => {
       IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
@@ -252,7 +247,7 @@ export default function TabFrame() {
 
   // When the editor mounts load the selection status from the cache.
   const onSubEditorMounted = async () => {
-    if (!SelectedTab || !Tabs) return;
+    if (!SelectedTab || !AllTabs) return;
     const cachedSelection = await IPCRenderSide.invoke(
       IPCActions.DATA.GET_SELECTION_STATUS_CACHE,
       SelectedTab.fullPath,
@@ -313,11 +308,11 @@ export default function TabFrame() {
           if (!ev.deltaY || !TabBarRef.current) return;
           (TabBarRef.current as HTMLElement).scrollLeft = ev.deltaY + ev.deltaX;
         }}
-        className={`tab-bar sticky top-0 z-20 flex h-10 w-full overflow-hidden overflow-x-auto scroll-smooth bg-zinc-400 text-slate-800 ${Tabs.length === 0 && 'hidden'}`}
+        className={`tab-bar sticky top-0 z-20 flex h-10 w-full overflow-hidden overflow-x-auto scroll-smooth bg-zinc-400 text-slate-800 ${AllTabs.length === 0 && 'hidden'}`}
       >
-        <Reorder.Group as="ul" axis="x" onReorder={onReOrder} className="flex flex-nowrap text-nowrap" values={Tabs}>
+        <Reorder.Group as="ul" axis="x" onReorder={onReOrder} className="flex flex-nowrap text-nowrap" values={AllTabs}>
           <AnimatePresence initial={false}>
-            {Tabs.map((item: TTabItems) => (
+            {AllTabs.map((item: TTabItems) => (
               <Tab
                 key={item.fullPath}
                 item={item}
@@ -332,7 +327,7 @@ export default function TabFrame() {
       {/* content for the tab */}
       <section
         ref={ScrollableArea}
-        className={`z-10 h-full w-full overflow-auto scroll-smooth text-nowrap px-2 pb-5 pl-4 pt-3 focus:scroll-auto ${Tabs.length === 0 && 'hidden'}`}
+        className={`z-10 h-full w-full overflow-auto scroll-smooth text-nowrap px-2 pb-5 pl-4 pt-3 focus:scroll-auto ${AllTabs.length === 0 && 'hidden'}`}
       >
         <AnimatePresence mode="wait">
           <motion.div

@@ -356,7 +356,7 @@ export function ReturnAllMDsInPath(_Event: IpcMainInvokeEvent): TMDFile[] {
 }
 
 // Read a MD file from path, add to opened file and push to renderer
-const { READ_MD_FROM_PATH } = IPCActions.FILES;
+const { READ_AND_ADD_TO_OPENED_FILE } = IPCActions.FILES;
 
 export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
   if (!targetPath.endsWith('.md')) throw new Error(`${targetPath} file is not MD`);
@@ -488,7 +488,7 @@ export function ConvertTagRawFromCache(_Event: IpcMainInvokeEvent, TagFileName: 
 export const IPCHandlerMappings = [
   { trigger: GET_APP_PATH, handler: GetAppPath },
   { trigger: LIST_CURRENT_PATH_MD, handler: ReturnAllMDsInPath },
-  { trigger: READ_MD_FROM_PATH, handler: ReadMDAndPushOpenedFiles },
+  { trigger: READ_AND_ADD_TO_OPENED_FILE, handler: ReadMDAndPushOpenedFiles },
   { trigger: GET_ALL_OPENED_FILES, handler: GetAllOpenedFiles },
   // { trigger: SET_OPENED_FILES, handler: SetOpenedFiles },
   { trigger: CLOSE_TARGET_OPENED_FILES, handler: CloseOpenedFile },
