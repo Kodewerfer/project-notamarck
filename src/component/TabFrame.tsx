@@ -5,11 +5,12 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import MarkdownEditor, { TEditorComponentRef } from 'component/base/MarkdownEditor.tsx';
 import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
 import { TChangedFilesPayload } from 'electron-src/Types/IPC.ts';
+import { useNavigate } from '@tanstack/react-router';
+import path from 'path-browserify';
 import _ from 'lodash';
 
 import './css/TabFrame.css';
-import { useNavigate } from '@tanstack/react-router';
-import path from 'path-browserify';
+import './css/EditorStyles.css';
 
 // Identifying info a tab holds, in addition to fs related props, add selection cache
 export type TTabItems = TFileInMemory & {
@@ -312,7 +313,7 @@ export default function TabFrame() {
           if (!ev.deltaY || !TabBarRef.current) return;
           (TabBarRef.current as HTMLElement).scrollLeft = ev.deltaY + ev.deltaX;
         }}
-        className={`tab-bar sticky top-0 z-20 flex h-10 w-full overflow-hidden overflow-x-auto scroll-smooth bg-zinc-400 text-slate-800  ${Tabs.length === 0 && 'hidden'}`}
+        className={`tab-bar sticky top-0 z-20 flex h-10 w-full overflow-hidden overflow-x-auto scroll-smooth bg-zinc-400 text-slate-800 ${Tabs.length === 0 && 'hidden'}`}
       >
         <Reorder.Group as="ul" axis="x" onReorder={onReOrder} className="flex flex-nowrap text-nowrap" values={Tabs}>
           <AnimatePresence initial={false}>
