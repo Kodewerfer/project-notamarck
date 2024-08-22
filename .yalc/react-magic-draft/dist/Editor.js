@@ -964,14 +964,17 @@ function EditorActual(_a, ref) {
             DaemonHandle.SyncNow();
         });
     }
+    // Copy and cut handlers to handle copy/cut component directly (when the selection is collapsed)
+    // copy handler used by cut to acquire active component
     function CopyHandler(_) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
+            // TODO: removing line breaker is now handled in daemon's paste handler, remove these later
             // will ask for permission, extract text only, as a default(no matter if the selection is expanded)
-            const clipboardText = yield navigator.clipboard.readText();
+            // const clipboardText = await navigator.clipboard.readText();
+            var _a;
             // remove all line breaks
             // await navigator.clipboard.writeText(clipboardText.replace(/\r?\n|\r/g, " "));
-            yield navigator.clipboard.writeText(clipboardText || " ");
+            // await navigator.clipboard.writeText(clipboardText || " ");
             const selection = window.getSelection();
             if (!selection || !selection.isCollapsed)
                 return; //expanded selection will only copy pure text.
@@ -999,30 +1002,12 @@ function EditorActual(_a, ref) {
             const ElementToDelete = yield CopyHandler();
             if (!ElementToDelete)
                 return;
+            // normal bowser behavior won't deal with components properly
             DaemonHandle.AddToOperations({
                 type: "REMOVE",
                 targetNode: ElementToDelete
             });
             DaemonHandle.SyncNow();
-        });
-    }
-    function PasteHandler(ev) {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
-            let ActiveComponentsStack = LastActivationCache.current;
-            const TopComponent = ActiveComponentsStack[ActiveComponentsStack.length - 1];
-            console.log(TopComponent);
-            if (!TopComponent)
-                return;
-            ev.preventDefault();
-            const clipboardText = yield navigator.clipboard.readText();
-            const lastElementTagName = (_b = (_a = TopComponent.return) === null || _a === void 0 ? void 0 : _a.element) === null || _b === void 0 ? void 0 : _b.tagName;
-            // FIXME: Deprecated API, no alternative
-            if (lastElementTagName && ParagraphTest.test(lastElementTagName))
-                // await navigator.clipboard.writeText(ClipboardWithSyntax.current);
-                document.execCommand('insertText', false, clipboardText);
-            else
-                document.execCommand('insertText', false, clipboardText.replace(/\r?\n|\r/g, " "));
         });
     }
     // Masking and unmasking to hide flicker
@@ -1052,7 +1037,7 @@ function EditorActual(_a, ref) {
     // Editor level Key handlers, Override keys
     // NOTE: these will fire after daemon's
     useLayoutEffect(() => {
-        var _a, _b, _c, _d;
+        var _a, _b, _c;
         function EditorKeydown(ev) {
             if (ev.key === "Enter") {
                 EnterKeyHandler(ev);
@@ -1073,13 +1058,11 @@ function EditorActual(_a, ref) {
         (_a = EditorElementRef.current) === null || _a === void 0 ? void 0 : _a.addEventListener("keydown", EditorKeydown);
         (_b = EditorElementRef.current) === null || _b === void 0 ? void 0 : _b.addEventListener("copy", CopyHandler);
         (_c = EditorElementRef.current) === null || _c === void 0 ? void 0 : _c.addEventListener("cut", CutHandler);
-        (_d = EditorElementRef.current) === null || _d === void 0 ? void 0 : _d.addEventListener("paste", PasteHandler);
         return () => {
-            var _a, _b, _c, _d;
+            var _a, _b, _c;
             (_a = EditorElementRef.current) === null || _a === void 0 ? void 0 : _a.removeEventListener("keydown", EditorKeydown);
             (_b = EditorElementRef.current) === null || _b === void 0 ? void 0 : _b.removeEventListener("copy", CopyHandler);
             (_c = EditorElementRef.current) === null || _c === void 0 ? void 0 : _c.removeEventListener("cut", CutHandler);
-            (_d = EditorElementRef.current) === null || _d === void 0 ? void 0 : _d.removeEventListener("paste", PasteHandler);
         };
     }, [EditorElementRef.current]);
     const DaemonHandle = useEditorDaemon(EditorElementRef, MirrorDocRef, OnDaemonFinishedProcessing, {

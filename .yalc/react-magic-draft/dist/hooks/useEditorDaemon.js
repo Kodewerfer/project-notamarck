@@ -1006,14 +1006,17 @@ export default function useEditorDaemon(EditorElementRef, MirrorDocumentRef, Fin
             debounceSelectionStatus();
             debounceRollbackAndSync();
         };
-        // now handled in editor
         const PastHandler = (ev) => {
             ev.preventDefault();
+            // ev.clipboardData can get text here properly
             const text = ev.clipboardData.getData('text/plain');
+            // only remove the \n so that \r will still make it possible to have new lines
+            // TODO: maybe buggy, need more test
+            const newText = text.split('\n').join("");
             // FIXME: Deprecated API, no alternative
-            document.execCommand('insertText', false, text);
-            debounceSelectionStatus();
-            debounceRollbackAndSync();
+            document.execCommand('insertText', false, newText);
+            DaemonState.SelectionStatusCache = GetSelectionStatus();
+            FlushAllRecords();
         };
         const SelectionHandler = (ev) => {
             DaemonState.SelectionStatusCache =
@@ -1056,7 +1059,7 @@ export default function useEditorDaemon(EditorElementRef, MirrorDocumentRef, Fin
         };
         WatchedElement.addEventListener("keydown", KeyDownHandler);
         WatchedElement.addEventListener("keyup", KeyUpHandler);
-        // WatchedElement.addEventListener("paste", PastHandler); // now handled in editor
+        WatchedElement.addEventListener("paste", PastHandler);
         WatchedElement.addEventListener("selectstart", SelectionHandler);
         WatchedElement.addEventListener("dragstart", DoNothing);
         WatchedElement.addEventListener("focusout", BlurHandler);
@@ -1066,7 +1069,7 @@ export default function useEditorDaemon(EditorElementRef, MirrorDocumentRef, Fin
             // WatchedElement.style.whiteSpace = whiteSpaceCached;
             WatchedElement.removeEventListener("keydown", KeyDownHandler);
             WatchedElement.removeEventListener("keyup", KeyUpHandler);
-            // WatchedElement.removeEventListener("paste", PastHandler);
+            WatchedElement.removeEventListener("paste", PastHandler);
             WatchedElement.removeEventListener("selectstart", SelectionHandler);
             WatchedElement.removeEventListener("dragstart", DoNothing);
             WatchedElement.removeEventListener("focusout", BlurHandler);
