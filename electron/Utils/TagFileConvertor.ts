@@ -8,6 +8,7 @@ import _ from 'lodash';
 
 import remarkParse from 'remark-parse';
 import remarkDirective from 'remark-directive';
+// @ts-ignore
 import { Compatible } from 'unified/lib';
 
 export function TagFileReader(arg: string) {
@@ -20,6 +21,7 @@ const HandleCustomDirectives = () => CustomDirectivesTransformer;
 
 function CustomDirectivesTransformer(ast: object) {
   // visit all textDirective, all links will be left behind and all else are removed
+  // @ts-ignore
   visit<any, any>(ast, 'textDirective', Visitor);
 
   function Visitor(node: any, _: number, parent: any) {
@@ -41,7 +43,7 @@ function CleanUpTransformer(ast: object) {
   // visit all top level paragraphs, remove all invalid nodes
   visit<any, any>(ast, 'paragraph', Visitor, true);
 
-  function Visitor(paragraphNode: any, index, parent) {
+  function Visitor(paragraphNode: any, _index: any, parent: any) {
     if (parent && parent.type !== 'root') remove(parent, paragraphNode);
 
     // paragraph with no child

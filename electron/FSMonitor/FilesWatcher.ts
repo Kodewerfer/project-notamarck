@@ -1,5 +1,5 @@
 import chokidar, { FSWatcher } from 'chokidar';
-import { Stats } from 'node:fs';
+// import { Stats } from 'node:fs';
 import {
   GetActiveFile,
   GetAppMainWindowID,
@@ -30,12 +30,12 @@ async function InitFilesWatcher() {
 
 export default async function StartFilesWatcher() {
   await InitFilesWatcher();
-  FilesWatcher.on('add', (path, stats) => OnNewFile(path, stats));
-  FilesWatcher.on('unlink', (path: string, stats: Stats | undefined) => OnDeleteFile(path, stats));
+  FilesWatcher.on('add', () => OnNewFile());
+  FilesWatcher.on('unlink', (path: string) => OnDeleteFile(path,));
 }
 
 // Add and unlink will also be triggered by rename
-async function OnNewFile(path: string, stats: Stats | undefined) {
+async function OnNewFile() {
   const mdFiles = await ListAllMDAsync();
   if (!mdFiles || !mdFiles.length) return;
 
@@ -44,7 +44,7 @@ async function OnNewFile(path: string, stats: Stats | undefined) {
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }
 
-async function OnDeleteFile(deleteFilePath: string, stats: Stats | undefined) {
+async function OnDeleteFile(deleteFilePath: string, ) {
   // deleted file is the active file
   if (GetActiveFile()?.fullPath === deleteFilePath) {
     ReassignActiveFile();

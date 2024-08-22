@@ -202,7 +202,7 @@ function HeaderRenderer({
   if (!data.children || data.children[0].type !== 'text') return;
   const textNode = useMemo(() => data.children[0], [data.children]);
 
-  const [TitleText, setTitleText] = useState(textNode.value);
+  const [TitleText] = useState(textNode.value);
   const [PendingTitleText, setPendingTitleText] = useState(textNode.value);
 
   const [isEditing, setIsEditing] = useState(false);

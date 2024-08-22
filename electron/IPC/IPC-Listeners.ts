@@ -30,6 +30,7 @@ import {
 import { GetLastSearchTargetToken, SetSearchTargetToken } from '../Data/Seach.ts';
 import { ESearchTypes, TSearchTarget } from '../Types/Search.ts';
 import { TagObjectToMD } from '../Utils/TagFileConvertor.ts';
+// @ts-ignore
 import { Compatible } from 'unified/lib';
 import path from 'node:path';
 import { Parent } from 'unist';
