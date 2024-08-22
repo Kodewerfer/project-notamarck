@@ -14,6 +14,7 @@ export const IPCActions = {
   SHORT_CUT: {
     SIGNAL: {
       SAVE: 'SHORT_CUT:PUSH:SAVE',
+      CLOSE: 'SHORT_CUT:PUSH:CLOSE',
       NEW_ITEM: 'SHORT_CUT:PUSH:NEW_ITEM',
     },
   },

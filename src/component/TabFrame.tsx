@@ -201,6 +201,12 @@ export default function TabFrame() {
       IPCRenderSide.send(IPCActions.FILES.CHANGE_TARGET_FILE_CONTENT, SelectedTab.fullPath, selectedTabContent);
     });
 
+    // on receiving saving signal from main
+    const unbindCloseSignal = IPCRenderSide.on(IPCActions.SHORT_CUT.SIGNAL.CLOSE, async _ => {
+      if (!SelectedTab || !MDEditorRef) return;
+      await onCloseTab(SelectedTab);
+    });
+
     return () => {
       unbindNewJumpToLine();
       unbindOpenedFileChange();
@@ -209,6 +215,7 @@ export default function TabFrame() {
       unbindEditorTextInsert();
       unbindSearchResultChanged();
       unbindSaveSignal();
+      unbindCloseSignal();
     };
   }); // Critical!!: These events have to be bind and unbind each time,(no useEffect dep array ) so that when FileFrame._tabFrame.edit.$filepath is accessed, the references and info are correct
 

@@ -23,6 +23,11 @@ export const KeyMappingConfig = [
     func: Saving,
   },
   {
+    keyPress: 'CommandOrControl+W', //saving
+    desc: 'Close Tab/Content',
+    func: Close,
+  },
+  {
     keyPress: 'CommandOrControl+N', //New item
     desc: 'New file/tag',
     func: NewItem,
@@ -47,6 +52,11 @@ export const KeyMappingConfig = [
 function Saving() {
   if (!checkFocus()) return;
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.SHORT_CUT.SIGNAL.SAVE);
+}
+
+function Close() {
+  if (!checkFocus()) return;
+  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.SHORT_CUT.SIGNAL.CLOSE);
 }
 
 function NewItem() {
