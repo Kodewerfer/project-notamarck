@@ -38,10 +38,13 @@ export function RootSideBar() {
     })();
   }, []);
 
+  const bNotAtIndex = matches[matches.length - 1] && matches[matches.length - 1].id !== '/';
   return (
-    <aside className={'fixed left-0 top-0 z-50 h-full w-14 bg-gray-50 dark:bg-gray-900'}>
+    <aside
+      className={`fixed left-0 top-0 z-50 h-full w-14 transition-colors ease-in ${bNotAtIndex ? 'bg-gray-50 dark:bg-gray-900' : 'bg-gray-50/75 py-6 dark:bg-slate-800/75'}`}
+    >
       {/*side buttons*/}
-      {matches[matches.length - 1] && matches[matches.length - 1].id !== '/' && (
+      {bNotAtIndex && (
         <ul className="relative z-50 flex h-full w-14 flex-col align-middle">
           <li className="group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
             <Link className="group relative block grow pl-1.5" to="/FileFrame/edit">
