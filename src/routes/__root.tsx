@@ -48,7 +48,7 @@ function RootComponent() {
     },
   };
 
-  if (nextMatch.id === '/FileFrame') {
+  if (nextMatch && nextMatch.id === '/FileFrame') {
     RootLevelAnimationProps = Object.assign(RootLevelAnimationProps, MainFrameOverride);
   }
 
@@ -61,7 +61,7 @@ function RootComponent() {
         <AnimatedOutlet
           AnimationProps={RootLevelAnimationProps}
           AdditionalClassName={'ml-14 overflow-hidden h-screen'}
-          key={nextMatch.id}
+          key={nextMatch && nextMatch.id}
           ref={outletRef}
         />
       </AnimatePresence>
