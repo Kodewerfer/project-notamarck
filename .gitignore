@@ -26,6 +26,8 @@ release
 *.sw?
 
 /workspace
+/release/*
+/dist
 
 #Generated file-based router
 routeTree.gen.ts
