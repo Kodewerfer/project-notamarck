@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { IPCHandlerMappings } from './IPC/IPC-Handlers.ts';
@@ -43,13 +43,31 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    title: 'Project Notamarck',
+    autoHideMenuBar: true,
+    icon: path.join(process.env.VITE_PUBLIC, 'Notamarck-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
-      // nodeIntegration: true
     },
   });
+
+  win.setMenu(
+    Menu.buildFromTemplate([
+      {
+        label: 'App',
+        submenu: [{ role: 'quit' }],
+      },
+      {
+        label: 'View',
+        submenu: [{ role: 'reload' }, { type: 'separator' }, { role: 'togglefullscreen' }],
+      },
+      {
+        label: 'Dev',
+        submenu: [{ role: 'toggleDevTools' }],
+      },
+    ]),
+  );
 
   // cache the ID for later use
   SetAppMainWindowID(win.id);
