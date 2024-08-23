@@ -4,6 +4,7 @@ import { getLastPartOfPath } from '@/util/helper.ts';
 import { FolderIcon } from '@heroicons/react/24/solid';
 import { useEffect, useState } from 'react';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
+import log from 'electron-log';
 
 export const Route = createFileRoute('/')({
   component: IndexComponent,
@@ -30,6 +31,7 @@ function IndexComponent() {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, targetFolder);
     } catch (e) {
       console.error(e);
+      log.error(e);
       await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
         message: `Error switching workspace`,
@@ -58,6 +60,7 @@ function IndexComponent() {
       });
       if (buttonPressed === 1) return;
       console.error(e);
+      log.error(e);
     }
 
     // Only one folder should be allowed to choose at a time
@@ -65,6 +68,7 @@ function IndexComponent() {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, DIRPath[0]);
     } catch (e) {
       console.error(e);
+      log.error(e);
       await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
         message: `Error switching workspace`,

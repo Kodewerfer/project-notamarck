@@ -13,6 +13,7 @@
   "dependencies": {
     "@heroicons/react": "^2.1.5",
     "chokidar": "^3.6.0",
+    "electron-log": "^5.1.7",
     "electron-store": "^10.0.0",
     "flexsearch": "^0.7.43",
     "framer-motion": "^11.3.2",

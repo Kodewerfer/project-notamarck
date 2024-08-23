@@ -8,6 +8,7 @@ import path from 'path-browserify';
 import SearchBar from 'component/SearchBar.tsx';
 import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
 import _ from 'lodash';
+import log from 'electron-log';
 
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/')({
@@ -273,6 +274,7 @@ async function ListAllTags() {
     AllTags = await IPCRenderSide.invoke(IPCActions.FILES.LIST_ALL_TAGS);
   } catch (e) {
     console.log(e);
+    log.error(e);
   }
 
   return AllTags;
@@ -285,6 +287,7 @@ async function GetEditingTags(): Promise<TTagsInMemory> {
     EditingTag = await IPCRenderSide.invoke(IPCActions.DATA.GET_EDITING_TAG);
   } catch (e) {
     console.log(e);
+    log.error(e);
   }
 
   return EditingTag;

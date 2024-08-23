@@ -7,6 +7,7 @@ import { FolderIcon } from '@heroicons/react/24/solid';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { getLastPartOfPath } from '@/util/helper.ts';
 import _ from 'lodash';
+import log from 'electron-log';
 
 export const Route = createFileRoute('/settings')({
   loader: () => {
@@ -71,6 +72,7 @@ function Settings() {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, targetFolder);
     } catch (e) {
       console.error(e);
+      log.error(e);
       await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
         message: `Error switching workspace`,
@@ -99,6 +101,7 @@ function Settings() {
       });
       if (buttonPressed === 1) return;
       console.error(e);
+      log.error(e);
     }
 
     await IPCRenderSide.invoke(IPCActions.DATA.CLOSE_ALL_OPENED_FILES);
@@ -108,6 +111,7 @@ function Settings() {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, DIRPath[0]);
     } catch (e) {
       console.error(e);
+      log.error(e);
       await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
         message: `Error switching workspace`,

@@ -12,6 +12,7 @@ import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import { TMDFile } from 'electron-src/Types/Files.ts';
 import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
 import _ from 'lodash';
+import log from 'electron-log';
 
 const { IPCRenderSide } = window;
 
@@ -55,12 +56,12 @@ function FileFrame() {
   // Initial loading, do an extra fetching if there is no data or no length
   useEffect(() => {
     (async () => {
-      if (!MDList||!MDList.length) {
+      if (!MDList || !MDList.length) {
         const MDData = await ListMdInFolder();
         setMDList(MDData);
       }
 
-      if (!TagList||!TagList.length) {
+      if (!TagList || !TagList.length) {
         // fetch tags
         const allTags = await ListAllTags();
         setTagList(allTags);
@@ -87,7 +88,6 @@ function FileFrame() {
     });
 
     const unbindMDListingChange = IPCRenderSide.on(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED, async _ => {
-      console.warn('MD LIST Changed');
       const MDData = await ListMdInFolder();
       setMDList(MDData);
     });
@@ -353,6 +353,7 @@ async function ListMdInFolder() {
     MdFiles = await IPCRenderSide.invoke(IPCActions.FILES.LIST_CURRENT_PATH_MD);
   } catch (e) {
     console.error(e);
+    log.error(e);
   }
   return MdFiles;
 }
@@ -364,6 +365,7 @@ async function ListAllTags() {
     AllTags = await IPCRenderSide.invoke(IPCActions.FILES.LIST_ALL_TAGS);
   } catch (e) {
     console.log(e);
+    log.error(e);
   }
 
   return AllTags;

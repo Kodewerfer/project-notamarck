@@ -17,6 +17,7 @@ import Store from 'electron-store';
 import StartFilesWatcher from './FSMonitor/FilesWatcher.ts';
 import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
 import { SetUpGlobalShortCuts, UnregisterGlobalShortcuts } from './Utils/GlobalShortcuts.ts';
+import log from 'electron-log';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -115,6 +116,8 @@ app.whenReady().then(_ => {
   BrowserWindow.fromId(GetAppMainWindowID())?.on('blur', () => {
     UnregisterGlobalShortcuts();
   });
+
+  log.log('App launched');
 });
 
 // Init a default "workspace" folder under the app root
@@ -128,12 +131,14 @@ function InitWorkspace() {
   } catch (e) {
     //   problem accessing the workspace
     console.log('Workspace cannot be accessed, defaulting to AppFolder');
+    log.log('Workspace cannot be accessed, defaulting to AppFolder');
     try {
       const DefaultWorkSpace = `${app.getAppPath()}\\workspace`;
       if (!fs.existsSync(DefaultWorkSpace)) fs.mkdirSync(DefaultWorkSpace);
       SetCurrentWorkspaceThenStore(DefaultWorkSpace);
     } catch (e) {
       console.log('error creating default workspace directory,', e);
+      log.error('error creating default workspace directory,', e);
     }
   }
 
