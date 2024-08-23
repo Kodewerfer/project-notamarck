@@ -1,10 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useLayoutEffect, useNavigate } from '@tanstack/react-router';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { getLastPartOfPath } from '@/util/helper.ts';
 import { FolderIcon } from '@heroicons/react/24/solid';
 import { useEffect, useState } from 'react';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import log from 'electron-log';
+import { XMarkIcon } from '@heroicons/react/16/solid';
 
 export const Route = createFileRoute('/')({
   component: IndexComponent,
@@ -26,17 +27,33 @@ function IndexComponent() {
     })();
   }, []);
 
+  useLayoutEffect(() => {
+    const unbindRecentWorkspacesChange = IPCRenderSide.on(
+      IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED,
+      (_, payload) => {
+        if (Array.isArray(payload)) setRecentFolders([...payload]);
+      },
+    );
+    return () => {
+      unbindRecentWorkspacesChange();
+    };
+  }, []);
+
   async function ClickedOnRecentFolders(targetFolder: string) {
     try {
       await IPCRenderSide.invoke(IPCActions.APP.SET_WORK_SPACE, targetFolder);
     } catch (e) {
       console.error(e);
       log.error(e);
-      await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+      const buttonPressed = await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
-        message: `Error switching workspace`,
+        message: `Error switching workspace, Remove it from the list?`,
         detail: `${e}`,
+        buttons: ['yes', 'no'],
       });
+      if (buttonPressed === 0) {
+        IPCRenderSide.send(IPCActions.APP.REMOVE_FROM_RECENT_WORK_SPACES, targetFolder);
+      }
       return;
     }
     setCurrentFolderPath(await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE));
@@ -106,7 +123,7 @@ function IndexComponent() {
                   key={item}
                   onClick={() => ClickedOnRecentFolders(item)}
                   className={
-                    'my-2.5 mb-2 flex cursor-pointer from-gray-200 to-gray-100 py-3.5 pr-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-500 dark:to-slate-600 dark:hover:shadow-md'
+                    'group relative my-2.5 mb-2 flex cursor-pointer from-gray-200 to-gray-100 py-3.5 pr-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-500 dark:to-slate-600 dark:hover:shadow-md'
                   }
                 >
                   <div className={'grow'}>
@@ -116,6 +133,19 @@ function IndexComponent() {
                     <span className={'block truncate pl-2.5 text-gray-500 dark:dark:text-gray-200'}>{item}</span>
                   </div>
                   <FolderIcon className={'ml-4 size-5 min-h-5 min-w-5 self-center'} />
+                  {/*close button*/}
+                  <div
+                    className={
+                      'absolute left-4 top-1/2 -translate-y-1/2 scale-0 group-hover:scale-100 group-hover:transition'
+                    }
+                    onClick={ev => {
+                      ev.preventDefault();
+                      ev.stopPropagation();
+                      IPCRenderSide.send(IPCActions.APP.REMOVE_FROM_RECENT_WORK_SPACES, item);
+                    }}
+                  >
+                    <XMarkIcon className={'size-6'} />
+                  </div>
                 </li>
               ))}
             </ul>

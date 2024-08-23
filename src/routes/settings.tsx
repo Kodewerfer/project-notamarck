@@ -73,11 +73,15 @@ function Settings() {
     } catch (e) {
       console.error(e);
       log.error(e);
-      await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
+      const buttonPressed = await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
-        message: `Error switching workspace`,
+        message: `Error switching workspace, Remove it from the list?`,
         detail: `${e}`,
+        buttons: ['yes', 'no'],
       });
+      if (buttonPressed === 0) {
+        IPCRenderSide.send(IPCActions.APP.REMOVE_FROM_RECENT_WORK_SPACES, targetFolder);
+      }
       return;
     }
     setCurrentFolderPath(await GetWorkspace());
@@ -228,7 +232,7 @@ function Settings() {
                       key={item}
                       onClick={() => ClickedOnRecentFolders(item)}
                       className={
-                        'my-2.5 mb-2 flex cursor-pointer from-gray-200 to-gray-100 py-3.5 pl-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-600 dark:to-slate-500'
+                        'relative group my-2.5 mb-2 flex cursor-pointer from-gray-200 to-gray-100 py-3.5 pl-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-600 dark:to-slate-500'
                       }
                     >
                       <FolderIcon className={'size-5 min-h-5 min-w-5 self-center'} />
@@ -237,6 +241,19 @@ function Settings() {
                           {getLastPartOfPath(item)}
                         </span>
                         <span className={'block truncate pl-2.5 text-gray-500 dark:text-gray-300'}>{item}</span>
+                      </div>
+                      {/*close button*/}
+                      <div
+                        className={
+                          'absolute right-4 top-1/2 -translate-y-1/2 scale-0 group-hover:scale-100 group-hover:transition'
+                        }
+                        onClick={ev => {
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                          IPCRenderSide.send(IPCActions.APP.REMOVE_FROM_RECENT_WORK_SPACES, item);
+                        }}
+                      >
+                        <XMarkIcon className={'size-6'} />
                       </div>
                     </li>
                   ))}
