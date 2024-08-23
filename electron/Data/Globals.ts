@@ -5,6 +5,18 @@ import Store from 'electron-store';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { AppData_Keys } from './Persistence.ts';
+import ElectronStore from 'electron-store';
+
+// set and get previous app configs
+let _Config_Store: ElectronStore | null = null;
+
+export function GetConfigStore(): Readonly<ElectronStore> | null {
+  return _Config_Store;
+}
+
+export function InitConfigStore() {
+  _Config_Store = new Store();
+}
 
 let _App_MainWindow_ID = 0;
 
@@ -38,8 +50,8 @@ export function SetCurrentWorkspaceThenStore(directory: string) {
   _Current_Workspace = String(directory);
 
   // persist the data
-  const store = new Store();
-  store.set(AppData_Keys.currentWorkspace, _Current_Workspace);
+  const store = GetConfigStore();
+  if (store) store.set(AppData_Keys.currentWorkspace, _Current_Workspace);
 
   return oldWorkspace;
 }
@@ -54,9 +66,8 @@ export function SyncWorkspaceAndRecentsThenStore() {
 
   _Recent_Workspaces = Array.from(recentPathMap, ([key]) => key);
 
-  // persist the data
-  const store = new Store();
-  store.set(AppData_Keys.recentWorkspace, _Recent_Workspaces);
+  const store = GetConfigStore();
+  if (store) store.set(AppData_Keys.recentWorkspace, _Recent_Workspaces);
 }
 
 export function GetCurrentWorkspace(): Readonly<string> {
@@ -67,11 +78,22 @@ export function GetRecentWorkspace(): Readonly<string[]> {
   return [..._Recent_Workspaces];
 }
 
-export function AddToRecentWorkspace(lastestWorkspace: string) {
+export function AddToRecentWorkspaceAndStore(lastestWorkspace: string) {
   let recentWorkspaceMap = new Map(_Recent_Workspaces.map(item => [item, true]));
   if (recentWorkspaceMap.get(lastestWorkspace)) return; //duplicated
   _Recent_Workspaces.push(lastestWorkspace);
+  const store = GetConfigStore();
+  if (store) store.set(AppData_Keys.recentWorkspace, _Recent_Workspaces);
   return [..._Recent_Workspaces];
+}
+
+export function RemoveFromRecentWorkspacesAndStore(workspacePath: string) {
+  if (workspacePath.trim() === '') return;
+
+  _Recent_Workspaces = _Recent_Workspaces.filter(path => path !== workspacePath);
+
+  const store = GetConfigStore();
+  if (store) store.set(AppData_Keys.recentWorkspace, _Recent_Workspaces);
 }
 
 // Override all, no checking for dups, used by init only

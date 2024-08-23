@@ -8,12 +8,13 @@ import {
   SetAppMainWindowID,
   SetRecentWorkSpace,
   GetAppMainWindowID,
+  GetConfigStore,
+  InitConfigStore,
 } from './Data/Globals.ts';
 import * as fs from 'node:fs';
 import { ResetAndCacheTagsListAsync } from './Utils/TagOperations.ts';
 import { ResetAndCacheMDFilesListAsync } from './Utils/FileOperations.ts';
 import { AppData_Keys } from './Data/Persistence.ts';
-import Store from 'electron-store';
 import StartFilesWatcher from './FSMonitor/FilesWatcher.ts';
 import StartTagsWatcher from './FSMonitor/TagsWatcher.ts';
 import { SetUpGlobalShortCuts, UnregisterGlobalShortcuts } from './Utils/GlobalShortcuts.ts';
@@ -113,8 +114,7 @@ app.whenReady().then(_ => {
     ipcMain.on(IPC.trigger, IPC.listener);
   });
 
-  // TODO: after adding app config with file persistence, load previous workspace info here
-
+  InitConfigStore();
   InitWorkspace();
 
   // Cache the file list of both tags and main workspace MDs
@@ -140,9 +140,10 @@ app.whenReady().then(_ => {
 
 // Init a default "workspace" folder under the app root
 function InitWorkspace() {
-  const store = new Store();
+  const store = GetConfigStore();
   // try to get the workspace from last time
-  const storedPath = String(store.get(AppData_Keys.currentWorkspace)) || '';
+  let storedPath = '';
+  if (store) storedPath = String(store.get(AppData_Keys.currentWorkspace));
   try {
     fs.accessSync(storedPath);
     SetCurrentWorkspaceThenStore(storedPath);
@@ -151,7 +152,7 @@ function InitWorkspace() {
     console.log('Workspace cannot be accessed, defaulting to AppFolder');
     log.log('Workspace cannot be accessed, defaulting to AppFolder');
     try {
-      const DefaultWorkSpace = `${app.getAppPath()}\\workspace`;
+      const DefaultWorkSpace = path.join(app.getPath('userData'), 'DefaultWorkSpace');
       if (!fs.existsSync(DefaultWorkSpace)) fs.mkdirSync(DefaultWorkSpace);
       SetCurrentWorkspaceThenStore(DefaultWorkSpace);
     } catch (e) {
@@ -161,6 +162,9 @@ function InitWorkspace() {
   }
 
   //   get recent workspace from store
-  const recentWorkspaces = (store.get(AppData_Keys.recentWorkspace) as string[]) || [];
-  if (recentWorkspaces.length) SetRecentWorkSpace(recentWorkspaces);
+  if (store) {
+    const storedRecents = (store.get(AppData_Keys.recentWorkspace) as string[]) || [];
+
+    if (storedRecents.length) SetRecentWorkSpace(storedRecents);
+  }
 }

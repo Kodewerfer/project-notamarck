@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { IPCActions } from './IPC-Actions.ts';
 import { app, BrowserWindow, dialog } from 'electron';
 import {
-  AddToRecentWorkspace,
+  AddToRecentWorkspaceAndStore,
   ChangeActiveFile,
   FindInOpenedFilesByFullPath,
   GetActiveFile,
@@ -129,7 +129,7 @@ export function ValidateAndChangeWorkspaceThenPush(_Event: IpcMainInvokeEvent, N
 
   // add to recent workspace
   if (oldDIrPath.trim() !== '') {
-    AddToRecentWorkspace(oldDIrPath);
+    AddToRecentWorkspaceAndStore(oldDIrPath);
     SyncWorkspaceAndRecentsThenStore();
     BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
       IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED,

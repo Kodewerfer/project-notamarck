@@ -6,11 +6,12 @@ import {
   GetActiveFile,
   GetActiveFileContent,
   GetCurrentWorkspace,
-  GetOpenedFiles,
+  GetOpenedFiles, GetRecentWorkspace,
+  RemoveFromRecentWorkspacesAndStore,
   SetActiveFileContent,
   SetOpenFiles,
-  UpdateOpenedFile,
-} from '../Data/Globals.ts';
+  UpdateOpenedFile
+} from "../Data/Globals.ts";
 import { BrowserWindow, Menu, Notification, shell } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { SaveContentToFileOverrideOnDup, UnlinkFile } from '../Utils/FileOperations.ts';
@@ -35,6 +36,17 @@ import { Compatible } from 'unified/lib';
 import path from 'node:path';
 import { Parent } from 'unist';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
+
+/***********
+ * - APP -
+ ***********/
+
+const { REMOVE_FROM_RECENT_WORK_SPACES } = IPCActions.APP; //receiving channel
+
+function RemovePathFromRecentWorkspaces(_event: IpcMainEvent, workspacePath: string) {
+  RemoveFromRecentWorkspacesAndStore(workspacePath);
+  _event.sender.send(IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED,GetRecentWorkspace());
+}
 
 /***********
  * - Shell -
@@ -371,4 +383,5 @@ export const IPCListenerMappings = [
   { trigger: SET_JUMP_TO_LINE, listener: PushNewLineNum },
   { trigger: OPEN_EXTERNAL_HTTP, listener: OpenHTTPLinkFromOutside },
   { trigger: VALIDATE_TAG_IN_LINKED_FILES, listener: ValidateTagInFiles },
+  { trigger: REMOVE_FROM_RECENT_WORK_SPACES, listener: RemovePathFromRecentWorkspaces },
 ];
