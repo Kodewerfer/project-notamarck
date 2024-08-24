@@ -60,7 +60,7 @@ function RootComponent() {
       <AnimatePresence mode={'wait'}>
         <AnimatedOutlet
           AnimationProps={RootLevelAnimationProps}
-          AdditionalClassName={'ml-14 overflow-hidden h-screen'}
+          AdditionalClassName={'pl-14 w-full overflow-hidden h-screen'}
           key={nextMatch && nextMatch.id}
           ref={outletRef}
         />

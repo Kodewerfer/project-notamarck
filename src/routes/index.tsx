@@ -103,34 +103,36 @@ function IndexComponent() {
       {/*wrapper*/}
       <div
         className={
-          'index-wrapper h-screen w-full cursor-pointer select-none content-center justify-center gap-28 overflow-hidden bg-gray-50/75 py-6 dark:bg-slate-800/75'
+          'index-wrapper h-screen w-full cursor-pointer select-none content-center justify-center gap-28 overflow-auto bg-gray-50/75 py-6 dark:bg-slate-800/75'
         }
       >
         {/*inner*/}
         <div
           className={
-            'index-inner relative m-auto ms-auto flex h-full w-5/6 cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-2xl dark:bg-slate-500 dark:text-blue-50'
+            'index-inner relative m-auto ms-auto flex h-full w-11/12 min-w-[720px] cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-md dark:bg-slate-500 dark:text-blue-50'
           }
         >
           {/* recent folders */}
-          <div className={'flex h-full w-full max-w-xl flex-col'}>
+          <div className={'flex h-full w-2/5 min-w-48 grow flex-col'}>
             <h1 className={'mx-4 mb-2 h-12 border-b-2 pb-2 text-center text-lg font-semibold dark:border-slate-400'}>
               Recent Workspaces
             </h1>
-            <ul className={'w-full grow basis-full overflow-auto text-right'}>
+            <ul className={'w-full basis-full overflow-auto text-right'}>
               {recentFolders.reverse().map(item => (
                 <li
                   key={item}
                   onClick={() => ClickedOnRecentFolders(item)}
                   className={
-                    'group relative my-2.5 mb-2 flex cursor-pointer from-gray-200 to-gray-100 py-3.5 pr-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-500 dark:to-slate-600 dark:hover:shadow-md'
+                    'group relative my-2.5 mb-2 flex w-full cursor-pointer justify-end from-gray-200 to-gray-100 py-3.5 pr-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-500 dark:to-slate-600 dark:hover:shadow-md'
                   }
                 >
-                  <div className={'grow'}>
-                    <span className={'block truncate pl-2.5 font-semibold dark:drop-shadow'}>
+                  <div className={'truncates w-full max-w-sm'}>
+                    <span className={'block w-full truncate pl-2.5 font-semibold dark:drop-shadow'}>
                       {getLastPartOfPath(item)}
                     </span>
-                    <span className={'block truncate pl-2.5 text-gray-500 dark:dark:text-gray-200'}>{item}</span>
+                    <span className={'block w-full truncate pl-2.5 text-right text-gray-500 dark:dark:text-gray-200'}>
+                      {item}
+                    </span>
                   </div>
                   <FolderIcon className={'ml-4 size-5 min-h-5 min-w-5 self-center'} />
                   {/*close button*/}
@@ -152,7 +154,7 @@ function IndexComponent() {
           </div>
 
           {/*folder selection*/}
-          <div className={'h-full w-full grow overflow-y-auto overflow-x-hidden pl-4'}>
+          <div className={'h-full w-3/5 min-w-96 overflow-y-auto overflow-x-hidden pl-4'}>
             {/*current folder*/}
             <div
               onClick={() => navigate({ to: '/FileFrame/edit' })}

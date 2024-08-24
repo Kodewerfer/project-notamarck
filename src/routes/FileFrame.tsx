@@ -235,13 +235,14 @@ function FileFrame() {
   return (
     <div className={'Main-frame-root flex h-screen w-full max-w-full overflow-auto'}>
       {/*File listing side bar*/}
-      <div className="file-list-block z-10 h-screen w-80 min-w-80 border-r border-gray-200 dark:border-none dark:bg-slate-600">
+      <div className="file-list-block z-10 h-screen w-1/3 max-w-96 border-r border-gray-200 dark:border-none dark:bg-slate-600">
         {/*file list*/}
-        <div className="flex h-full min-h-screen flex-col overflow-hidden bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
+        <div className="flex h-full min-h-screen flex-col truncate bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
           <div className={'h-20 max-h-20'}>
-            <section className="flex cursor-pointer bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
-              <FolderIcon className="size-4 self-center" />
-              <span className="grow pl-1.5">{currentFolder}</span>
+            {/*current workspace*/}
+            <section className="flex w-full cursor-pointer overflow-hidden text-ellipsis bg-slate-200 px-2 py-1.5 font-medium dark:bg-slate-600">
+              <FolderIcon className="size-4 min-w-4 self-center" />
+              <span className="grow truncate pl-1.5">{currentFolder}</span>
             </section>
             {/*Add new file button*/}
             <section
@@ -307,7 +308,7 @@ function FileFrame() {
                 // normal listing
                 return (
                   <li
-                    className={`${currentEditingFile?.fullPath === item.path ? 'is-editing' : ''} ${selectedFilesPaths.includes(item.path) ? 'bg-slate-300 dark:bg-slate-600' : ''} file-listing group my-1 flex cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
+                    className={`${currentEditingFile?.fullPath === item.path ? 'is-editing' : ''} ${selectedFilesPaths.includes(item.path) ? 'bg-slate-300 dark:bg-slate-600' : ''} file-listing group my-1 flex min-w-fit cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
                     key={item.path}
                     onClick={ev => selectFiles(ev, item)}
                     onContextMenu={ev => {
@@ -317,7 +318,7 @@ function FileFrame() {
                       navigate({ to: '/FileFrame/edit/$filepath', params: { filepath: item.path } });
                     }}
                   >
-                    <ArrowRightIcon className="mr-2 hidden size-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex" />
+                    <ArrowRightIcon className="mr-2 hidden size-3 min-w-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex" />
                     {/*filepathToRename*/}
                     <span>{item.name}</span>
                   </li>
@@ -338,7 +339,7 @@ function FileFrame() {
           }}
         />
         {/*Main editor area*/}
-        <div style={{ height: `${BackdropHeight}px` }} className={`editor-backdrop w-full grow dark:bg-slate-200`}>
+        <div style={{ height: `${BackdropHeight}px` }} className={`editor-backdrop w-full dark:bg-slate-200`}>
           {/*the main display area*/}
           <Outlet />
         </div>
