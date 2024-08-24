@@ -348,7 +348,7 @@ function SearchBarActual(
           onClick={_ => setIsSearching(true)}
           onDoubleClick={_ => setIsSearching(true)}
           className={
-            'peer order-3 grow border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-gray-900' +
+            'peer order-3 grow border-0 border-b-2 border-transparent w-full bg-transparent py-1.5 pl-2 text-gray-900' +
             ' placeholder:text-gray-400 focus:border-gray-300 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
           }
         />
@@ -373,14 +373,14 @@ function SearchBarActual(
       {/*  the search result list for files and tags*/}
       {isSearching && searchType !== ESearchTypes.Content && (
         <div
-          className={` ${Options.DisplayMode === 'dropdown' ? 'absolute w-11/12' : 'block'} left-2 top-14 h-fit max-h-96 cursor-default select-none overflow-y-auto overflow-x-hidden bg-inherit px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-b-lg shadow-xl' : ''} dark:text-blue-50`}
+          className={` ${Options.DisplayMode === 'dropdown' ? 'absolute w-11/12' : 'block'} left-2 top-14 h-fit max-h-96 cursor-default select-none overflow-auto text-nowrap bg-inherit px-6 py-4 ${Options.DisplayMode === 'dropdown' ? 'rounded-b-lg shadow-xl' : ''} dark:text-blue-50`}
           ref={ListResultRef}
         >
           {/*additional actions*/}
           {Options.ShowActions && (
             <ul className={'mt-2 cursor-pointer pb-2'}>
               <li
-                className={`rounded px-4 py-2 hover:bg-blue-100 dark:hover:bg-blue-400`}
+                className={`min-w-fit rounded px-4 py-2 hover:bg-blue-100 dark:hover:bg-blue-400`}
                 onClick={() => CreateNewFile()}
               >
                 <span>Create New {searchType || ''} </span>
@@ -399,11 +399,11 @@ function SearchBarActual(
                     onMouseEnter={() => setActiveResultIndex(index)}
                     onMouseDown={() => setActiveResultIndex(index)}
                     onMouseUp={ev => ActiveResultSelection(ev.ctrlKey)}
-                    className={`flex rounded px-4 py-2 ${activeResultIndex === index ? 'bg-gray-200 dark:bg-slate-500' : ''}`}
+                    className={`flex min-w-fit rounded px-4 py-2 ${activeResultIndex === index ? 'bg-gray-200 dark:bg-slate-500' : ''}`}
                   >
                     <span className={'grow'}>{path.parse(item.name).name}</span>
                     {/*<span className={'px-6'}>{item.path}</span>*/}
-                    <span className={`px-6 sm:hidden ${activeResultIndex !== index ? 'hidden' : 'md:block'}`}>
+                    <span className={`hidden px-6 ${activeResultIndex !== index ? '' : 'md:block'}`}>
                       hold{' '}
                       <kbd className="rounded-lg border border-gray-200 bg-gray-100 px-2 py-1.5 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">
                         Ctrl
@@ -426,7 +426,7 @@ function SearchBarActual(
                     onMouseEnter={() => setActiveResultIndex(index)}
                     onMouseDown={() => setActiveResultIndex(index)}
                     onMouseUp={ev => ActiveResultSelection(ev.ctrlKey)}
-                    className={`flex rounded px-4 py-2 ${activeResultIndex === index ? 'bg-gray-200 dark:bg-slate-500' : ''}`}
+                    className={`flex min-w-fit rounded px-4 py-2 ${activeResultIndex === index ? 'bg-gray-200 dark:bg-slate-500' : ''}`}
                   >
                     <span className={'pr-3 font-semibold text-gray-600 dark:text-slate-600'}>Tag:</span>
                     <span className={'grow'}>{path.parse(item.tagFileName).name.split('.')[0]}</span>
@@ -449,9 +449,9 @@ function SearchBarActual(
       {isSearching && searchType === ESearchTypes.Content && (
         <div
           ref={ContentResultRef}
-          className={`absolute h-20 w-11/12 cursor-default select-none overflow-ellipsis rounded-xl bg-inherit px-6 py-4 dark:text-blue-50`}
+          className={`absolute h-20 w-11/12 cursor-default select-none overflow-auto text-nowrap rounded-b-xl bg-inherit px-6 py-4 shadow-xl dark:border-0 dark:text-blue-50`}
         >
-          <div className={'flex h-full w-full flex-row items-center justify-center'}>
+          <div className={'flex h-full w-full min-w-fit flex-col items-center justify-center md:flex-row'}>
             <div>
               <span className={'text-sm font-semibold'}>Result: </span>
               <span className={'text-sm font-semibold'}> {contentSearchResults.length} </span>
