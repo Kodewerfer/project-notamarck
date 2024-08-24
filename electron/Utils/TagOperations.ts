@@ -10,6 +10,7 @@ import { Parent } from 'unist';
 import { CleanTagMap, SetTagMap } from '../Data/Tags.ts';
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
+import log from 'electron-log';
 
 const _Tag_Folder_Name = 'tags';
 
@@ -312,12 +313,17 @@ export function ExtractFileLinksNamesFromTagAST(tagASTArr: Parent[]) {
 
 export async function ResetAndCacheTagsListAsync() {
   CleanTagMap();
-  const allTags = await FetchAllTagsAsync();
-  if (!allTags || !allTags.length) return;
+  try {
+    const allTags = await FetchAllTagsAsync();
 
-  allTags.forEach((tag: TTagsInMemory) => {
-    SetTagMap(tag);
-  });
+    if (!allTags || !allTags.length) return;
 
+    allTags.forEach((tag: TTagsInMemory) => {
+      SetTagMap(tag);
+    });
+  } catch (e) {
+    ShowErrorAlert('Error in listing tags', (e as Error).message);
+    log.error(e);
+  }
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
 }

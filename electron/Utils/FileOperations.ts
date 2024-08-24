@@ -5,6 +5,8 @@ import { FormatFileSize } from '../Helper.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
+import { ShowErrorAlert } from "electron-src/Utils/ErrorsAndPrompts.ts";
+import log from "electron-log";
 
 /**
  * Reads the contents of a Markdown file specified by the targetPath and adds the information to the opened files.
@@ -163,10 +165,15 @@ export async function ResetAndCacheMDFilesListAsync() {
   // reset the list
   SetMDFilesList([]);
 
+  try{
   const mdFiles = await ListAllMDAsync();
   if (!mdFiles || !mdFiles.length) return;
 
   SetMDFilesList(mdFiles);
+  }catch (e){
+    ShowErrorAlert("Error in listing files",(e as Error).message);
+    log.error(e);
+  }
 
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }
