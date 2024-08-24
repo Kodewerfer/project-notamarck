@@ -138,7 +138,7 @@ function Settings() {
         {/*inner*/}
         <div
           className={
-            'setting-window relative m-auto ms-auto flex h-5/6 w-11/12 min-w-[720px] cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-lg dark:bg-slate-500 dark:text-blue-50'
+            'setting-window relative m-auto ms-auto flex h-5/6 w-11/12 min-w-[640px] cursor-auto rounded-2xl bg-gray-100 px-3.5 py-6 antialiased shadow-lg dark:bg-slate-500 dark:text-blue-50'
           }
         >
           {/*close button*/}

@@ -282,7 +282,7 @@ function FileFrame() {
                 if (filepathToRename === item.path)
                   return (
                     <li
-                      className={`file-listing group my-1 flex cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
+                      className={`file-listing group my-1 flex min-w-fit cursor-default select-none rounded-lg bg-amber-400/75 px-2 py-1 pl-6`}
                       key={item.path}
                     >
                       <input
@@ -300,7 +300,7 @@ function FileFrame() {
                         value={newPendingName}
                         onChange={ev => setNewPendingName(ev.target.value)}
                         className={
-                          'grow border-0 bg-gray-50 py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6'
+                          'border-2 border-dashed border-amber-50 bg-transparent py-1.5 pl-2 text-sm leading-6 text-gray-900 placeholder:font-semibold placeholder:text-amber-50 focus:outline-0 focus:ring-0'
                         }
                       />
                     </li>
@@ -308,7 +308,7 @@ function FileFrame() {
                 // normal listing
                 return (
                   <li
-                    className={`${currentEditingFile?.fullPath === item.path ? 'is-editing' : ''} ${selectedFilesPaths.includes(item.path) ? 'bg-slate-300 dark:bg-slate-600' : ''} file-listing group my-1 flex min-w-fit cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
+                    className={`relative ${selectedFilesPaths.includes(item.path) ? 'bg-slate-300 dark:bg-slate-600' : ''} ${currentEditingFile?.fullPath === item.path && 'before:absolute before:inset-1 before:block before:rounded-2xl before:bg-blue-500/75'} file-listing group my-1 min-w-fit cursor-default select-none rounded-lg px-2 py-1 pl-6 hover:bg-slate-200 dark:hover:bg-slate-500`}
                     key={item.path}
                     onClick={ev => selectFiles(ev, item)}
                     onContextMenu={ev => {
@@ -318,9 +318,12 @@ function FileFrame() {
                       navigate({ to: '/FileFrame/edit/$filepath', params: { filepath: item.path } });
                     }}
                   >
-                    <ArrowRightIcon className="mr-2 hidden size-3 min-w-3 self-center group-hover:text-blue-50 group-[.is-editing]:flex" />
                     {/*filepathToRename*/}
-                    <span>{item.name}</span>
+                    <span
+                      className={`relative w-full truncate ${currentEditingFile?.fullPath === item.path && 'font-semibold text-blue-50'}`}
+                    >
+                      {item.name}
+                    </span>
                   </li>
                 );
               })}

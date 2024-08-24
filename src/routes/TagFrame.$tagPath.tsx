@@ -141,7 +141,7 @@ function TagEdit() {
   }
 
   return (
-    <div className={'flex h-full flex-col bg-gray-50 dark:bg-slate-700 dark:text-blue-50'}>
+    <div className={'flex h-full flex-col overflow-hidden bg-gray-50 dark:bg-slate-700 dark:text-blue-50'}>
       {/*return to the listing page if the tag is invalid*/}
       {!EditingTag && <Navigate to={'/TagFrame'} />}
       {/*Editing page*/}

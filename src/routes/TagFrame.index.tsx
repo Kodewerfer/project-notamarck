@@ -176,10 +176,10 @@ function TagList() {
         ev.preventDefault();
         ShowTagContextMenu();
       }}
-      className={'TagFrame-root h-full bg-gray-50 px-4 dark:bg-slate-700'}
+      className={'TagFrame-root h-full overflow-x-auto overflow-y-hidden bg-gray-50 px-4 dark:bg-slate-700'}
     >
       {/*search bar wrapper, for easier height calculation*/}
-      <div ref={searchBarWrapperDom} className={'search-wrapper pt-8'}>
+      <div ref={searchBarWrapperDom} className={'search-wrapper w-full pt-8'}>
         {/*all-in-one Search bar component*/}
         <SearchBar
           MDList={null}
@@ -187,7 +187,9 @@ function TagList() {
             TagList: result => setFilteredTagList(result),
           }}
           TagsList={TagList}
-          AdditionalClasses={'rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'}
+          AdditionalClasses={
+            'min-w-[640px] rounded-xl border-2 border-dotted border-gray-200 dark:border-2 dark:bg-slate-800'
+          }
           SearchOptions={{
             ShowResult: false,
             LockSearchType: ESearchTypes.Tag,
@@ -209,10 +211,13 @@ function TagList() {
       {/*Tags grid*/}
       <div
         style={{ height: `${TagGridHeight}px` }}
-        className={'mt-4 grid select-none grid-cols-6 gap-4 overflow-auto sm:grid-cols-3 sm:gap-2 md:grid-cols-4'}
+        className={
+          'tag-grid mt-4 grid min-w-[640px] select-none grid-cols-3 gap-2 overflow-auto lg:grid-cols-4 xl:grid-cols-6 xl:gap-4'
+        }
       >
         {FilteredTagList &&
           FilteredTagList.map(tagInfo => (
+            // grid items
             <div
               key={tagInfo.tagPath}
               onClick={ev => selectTags(ev, tagInfo)}
@@ -221,16 +226,17 @@ function TagList() {
                 ev.preventDefault();
                 selectTagRightClick(ev, tagInfo);
               }}
-              className={`relative cursor-default text-ellipsis rounded-xl py-2 pl-4 pr-4 hover:bg-gray-200 dark:text-gray-100 dark:hover:bg-slate-400 ${selectedTagsPaths.includes(tagInfo.tagPath) ? 'bg-gray-300 dark:bg-slate-300' : 'bg-gray-100 dark:bg-slate-600'}`}
+              className={`tag-item relative cursor-default rounded-xl py-2 pl-4 pr-4 hover:bg-gray-200 dark:text-gray-100 dark:hover:bg-slate-400 ${selectedTagsPaths.includes(tagInfo.tagPath) ? 'bg-gray-300 dark:bg-slate-300' : 'bg-gray-100 dark:bg-slate-600'}`}
             >
-              <div className={'flex h-full w-full items-center'}>
+              <div className={'tag-item-inner flex h-full w-full items-center'}>
                 {EditingTag && EditingTag.tagPath === tagInfo.tagPath ? (
-                  <TagIconSolid className={'z-10 min-w-14 max-w-14'} />
+                  <TagIconSolid className={'peer z-10 min-w-14 max-w-14'} />
                 ) : (
-                  <TagIcon className={'z-10 min-w-14 max-w-14'} />
+                  <TagIcon className={'peer z-10 min-w-14 max-w-14'} />
                 )}
 
                 {tagPathToRename === tagInfo.tagPath ? (
+                  // on renaming
                   <input
                     className={`h-full w-full border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-lg font-semibold text-gray-900 placeholder:text-gray-400 focus:border-slate-600 focus:outline-0 focus:ring-0`}
                     ref={RenamingInputRef}
@@ -248,7 +254,8 @@ function TagList() {
                     onChange={ev => setNewPendingName(ev.target.value)}
                   />
                 ) : (
-                  <span className={`peer z-10 w-max shrink truncate text-ellipsis pl-4 text-lg font-semibold`}>
+                  // normal display
+                  <span className={`peer z-10 flex-1 truncate pl-4 text-lg font-semibold`}>
                     {path.parse(tagInfo.tagFileName).name.split('.')[0]}
                   </span>
                 )}
