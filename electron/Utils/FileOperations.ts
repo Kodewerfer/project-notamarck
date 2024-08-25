@@ -167,13 +167,10 @@ export async function ResetAndCacheMDFilesListAsync() {
 
   try {
     const mdFiles = await ListAllMDAsync();
-    if (!mdFiles || !mdFiles.length) return;
-
     SetMDFilesList(mdFiles);
   } catch (e) {
     ShowErrorAlert('Error in listing files', (e as Error).message);
     log.error(e);
   }
-
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }

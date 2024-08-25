@@ -38,7 +38,7 @@ function FileFrame() {
   const [MDList, setMDList] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
   const [TagList, setTagList] = useState<TTagsInMemory[] | null | undefined>(Route.useLoaderData()?.Tags);
 
-  const [filteredMDList, setfilteredMDList] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
+  const [filteredMDList, setFilteredMDList] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
 
   const [ActiveFileContent, setActiveFileContent] = useState<string>('');
 
@@ -352,7 +352,7 @@ function FileFrame() {
           TagsList={TagList}
           FileContent={ActiveFileContent}
           SearchCallbacks={{
-            MdList: result => setfilteredMDList(result),
+            MdList: result => setFilteredMDList(result),
             Content: result => IPCRenderSide.send(IPCActions.EDITOR_MD.SET_CONTENT_SEARCH_RESULT, result),
           }}
         />

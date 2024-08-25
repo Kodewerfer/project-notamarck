@@ -6,11 +6,10 @@ import {
   GetCurrentWorkspace,
   GetOpenedFiles,
   RemoveOpenedFile,
-  SetMDFilesList,
 } from '../Data/Globals.ts';
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
-import { ListAllMDAsync, ResetAndCacheMDFilesListAsync } from '../Utils/FileOperations.ts';
+import { ResetAndCacheMDFilesListAsync } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import _ from 'lodash';
 
@@ -57,11 +56,5 @@ async function OnDeleteFile(deleteFilePath: string) {
       GetOpenedFiles(),
     );
 
-  // set new file list and signal
-  const mdFiles = await ListAllMDAsync();
-  if (!mdFiles || !mdFiles.length) return;
-
-  SetMDFilesList(mdFiles);
-
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
+  ResetAndCacheMDFilesListAsync();
 }
