@@ -6,6 +6,12 @@ const { IPCRenderSide } = window;
 export const Route = createFileRoute('/FileFrame/_tabFrame/edit/$filepath')({
   // notify main of the new file, main process will then push all opened files to the tab frame
   loader: async ({ params: { filepath } }) => {
+    const currentActiveFile = await IPCRenderSide.invoke(IPCActions.DATA.GET_ACTIVE_FILE);
+    if (currentActiveFile?.fullPath === filepath) {
+      console.log('File already active, abort reading');
+      return;
+    }
+
     const currentWorkspace = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
     // check for the file's folder
     if (removeLastPartOfPath(filepath) !== currentWorkspace) {
