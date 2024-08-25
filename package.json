@@ -1,9 +1,14 @@
 {
   "name": "project-notamarck",
   "author": "Kodewerfer",
+  "description": "A note taking app that focus on simplicity and creating connections between notes",
   "private": false,
-  "license": "Apache-2.0",
-  "version": "0.1.0",
+  "license": "GPL-3.0",
+  "version": "0.7.0-beta",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kodewerfer/project-notamarck.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
