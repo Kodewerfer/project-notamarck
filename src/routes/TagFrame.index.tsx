@@ -23,18 +23,18 @@ export const Route = createFileRoute('/TagFrame/')({
 function TagList() {
   // use to navigate to tag editing
   const navigate = useNavigate();
-  const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData().list); //passed down to search bar
+  const [TagList, setTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()?.list); //passed down to search bar
 
-  const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData().editing); //passed down to search bar
+  const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData()?.editing); //passed down to search bar
   // for display, in sync with search bar
-  const [FilteredTagList, setFilteredTagList] = useState<TTagsInMemory[]>(Route.useLoaderData().list); //default to the full list
+  const [FilteredTagList, setFilteredTagList] = useState<TTagsInMemory[]>(Route.useLoaderData()?.list); //default to the full list
 
   const [selectedTagsPaths, setSelectedTagsPaths] = useState<string[]>([]); //used in styling elements
   const selectedTagsPathRef = useRef<string[]>([]); // copy of the state version, actually used as data package
 
   // dynamic resizing
   const searchBarWrapperDom = useRef<HTMLDivElement | null>(null);
-  const [TagGridHeight, setTagGridHeight] = useState<number>(100);
+  const [RestOfTheScreenHeight, setRestOfTheScreenHeight] = useState<number>(100);
 
   const RenamingInputRef = useRef<HTMLInputElement>(null);
   const [tagPathToRename, setTagPathToRename] = useState<string | null>(null);
@@ -92,7 +92,7 @@ function TagList() {
     const searchBar = searchBarWrapperDom.current;
 
     const debounceResize = _.debounce(() => {
-      if (searchBar) setTagGridHeight(window.innerHeight - searchBar.clientHeight);
+      if (searchBar) setRestOfTheScreenHeight(window.innerHeight - searchBar.clientHeight);
     }, 50);
 
     const resizeObserver = new ResizeObserver(debounceResize);
@@ -209,66 +209,67 @@ function TagList() {
           </div>
         ))}
       {/*Tags grid*/}
-      <div
-        style={{ height: `${TagGridHeight}px` }}
-        className={
-          'tag-grid mt-4 grid min-w-[640px] select-none grid-cols-3 gap-2 overflow-auto lg:grid-cols-4 xl:grid-cols-6 xl:gap-4'
-        }
-      >
-        {FilteredTagList &&
-          FilteredTagList.map(tagInfo => (
-            // grid items
-            <div
-              key={tagInfo.tagPath}
-              onClick={ev => selectTags(ev, tagInfo)}
-              onDoubleClick={() => navigate({ to: '/TagFrame/$tagPath', params: { tagPath: tagInfo.tagPath } })}
-              onContextMenu={ev => {
-                ev.preventDefault();
-                selectTagRightClick(ev, tagInfo);
-              }}
-              className={`tag-item relative cursor-default rounded-xl py-2 pl-4 pr-4 hover:bg-gray-200 dark:text-gray-100 dark:hover:bg-slate-400 ${selectedTagsPaths.includes(tagInfo.tagPath) ? 'bg-gray-300 dark:bg-slate-300' : 'bg-gray-100 dark:bg-slate-600'}`}
-            >
-              <div className={'tag-item-inner flex h-full w-full items-center'}>
-                {EditingTag && EditingTag.tagPath === tagInfo.tagPath ? (
-                  <TagIconSolid className={'peer z-10 min-w-14 max-w-14'} />
-                ) : (
-                  <TagIcon className={'peer z-10 min-w-14 max-w-14'} />
-                )}
+      <div style={{ height: `${RestOfTheScreenHeight}px` }} className={'scroll-wrapper overflow-auto'}>
+        <div
+          className={
+            'tag-grid mt-4 grid min-w-[640px] select-none grid-cols-3 gap-6 lg:grid-cols-4 xl:grid-cols-6 xl:gap-4'
+          }
+        >
+          {FilteredTagList &&
+            FilteredTagList.map(tagInfo => (
+              // grid items
+              <div
+                key={tagInfo.tagPath}
+                onClick={ev => selectTags(ev, tagInfo)}
+                onDoubleClick={() => navigate({ to: '/TagFrame/$tagPath', params: { tagPath: tagInfo.tagPath } })}
+                onContextMenu={ev => {
+                  ev.preventDefault();
+                  selectTagRightClick(ev, tagInfo);
+                }}
+                className={`tag-item relative h-24 cursor-default rounded-xl py-2 pl-4 pr-4 hover:bg-gray-200 dark:text-gray-100 dark:hover:bg-slate-400 ${selectedTagsPaths.includes(tagInfo.tagPath) ? 'bg-gray-300 dark:bg-slate-300' : 'bg-gray-100 dark:bg-slate-600'}`}
+              >
+                <div className={'tag-item-inner flex h-full w-full items-center'}>
+                  {EditingTag && EditingTag.tagPath === tagInfo.tagPath ? (
+                    <TagIconSolid className={'peer z-10 min-w-14 max-w-14'} />
+                  ) : (
+                    <TagIcon className={'peer z-10 min-w-14 max-w-14'} />
+                  )}
 
-                {tagPathToRename === tagInfo.tagPath ? (
-                  // on renaming
-                  <input
-                    className={`h-full w-full border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-lg font-semibold text-gray-900 placeholder:text-gray-400 focus:border-slate-600 focus:outline-0 focus:ring-0`}
-                    ref={RenamingInputRef}
-                    type={'text'}
-                    placeholder={path.parse(tagInfo.tagFileName).name.split('.')[0]}
-                    onBlur={() => {
-                      // cancel renaming file
-                      setNewPendingName('');
-                      setTagPathToRename(null);
-                    }}
-                    onKeyUp={async ev => {
-                      if (ev.key === 'Enter') await RenameTargetTag(tagInfo.tagPath);
-                    }}
-                    value={newPendingName}
-                    onChange={ev => setNewPendingName(ev.target.value)}
-                  />
-                ) : (
-                  // normal display
-                  <span className={`peer z-10 flex-1 truncate pl-4 text-lg font-semibold`}>
+                  {tagPathToRename === tagInfo.tagPath ? (
+                    // on renaming
+                    <input
+                      className={`h-full w-full border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-lg font-semibold text-gray-900 placeholder:text-gray-400 focus:border-slate-600 focus:outline-0 focus:ring-0`}
+                      ref={RenamingInputRef}
+                      type={'text'}
+                      placeholder={path.parse(tagInfo.tagFileName).name.split('.')[0]}
+                      onBlur={() => {
+                        // cancel renaming file
+                        setNewPendingName('');
+                        setTagPathToRename(null);
+                      }}
+                      onKeyUp={async ev => {
+                        if (ev.key === 'Enter') await RenameTargetTag(tagInfo.tagPath);
+                      }}
+                      value={newPendingName}
+                      onChange={ev => setNewPendingName(ev.target.value)}
+                    />
+                  ) : (
+                    // normal display
+                    <span className={`peer z-10 flex-1 truncate pl-4 text-lg font-semibold`}>
+                      {path.parse(tagInfo.tagFileName).name.split('.')[0]}
+                    </span>
+                  )}
+
+                  <div
+                    role="tooltip"
+                    className="tooltip invisible absolute -bottom-1/2 left-1/2 z-20 inline-block max-h-12 max-w-full -translate-x-1/2 transform truncate text-wrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition-opacity duration-300 peer-hover:visible peer-hover:opacity-90 dark:bg-gray-700"
+                  >
                     {path.parse(tagInfo.tagFileName).name.split('.')[0]}
-                  </span>
-                )}
-
-                <div
-                  role="tooltip"
-                  className="tooltip invisible absolute -bottom-1/2 left-1/2 z-20 inline-block max-h-12 max-w-full -translate-x-1/2 transform truncate text-wrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition-opacity duration-300 peer-hover:visible peer-hover:opacity-90 dark:bg-gray-700"
-                >
-                  {path.parse(tagInfo.tagFileName).name.split('.')[0]}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+        </div>
       </div>
     </div>
   );

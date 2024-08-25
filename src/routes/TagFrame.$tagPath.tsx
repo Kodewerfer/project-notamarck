@@ -26,8 +26,8 @@ export const Route = createFileRoute('/TagFrame/$tagPath')({
 
 function TagEdit() {
   // used as a reference only
-  const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData().tag);
-  const workspacePath = Route.useLoaderData().workspacePath || '';
+  const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData()?.tag);
+  const workspacePath = Route.useLoaderData()?.workspacePath || '';
   // AST tree's first-level children nodes
   const [TagRenderingSource, setTagRenderingSource] = useState<Parent[] | null>(null);
   const renderingSourceCache = useRef<any[] | null>(null);
