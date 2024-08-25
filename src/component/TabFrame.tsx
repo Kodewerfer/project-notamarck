@@ -356,14 +356,15 @@ export default function TabFrame() {
                   if (linkType.trim() === '' || linkTarget.trim() === '') return;
 
                   const workspacePath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE);
-
+                  const currentTagPath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE_TAGS_PATH);
+                  console.log(linkType, linkTarget);
                   switch (linkType) {
                     case 'file':
                       // target is a tag
                       if (linkTarget.includes('.tag')) {
                         navigate({
                           to: '/TagFrame/$tagPath',
-                          params: { tagPath: path.join(workspacePath, linkTarget) },
+                          params: { tagPath: path.join(currentTagPath, linkTarget) },
                         });
                         break;
                       }

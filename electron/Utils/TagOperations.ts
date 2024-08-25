@@ -199,9 +199,11 @@ function SearchTagForLink(tagInfo: TTagsInMemory | null, searchFor: string) {
  */
 export function OpenAndSearchFilesForTag(FilePath: string, targetTag: TTagsInMemory | null) {
   if (!targetTag) return null;
+  if (!fs.existsSync(FilePath)) return null;
   const tagLinkSyntax = GetFileLinkSyntax(targetTag.tagFileName);
 
   const searchIndex = new FlexSearch.Index('performance');
+
   try {
     let MDFileContent = fs.readFileSync(FilePath, { encoding: 'utf8' });
     const lines = MDFileContent.split('\n');

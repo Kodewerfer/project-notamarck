@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Navigate, redirect, useNavigate } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
@@ -9,10 +9,23 @@ import { XMarkIcon } from '@heroicons/react/16/solid';
 import { motion } from 'framer-motion';
 import _ from 'lodash';
 import path from 'path-browserify';
+import { removeLastPartOfPath } from '@/util/helper.ts';
 
 const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/$tagPath')({
   loader: async ({ params: { tagPath } }) => {
+    const currentTagPath = await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE_TAGS_PATH);
+    // check for the file's folder
+    if (removeLastPartOfPath(tagPath) !== currentTagPath) {
+      console.warn(
+        `Opened tag ${removeLastPartOfPath(tagPath)} not in workspace ${currentTagPath}, redirected to index`,
+      );
+      redirect({
+        to: '/TagFrame',
+      });
+      return;
+    }
+
     return {
       tag: await IPCRenderSide.invoke(IPCActions.DATA.READ_AND_SET_TAG_AS_EDITING, tagPath),
       workspacePath: await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE),
@@ -36,17 +49,17 @@ function TagEdit() {
   useEffect(() => {
     if (!EditingTag) return;
 
-    console.log('editing tag');
-
     (async () => {
       const convertedContent = await IPCRenderSide.invoke(
         IPCActions.CONVERSION.CONVERT_TAG_RAW_FROM_NAME,
         EditingTag.tagFileName,
       );
 
-      const ChildrenArr = Array.from(convertedContent.children);
-
-      IPCRenderSide.send(IPCActions.FILES.VALIDATE_TAG_IN_LINKED_FILES, EditingTag, ChildrenArr);
+      let ChildrenArr: any[] = [];
+      if (convertedContent && convertedContent.children) {
+        ChildrenArr = Array.from(convertedContent.children);
+        IPCRenderSide.send(IPCActions.FILES.VALIDATE_TAG_IN_LINKED_FILES, EditingTag, ChildrenArr);
+      }
 
       if (convertedContent && convertedContent.children) setTagRenderingSource(ChildrenArr as Parent[]);
     })();
