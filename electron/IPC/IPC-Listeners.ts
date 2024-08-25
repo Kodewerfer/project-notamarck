@@ -6,12 +6,13 @@ import {
   GetActiveFile,
   GetActiveFileContent,
   GetCurrentWorkspace,
-  GetOpenedFiles, GetRecentWorkspace,
+  GetOpenedFiles,
+  GetRecentWorkspace,
   RemoveFromRecentWorkspacesAndStore,
   SetActiveFileContent,
   SetOpenFiles,
-  UpdateOpenedFile
-} from "../Data/Globals.ts";
+  UpdateOpenedFile,
+} from '../Data/Globals.ts';
 import { BrowserWindow, Menu, Notification, shell } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
 import { SaveContentToFileOverrideOnDup, UnlinkFile } from '../Utils/FileOperations.ts';
@@ -36,6 +37,7 @@ import { Compatible } from 'unified/lib';
 import path from 'node:path';
 import { Parent } from 'unist';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
+import log from 'electron-log';
 
 /***********
  * - APP -
@@ -45,7 +47,7 @@ const { REMOVE_FROM_RECENT_WORK_SPACES } = IPCActions.APP; //receiving channel
 
 function RemovePathFromRecentWorkspaces(_event: IpcMainEvent, workspacePath: string) {
   RemoveFromRecentWorkspacesAndStore(workspacePath);
-  _event.sender.send(IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED,GetRecentWorkspace());
+  _event.sender.send(IPCActions.APP.PUSH.RECENT_WORK_SPACES_CHANGED, GetRecentWorkspace());
 }
 
 /***********
@@ -123,6 +125,7 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFilesPath: string[]
           try {
             UnlinkFile(filePath);
           } catch (e) {
+            log.error(e);
             ShowErrorAlert((e as Error).message);
           }
         });

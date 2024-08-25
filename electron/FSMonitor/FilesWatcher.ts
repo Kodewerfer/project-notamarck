@@ -40,6 +40,13 @@ const OnNewFile = _.debounce(() => {
 }, 200);
 
 async function OnDeleteFile(deleteFilePath: string) {
+  // delete file is in opened file
+  if (RemoveOpenedFile(deleteFilePath))
+    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
+      IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
+      GetOpenedFiles(),
+    );
+
   // deleted file is the active file
   if (GetActiveFile()?.fullPath === deleteFilePath) {
     ReassignActiveFile();
@@ -48,13 +55,6 @@ async function OnDeleteFile(deleteFilePath: string) {
       GetActiveFile(),
     );
   }
-
-  // delete file is in opened file
-  if (RemoveOpenedFile(deleteFilePath))
-    BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(
-      IPCActions.DATA.PUSH.OPENED_FILES_CHANGED,
-      GetOpenedFiles(),
-    );
 
   ResetAndCacheMDFilesListAsync();
 }

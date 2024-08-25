@@ -24,6 +24,7 @@ export function ReadMDAndAddToOpenedFile(targetPath: string) {
     AddToOpenedFiles(MDFileInfo);
     return MDFileInfo;
   } catch (e) {
+    log.error(`Error reading and adding to open file, ${e}`);
     throw e;
   }
 }
@@ -42,6 +43,7 @@ export function SaveContentToFileRenameOnDup(FileFullName: string, FileContent?:
   try {
     fs.writeFileSync(renamedFileFullName, FileContent ?? '', { encoding: 'utf8' });
   } catch (e) {
+    log.error(`Error writing to file ${renamedFileFullName}, ${e}`);
     throw new Error(`Error writing to file ${renamedFileFullName}, ${e}`);
   }
 }
@@ -60,6 +62,7 @@ export function SaveContentToFileOverrideOnDup(FileFullName: string, FileContent
   try {
     fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
   } catch (e) {
+    log.error(`Error writing to file ${FileFullName}, ${e}`);
     throw new Error(`Error writing to file ${FileFullName}, ${e}`);
   }
 }
@@ -82,6 +85,7 @@ export function RenameFileKeepDup(OldFullPath: string, NewName: string) {
   try {
     fs.renameSync(OldFullPath, finalizedNewName);
   } catch (e) {
+    log.error(`Error renaming file ${OldFullPath}, ${e}`);
     throw new Error(`Error renaming file ${OldFullPath}, ${e}`);
   }
   return finalizedNewName;
@@ -101,6 +105,7 @@ export function UnlinkFile(FileFullName: string) {
   try {
     fs.unlinkSync(FileFullName);
   } catch (e) {
+    log.error(`Error deleting file ${FileFullName}, ${e}`);
     throw new Error(`Error deleting file ${FileFullName}, ${e}`);
   }
 }
@@ -170,7 +175,7 @@ export async function ResetAndCacheMDFilesListAsync() {
     SetMDFilesList(mdFiles);
   } catch (e) {
     ShowErrorAlert('Error in listing files', (e as Error).message);
-    log.error(e);
+    log.error('Error in listing files', (e as Error).message);
   }
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
 }

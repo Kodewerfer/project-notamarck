@@ -25,6 +25,7 @@ export function GetTagFolderFullPath() {
     try {
       fs.mkdirSync(tagFolderFullPath);
     } catch (e) {
+      log.error(`Error getting/creating tag path, ${e}`);
       throw e;
     }
   }
@@ -46,6 +47,7 @@ export function SaveTagFileRenameOnDup(TagFileName: string, TagContent?: string)
   try {
     path.resolve(tagFilePath);
   } catch (e) {
+    log.error(`Tag path ${tagFilePath} is not valid.`, e);
     throw new Error(`Tag path ${tagFilePath} is not valid.`);
   }
 
@@ -55,6 +57,7 @@ export function SaveTagFileRenameOnDup(TagFileName: string, TagContent?: string)
   try {
     fs.writeFileSync(renamedTagFilePath, TagContent ?? '', { encoding: 'utf8' });
   } catch (e) {
+    log.error(`Error writing to tag ${renamedTagFilePath}, ${(e as Error).message}`);
     throw new Error(`Error writing to tag ${renamedTagFilePath}, ${(e as Error).message}`);
   }
 
@@ -68,12 +71,14 @@ export function SaveTagFileOverrideOnDup(TagFileName: string, TagContent?: strin
   try {
     path.resolve(tagFilePath);
   } catch (e) {
+    log.error(`Tag path ${tagFilePath} is not valid.`);
     throw new Error(`Tag path ${tagFilePath} is not valid.`);
   }
 
   try {
     fs.writeFileSync(tagFilePath, TagContent ?? '', { encoding: 'utf8' });
   } catch (e) {
+    log.error(`Error writing to tag ${tagFilePath}, ${(e as Error).message}`);
     throw new Error(`Error writing to tag ${tagFilePath}, ${(e as Error).message}`);
   }
 
@@ -136,6 +141,7 @@ export function UnlinkTag(TagFullName: string) {
   try {
     fs.unlinkSync(TagFullName);
   } catch (e) {
+    log.error(`Error deleting tag ${TagFullName}, ${e}`);
     throw new Error(`Error deleting tag ${TagFullName}, ${e}`);
   }
 }
@@ -159,6 +165,7 @@ export function RenameTagKeepDup(OldTagPath: string, NewName: string) {
   try {
     fs.renameSync(OldTagPath, finalizedNewName);
   } catch (e) {
+    log.error(`Error renaming tag ${OldTagPath}, ${(e as Error).message}`);
     throw new Error(`Error renaming tag ${OldTagPath}, ${(e as Error).message}`);
   }
   return finalizedNewName;
@@ -204,6 +211,7 @@ export function OpenAndSearchFilesForTag(FilePath: string, targetTag: TTagsInMem
       searchIndex.add(i, lines[i]);
     }
   } catch (e) {
+    log.error(`Error in searching tag refs in file, ${e}`);
     throw e;
   }
 
@@ -233,6 +241,7 @@ export function SearchInTagAndAppend(TagFileName: string, FromFilePath: string) 
 
     fs.appendFileSync(tagFilePath, '\n' + GetFileLinkSyntax(FromFilePath) + '\n');
   } catch (e) {
+    log.error('error creating tag reference in file,', (e as Error).message);
     ShowErrorAlert((e as Error).message);
   }
 }
@@ -266,6 +275,7 @@ export function SearchInTagAndRemoveFileLink(TagFileName: string, FromFilePath: 
 
     SaveTagFileOverrideOnDup(tagFilePath, rawContentLines.join('\n'));
   } catch (e) {
+    log.error('error removing file reference in tag,', (e as Error).message);
     ShowErrorAlert((e as Error).message);
   }
 }
@@ -306,7 +316,7 @@ export async function ResetAndCacheTagsListAsync() {
     });
   } catch (e) {
     ShowErrorAlert('Error in listing tags', (e as Error).message);
-    log.error(e);
+    log.error('Error in listing tags', (e as Error).message);
   }
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
 }

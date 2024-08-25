@@ -15,9 +15,17 @@ export const Route = createFileRoute('/FileFrame/_tabFrame/edit/$filepath')({
       });
       return;
     }
-    const OpenedFile = await IPCRenderSide.invoke(IPCActions.FILES.READ_AND_ADD_TO_OPENED_FILE, filepath);
 
-    return IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, OpenedFile);
+    try {
+      const OpenedFile = await IPCRenderSide.invoke(IPCActions.FILES.READ_AND_ADD_TO_OPENED_FILE, filepath);
+
+      return IPCRenderSide.send(IPCActions.DATA.CHANGE_ACTIVE_FILE, OpenedFile);
+    } catch (e) {
+      console.warn('Opened file error, redirected to index');
+      redirect({
+        to: '/FileFrame',
+      });
+    }
   },
   gcTime: 0,
   staleTime: 0,

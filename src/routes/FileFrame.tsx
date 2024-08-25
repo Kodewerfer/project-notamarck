@@ -223,6 +223,7 @@ function FileFrame() {
     try {
       await IPCRenderSide.invoke(IPCActions.FILES.CHANGE_TARGET_FILE_NAME, oldFillPath, NewFileName);
     } catch (e) {
+      log.error('error creating new file ', e);
       await IPCRenderSide.invoke(IPCActions.DIALOG.SHOW_MESSAGE_DIALOG, {
         type: 'error',
         message: `Error creating new file`,

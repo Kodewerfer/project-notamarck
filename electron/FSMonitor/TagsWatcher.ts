@@ -33,11 +33,11 @@ export default async function StartTagsWatcher() {
 }
 
 // Handlers
-// TODO: performance issue when large amount of tags add at the same time
 const debouncedAddNewTagToCache = _.debounce(() => {
   ResetAndCacheTagsListAsync();
 }, 200);
 
+// todo:remove the tag's reference in md files
 async function removeTagFromCache(tagPath: string, _: Stats | undefined) {
   const { base: TagNameKey } = path.parse(tagPath);
   RemoveFromTagMap(TagNameKey);
