@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createFileRoute, useLayoutEffect, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useLayoutEffect, useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/settings')({
 const { IPCRenderSide } = window;
 
 function Settings() {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const [currentSubPage, setCurrentSubPage] = useState<'workspace' | 'keyMap'>('workspace');
 
@@ -64,7 +64,7 @@ function Settings() {
       message: `Back to workspace now? `,
       buttons: ['yes', 'no'],
     });
-    if (buttonPressed === 0) router.history.back();
+    if (buttonPressed === 0) navigate({ to: '/FileFrame/edit' });
   }
 
   async function ClickedOnRecentFolders(targetFolder: string) {
@@ -151,14 +151,14 @@ function Settings() {
               href={''}
               onClick={ev => {
                 ev.preventDefault();
-                router.history.back();
+                navigate({ to: '/FileFrame/edit' });
               }}
             >
               <XMarkIcon />
             </a>
           </motion.div>
           {/*side-bar*/}
-          <aside className={'h-full max-w-96 w-1/3  select-none overflow-hidden'}>
+          <aside className={'h-full w-1/3 max-w-96 select-none overflow-hidden'}>
             <div
               className={
                 'm-auto mb-4 w-11/12 rounded-lg bg-gray-200 px-1.5 py-4 text-center tracking-wide dark:bg-slate-600'
@@ -182,7 +182,7 @@ function Settings() {
           </aside>
           {/*folder selection*/}
           {currentSubPage === 'workspace' && (
-            <div className={'flex h-screen min-h-screen min-w-96 w-2/3 flex-col overflow-y-auto overflow-x-clip pl-4'}>
+            <div className={'flex h-screen min-h-screen w-2/3 min-w-96 flex-col overflow-y-auto overflow-x-clip pl-4'}>
               {/*current folder*/}
               <div
                 className={
