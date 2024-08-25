@@ -1,19 +1,24 @@
 /*editor element styling*/
 
+/*syntax*/
+.Editor *[data-is-generated] {
+    @apply text-red-500/75 drop-shadow font-black
+}
+
 .Editor .line-container {
     @apply text-lg
 }
 
-.Editor .file-link{
+.Editor .file-link {
     @apply bg-red-500/35 font-semibold px-2 rounded-md cursor-pointer
 }
 
-.Editor .file-link:hover{
+.Editor .file-link:hover {
     @apply bg-red-500/45 transition ease-in
 }
 
 .Editor h1.line-container, .Editor h2.line-container, .Editor h3.line-container, .Editor h4.line-container, .Editor h5.line-container, .Editor h6.line-container {
-    @apply font-black leading-loose pb-2;
+    @apply font-black leading-loose pb-2 drop-shadow-md;
 }
 
 .Editor h1.line-container {
@@ -54,7 +59,7 @@
 }
 
 .Editor blockquote {
-    @apply bg-gray-500/35  pl-6 py-1.5 font-bold text-xl rounded-xl relative
+    @apply bg-gray-500/35  px-6 py-1.5 font-bold text-xl rounded-xl relative w-fit
 }
 
 .Editor blockquote:before {
@@ -71,5 +76,5 @@
 }
 
 .Editor pre {
-    @apply dark:bg-gray-300/25 bg-zinc-600/75 py-2 my-2 px-4 text-white rounded-md text-lg font-light;
+    @apply dark:bg-gray-300/25 bg-zinc-600/75 py-2 my-2 px-4 text-white rounded-md text-lg font-light w-fit
 }
