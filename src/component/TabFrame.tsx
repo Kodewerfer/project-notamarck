@@ -25,7 +25,7 @@ export default function TabFrame() {
   // NOTE: active tab/SelectedTab is not fetched from main, when the frame init and tabs has data, SelectedTab will be the first in order and send to main
   const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null); //acts like a cache for file info, do not compare ref directly
 
-  // const lastSearchResultElements = useRef<HTMLElement[] | null>(null);
+  const lastSearchResultElements = useRef<HTMLElement[] | null>(null);
 
   const MDEditorRef = useRef<TEditorComponentRef | null>(null);
   const TabBarRef = useRef<HTMLElement | null>(null);
@@ -48,12 +48,12 @@ export default function TabFrame() {
       });
 
       // TODO: no need for this, remove later
-      // // remove the result effect from last time
-      // lastSearchResultElements.current?.forEach(lastResult => {
-      //   lastResult?.classList.remove('search-result');
-      // });
-      //
-      // lastSearchResultElements.current = [...resultLines];
+      // remove the result effect from last time
+      lastSearchResultElements.current?.forEach(lastResult => {
+        lastResult?.classList.remove('search-result');
+      });
+
+      lastSearchResultElements.current = [...resultLines];
 
       // add result effect
       resultLines.forEach(resultElement => {
