@@ -4,7 +4,6 @@ import { createFileRoute, Outlet, useLayoutEffect, useNavigate } from '@tanstack
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 
 import { FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { ArrowRightIcon } from '@heroicons/react/16/solid';
 import { getLastPartOfPath } from '@/util/helper.ts';
 import SearchBar from 'component/SearchBar.tsx';
 import { TFileInMemory } from 'electron-src/Types/GlobalData.ts';
