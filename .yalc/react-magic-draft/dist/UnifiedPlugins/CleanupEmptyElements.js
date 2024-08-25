@@ -30,7 +30,10 @@ function ElementsCleanupTransformer(ast) {
                 remove(parent, node);
             }
         }
-        if (node.type.toLowerCase() === "element" && !SelfClosingHTMLElementsMap.get(node.tagName) && !node.children.length) {
+        const bChildNodeInvalid = !node.children.length || (node.children.length === 1 && String(node.children[0].value).trim() === "");
+        if (node.type.toLowerCase() === "element" && !SelfClosingHTMLElementsMap.get(node.tagName) && bChildNodeInvalid) {
+            // special handling for list elements and pre block,
+            // otherwise those elements will be hard to create
             if (node.tagName === 'li' || (node.tagName === 'code' && parent.tagName === 'pre')) {
                 const mockupElement = h("span", "\u00A0");
                 node.children && node.children.push(...mockupElement.children);
