@@ -271,11 +271,18 @@ function FileFrame() {
           </div>
           {/*  notification for search filter*/}
           {filteredMDList?.length !== MDList?.length && (
-            <div className={'h-20 max-h-20'}>
+            <div className={'h-14 max-h-14'}>
               <section
                 className={
-                  'group relative flex cursor-pointer justify-center bg-cyan-100/30 py-1.5 dark:bg-cyan-500/20'
+                  'group relative flex cursor-pointer justify-center bg-cyan-400/30 py-1.5 font-semibold dark:bg-cyan-500/20'
                 }
+                onClick={() => {
+                  const NewFileSearch: TSearchTarget = {
+                    searchText: '',
+                    searchType: ESearchTypes.File,
+                  };
+                  IPCRenderSide.send(IPCActions.DATA.SET_NEW_SEARCH_TARGET, NewFileSearch);
+                }}
               >
                 <span>Search Filtered</span>
               </section>

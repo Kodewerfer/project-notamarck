@@ -314,7 +314,7 @@ export default function TabFrame() {
           if (!ev.deltaY || !TabBarRef.current) return;
           (TabBarRef.current as HTMLElement).scrollLeft = ev.deltaY + ev.deltaX;
         }}
-        className={`tab-bar sticky top-0 z-20 flex h-10 w-full overflow-hidden overflow-x-auto scroll-smooth bg-zinc-400 text-slate-800 ${AllTabs.length === 0 && 'hidden'}`}
+        className={`tab-bar sticky top-0 z-20 flex h-10 w-full overflow-hidden overflow-x-auto scroll-smooth bg-slate-400 text-slate-800 ${AllTabs.length === 0 && 'hidden'}`}
       >
         <Reorder.Group as="ul" axis="x" onReorder={onReOrder} className="flex flex-nowrap text-nowrap" values={AllTabs}>
           <AnimatePresence initial={false}>
@@ -421,7 +421,7 @@ export const Tab = ({
   onClick,
   onRemove,
   isSelected,
-  TabsBGC = ['#a1a1aa', '#f3f4f6'], //unselect-selected
+  TabsBGC = ['#64748b', '#e2e8f0'], //unselect-selected
   TabsDraggingColor = '#e3e3e3',
   CloseBtnBGColor = ['#fff', '#e3e3e3'], //background forgrounad
 }: TTabProps) => {

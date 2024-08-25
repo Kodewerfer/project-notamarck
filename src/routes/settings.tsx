@@ -158,7 +158,7 @@ function Settings() {
             </a>
           </motion.div>
           {/*side-bar*/}
-          <aside className={'h-full w-64 select-none overflow-hidden'}>
+          <aside className={'h-full max-w-96 w-1/3  select-none overflow-hidden'}>
             <div
               className={
                 'm-auto mb-4 w-11/12 rounded-lg bg-gray-200 px-1.5 py-4 text-center tracking-wide dark:bg-slate-600'
@@ -182,7 +182,7 @@ function Settings() {
           </aside>
           {/*folder selection*/}
           {currentSubPage === 'workspace' && (
-            <div className={'flex h-screen min-h-screen min-w-96 grow flex-col overflow-y-auto overflow-x-clip pl-4'}>
+            <div className={'flex h-screen min-h-screen min-w-96 w-2/3 flex-col overflow-y-auto overflow-x-clip pl-4'}>
               {/*current folder*/}
               <div
                 className={
@@ -191,7 +191,7 @@ function Settings() {
               >
                 <section className={'flex text-lg'}>
                   <FolderOpenIcon className={'size-6 min-h-6 min-w-6 self-center'} />
-                  <div className={'grow'}>
+                  <div className={'grow truncate'}>
                     <span className={'block truncate pl-2.5 font-semibold'}>
                       {getLastPartOfPath(currentFolderPath)}
                     </span>
@@ -214,17 +214,6 @@ function Settings() {
 
               {/* recent folders */}
               <div className={'w-full grow basis-full overflow-auto'}>
-                {/*search recent*/}
-                {/*<div className={'flex'}>*/}
-                {/*  <MagnifyingGlassIcon className={'size-6 self-center'} />*/}
-                {/*  <input*/}
-                {/*    type={'text'}*/}
-                {/*    placeholder={'Search text'}*/}
-                {/*    className={*/}
-                {/*      'grow border-0 bg-transparent py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6'*/}
-                {/*    }*/}
-                {/*  />*/}
-                {/*</div>*/}
                 {/*The recent folders*/}
                 <ul className={'w-full'}>
                   {recentFolders.reverse().map(item => (
@@ -232,11 +221,11 @@ function Settings() {
                       key={item}
                       onClick={() => ClickedOnRecentFolders(item)}
                       className={
-                        'group relative my-2.5 mb-2 flex w-full cursor-pointer from-gray-200 to-gray-100 py-3.5 pl-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-600 dark:to-slate-500'
+                        'group relative my-2.5 mb-2 flex w-full shrink-0 cursor-pointer from-gray-200 to-gray-100 py-3.5 pl-2.5 hover:rounded-lg hover:bg-gradient-to-r dark:from-slate-600 dark:to-slate-500'
                       }
                     >
                       <FolderIcon className={'size-5 min-h-5 min-w-5 self-center'} />
-                      <div className={'grow'}>
+                      <div className={'grow truncate'}>
                         <span className={'block w-full truncate pl-2.5 font-semibold dark:drop-shadow'}>
                           {getLastPartOfPath(item)}
                         </span>
