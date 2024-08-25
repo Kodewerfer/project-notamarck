@@ -8,7 +8,7 @@ import { TMDFile } from 'electron-src/Types/Files.ts';
 import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
 import FlexSearch from 'flexsearch';
 import { ArrowLeftIcon } from '@heroicons/react/20/solid';
-import { ArrowRightIcon } from '@heroicons/react/16/solid';
+import { ArrowRightIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import _ from 'lodash';
 
 const { IPCRenderSide } = window;
@@ -181,6 +181,8 @@ function SearchBarActual(
 
       setPlaceHolderText(placeHolderText);
       if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
+
+      setSearchString((searchPayload as TSearchTarget).searchText || '');
     });
 
     return () => {
@@ -311,12 +313,21 @@ function SearchBarActual(
   return (
     <nav
       ref={ref}
-      className={`light:border-b relative z-40 h-fit w-full bg-gray-50 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
+      className={`light:border-b relative z-40 h-fit w-full bg-gray-100 px-4 py-2.5 dark:bg-slate-700 dark:text-blue-50 ${AdditionalClasses}`}
       onClick={_ => {
         if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
       }}
     >
-      <section className={'flex'}>
+      <section className={'relative flex pr-7'}>
+        {/* clean search */}
+        <div
+          onClick={() => {
+            setSearchString('');
+          }}
+          className={`${searchString && searchString !== '' ? 'absolute' : 'hidden'} right-3 top-1/2 -translate-y-1/2 cursor-pointer hover:text-red-500`}
+        >
+          <XMarkIcon className={'size-5 min-w-5'} />
+        </div>
         <MagnifyingGlassIcon className={'order-1 size-6 self-center'} />
         <input
           id={'main-search-bar'}
