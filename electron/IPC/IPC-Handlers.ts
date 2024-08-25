@@ -234,7 +234,7 @@ export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
 }
 
 // --tag
-const { SET_TAG_AS_EDITING } = IPCActions.DATA; //receiving
+const { READ_AND_SET_TAG_AS_EDITING } = IPCActions.DATA; //receiving
 export function SetEditingTagAndPush(_Event: IpcMainInvokeEvent, tagPath: string | null) {
   if (GetEditingTag()?.tagPath === tagPath) return GetEditingTag();
 
@@ -521,7 +521,7 @@ export const IPCHandlerMappings = [
   { trigger: LIST_ALL_TAGS, handler: ReturnAllTags },
   { trigger: CHANGE_TARGET_TAG_NAME, handler: RenameTagAndPush },
   { trigger: GET_LAST_SEARCH_TARGET, handler: ReturnLastSearchToken },
-  { trigger: SET_TAG_AS_EDITING, handler: SetEditingTagAndPush },
+  { trigger: READ_AND_SET_TAG_AS_EDITING, handler: SetEditingTagAndPush },
   { trigger: GET_EDITING_TAG, handler: ReturnEditingTag },
   { trigger: CONVERT_TAG_RAW_FROM_NAME, handler: ConvertTagRawFromCache },
   { trigger: CHECK_IN_OPENED_FILE, handler: CheckIfPathInOpenedFile },

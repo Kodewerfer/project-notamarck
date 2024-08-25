@@ -14,7 +14,7 @@ const { IPCRenderSide } = window;
 export const Route = createFileRoute('/TagFrame/$tagPath')({
   loader: async ({ params: { tagPath } }) => {
     return {
-      tag: await IPCRenderSide.invoke(IPCActions.DATA.SET_TAG_AS_EDITING, tagPath),
+      tag: await IPCRenderSide.invoke(IPCActions.DATA.READ_AND_SET_TAG_AS_EDITING, tagPath),
       workspacePath: await IPCRenderSide.invoke(IPCActions.APP.GET_WORK_SPACE),
     };
   },
