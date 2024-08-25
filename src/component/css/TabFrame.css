@@ -1,10 +1,5 @@
 .search-result {
-    @apply font-normal relative
-}
-
-.search-result::after {
-    @apply absolute inset-1 left-0 block w-full rounded-md bg-purple-500/25 z-0;
-    content: '';
+    @apply font-normal relative from-purple-500/25 to-purple-200/25 z-0 bg-gradient-to-r
 }
 
 .tab-bar::-webkit-scrollbar {
