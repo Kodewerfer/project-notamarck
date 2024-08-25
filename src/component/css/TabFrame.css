@@ -13,6 +13,14 @@
     @apply text-lg
 }
 
+.Editor .file-link{
+    @apply bg-red-500/35 font-semibold px-2 rounded-md cursor-pointer
+}
+
+.Editor .file-link:hover{
+    @apply bg-red-500/45 transition ease-in
+}
+
 .Editor h1.line-container, .Editor h2.line-container, .Editor h3.line-container, .Editor h4.line-container, .Editor h5.line-container, .Editor h6.line-container {
     @apply font-black leading-loose pb-2;
 }
