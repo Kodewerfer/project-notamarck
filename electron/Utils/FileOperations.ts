@@ -1,6 +1,13 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { AddToOpenedFiles, GetAppMainWindowID, GetCurrentWorkspace, SetMDFilesList } from '../Data/Globals.ts';
+import {
+  AddToOpenedFiles,
+  CheckForFileChanging,
+  ConsumeFileChangeMark,
+  GetAppMainWindowID,
+  GetCurrentWorkspace,
+  SetMDFilesList,
+} from '../Data/Globals.ts';
 import { FormatFileSize } from '../Helper.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { BrowserWindow } from 'electron';
@@ -57,9 +64,13 @@ export function SaveContentToFileRenameOnDup(FileFullName: string, FileContent?:
  * @throws {Error} Throws an error if there was an issue writing to the file.
  */
 export function SaveContentToFileOverrideOnDup(FileFullName: string, FileContent?: string) {
-  fs.accessSync(FileFullName);
+  if (CheckForFileChanging(FileFullName)) {
+    ConsumeFileChangeMark(FileFullName);
+    return;
+  }
 
   try {
+    fs.accessSync(FileFullName);
     fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
   } catch (e) {
     log.error(`Error writing to file ${FileFullName}, ${e}`);

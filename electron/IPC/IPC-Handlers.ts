@@ -16,6 +16,7 @@ import {
   GetOpenedFiles,
   GetRecentWorkspace,
   GetSelectionStatusCache,
+  MarkFileForFileChange,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
   SetCurrentWorkspaceThenStore,
@@ -52,6 +53,7 @@ import StartFilesWatcher from '../FSMonitor/FilesWatcher.ts';
 import StartTagsWatcher from '../FSMonitor/TagsWatcher.ts';
 import { KeyMappingConfig } from '../Utils/GlobalShortcuts.ts';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
+import log from 'electron-log';
 
 /************
  * - APP -
@@ -403,6 +405,14 @@ const { CHANGE_TARGET_FILE_NAME } = IPCActions.FILES;
 export function RenameFileAndPush(_Event: IpcMainInvokeEvent, OldFilePath: string, NewFileName: string) {
   // check if renaming active file
   let bInActiveFile = false;
+
+  if (!fs.existsSync(OldFilePath)) {
+    log.warn(`Trying to rename file that does not exists: ${OldFilePath} to ${NewFileName}`);
+    return;
+  }
+
+  MarkFileForFileChange(OldFilePath);
+
   if (GetActiveFile()?.fullPath === OldFilePath) {
     ReassignActiveFile();
     bInActiveFile = true;

@@ -8,6 +8,7 @@ import {
   GetCurrentWorkspace,
   GetOpenedFiles,
   GetRecentWorkspace,
+  MarkFileForFileChange,
   RemoveFromRecentWorkspacesAndStore,
   SetActiveFileContent,
   SetOpenFiles,
@@ -123,6 +124,7 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFilesPath: string[]
         if (confirmAlertResponse === 1) return;
         selectedFilesPath.forEach(filePath => {
           try {
+            MarkFileForFileChange(filePath);
             UnlinkFile(filePath);
           } catch (e) {
             log.error(e);
@@ -350,6 +352,7 @@ function RemoveFromTag(_event: IpcMainEvent, targetTag: string, FromFile: string
   try {
     ValidateTag(targetTag);
   } catch (e) {
+    log.error(`Trying to remove link from a tag that cannot be accessed ${targetTag}`);
     ShowErrorAlert(`Trying to remove link from a tag that cannot be accessed ${targetTag}`);
   }
 
