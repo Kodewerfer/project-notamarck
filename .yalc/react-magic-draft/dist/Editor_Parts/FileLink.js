@@ -23,10 +23,12 @@ import React, { useContext, useLayoutEffect, useRef, useState } from "react";
 import { GetAllSurroundingText, GetCaretContext, } from "../Utils/Helpers";
 import { CompileAllTextNode, UpdateComponentAndSync } from "./Utils/CommonFunctions";
 import { RecalibrateContainer } from "../context/ParentElementContext";
+import classNames from "classnames/dedupe";
 /**
  * A "Tag" link element is different in that it can be directly edited by the user once it is created.
  */
 export default function FileLink(_a) {
+    var _b;
     var { children, tagName, daemonHandle, initCallback, removeCallback } = _a, otherProps = __rest(_a, ["children", "tagName", "daemonHandle", "initCallback", "removeCallback"]);
     const [SetActivation] = useState(() => {
         return ComponentActivation;
@@ -139,7 +141,9 @@ export default function FileLink(_a) {
         if (FileLinkElementRef.current && ((_a = FileLinkElementRef.current) === null || _a === void 0 ? void 0 : _a.firstChild))
             daemonHandle.AddToIgnore([...FileLinkElementRef.current.childNodes], "any", true);
     });
-    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: `file-link ${isEditing ? "is-active" : ""}`, ref: FileLinkElementRef }), [
+    // Add component classed on top of classes that may be added to it
+    const combinedClassnames = classNames((_b = FileLinkElementRef === null || FileLinkElementRef === void 0 ? void 0 : FileLinkElementRef.current) === null || _b === void 0 ? void 0 : _b.className, `file-link`, { "is-active": isEditing });
+    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: combinedClassnames, ref: FileLinkElementRef }), [
         _jsx("span", { "data-is-generated": true, children: '\u00A0' }, "FrontSpacing"),
         _jsxs("span", { "data-is-generated": true, className: 'Hide-It', children: [":Link[", FileLinkTarget, "]"] }, "HiddenSyntaxFront"),
         (_jsx("span", { ref: FileLinkDisplayTextRef, "data-fake-text": true, contentEditable: false, children: FileLinkDisplayText }, "TagDisplay")), //!!important data-fake-text will not be extracted as part of the syntax

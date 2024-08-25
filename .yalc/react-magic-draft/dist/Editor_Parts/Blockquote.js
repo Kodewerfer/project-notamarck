@@ -11,12 +11,17 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 import React, { useEffect, useRef, useState } from "react";
 import { GetCaretContext, GetChildNodesAsHTMLString, GetFirstTextNode, GetLastTextNode, MoveCaretToNode } from "../Utils/Helpers";
+import classNames from "classnames/dedupe";
 export function Blockquote(_a) {
+    var _b;
     var { children, tagName, parentSetActivation, daemonHandle } = _a, otherProps = __rest(_a, ["children", "tagName", "parentSetActivation", "daemonHandle"]);
     const ContainerRef = useRef(null);
-    return React.createElement(tagName, Object.assign({ ref: ContainerRef, className: "block-quote" }, otherProps), children);
+    // Add component classed on top of classes that may be added to it
+    const combinedClassnames = classNames((_b = ContainerRef === null || ContainerRef === void 0 ? void 0 : ContainerRef.current) === null || _b === void 0 ? void 0 : _b.className, `block-quote`);
+    return React.createElement(tagName, Object.assign({ ref: ContainerRef, className: combinedClassnames }, otherProps), children);
 }
 export function QuoteItem(_a) {
+    var _b;
     var { children, tagName, daemonHandle } = _a, otherProps = __rest(_a, ["children", "tagName", "daemonHandle"]);
     const [SetActivation] = useState(() => {
         return ComponentActivation;
@@ -129,7 +134,9 @@ export function QuoteItem(_a) {
             daemonHandle.AddToIgnore(QuoteSyntaxFiller.current, "any");
         }
     });
-    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: `block-quote-item ${isEditing ? "is-active" : ""}`, ref: WholeElementRef }), [
+    // Add component classed on top of classes that may be added to it
+    const combinedClassnames = classNames((_b = WholeElementRef === null || WholeElementRef === void 0 ? void 0 : WholeElementRef.current) === null || _b === void 0 ? void 0 : _b.className, `block-quote-item`, { "is-active": isEditing });
+    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: combinedClassnames, ref: WholeElementRef }), [
         React.createElement('span', {
             'data-is-generated': true, //!!IMPORTANT!! custom attr for the daemon's find xp function, so that this element won't count towards to the number of sibling of the same name
             key: 'QuoteSyntaxLead',

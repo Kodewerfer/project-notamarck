@@ -14,11 +14,13 @@ import React, { useContext, useLayoutEffect, useRef, useState } from "react";
 import { GetAllSurroundingText, GetCaretContext } from "../Utils/Helpers";
 import { CompileAllTextNode, UpdateComponentAndSync } from "./Utils/CommonFunctions";
 import { RecalibrateContainer } from "../context/ParentElementContext";
+import classNames from "classnames/dedupe";
 /**
  *  In current implementation, the Link component is a special kind of "plainSyntax" component which are in-line elements in nature
  *  Many of the functionalities are the same, but since link have some specialities and may undergo changes, the code are kept seperated.
  * */
 export default function Links(_a) {
+    var _b;
     var { children, tagName, daemonHandle } = _a, otherProps = __rest(_a, ["children", "tagName", "daemonHandle"]);
     const [SetActivation] = useState(() => {
         return ComponentActivation;
@@ -120,7 +122,9 @@ export default function Links(_a) {
             LinkedContentMapRef.current.clear();
         };
     });
-    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: `http-link ${isEditing ? "is-active" : ""}`, ref: LinkElementRef }), [
+    // Add component classed on top of classes that may be added to it
+    const combinedClassnames = classNames((_b = LinkElementRef === null || LinkElementRef === void 0 ? void 0 : LinkElementRef.current) === null || _b === void 0 ? void 0 : _b.className, `http-link`, { "is-active": isEditing });
+    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: combinedClassnames, ref: LinkElementRef }), [
         _jsxs("span", { className: `Text-Normal ${isEditing ? "" : 'Hide-It'}`, "data-is-generated": true, children: ['\u00A0', _jsx("span", { contentEditable: false, children: "[" })] }, 'SyntaxFrontBracket'),
         // link text
         ...(Array.isArray(children) ? children : [children]),

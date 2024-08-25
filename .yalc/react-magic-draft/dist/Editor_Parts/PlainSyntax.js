@@ -14,7 +14,9 @@ import React, { useContext, useLayoutEffect, useRef, useState } from "react";
 import { GetAllSurroundingText, GetCaretContext, GetChildNodesTextContent, } from '../Utils/Helpers';
 import { CompileAllTextNode, UpdateComponentAndSync } from "./Utils/CommonFunctions";
 import { RecalibrateContainer } from "../context/ParentElementContext";
+import classNames from "classnames/dedupe";
 export default function PlainSyntax(_a) {
+    var _b;
     var { children, tagName, daemonHandle } = _a, otherProps = __rest(_a, ["children", "tagName", "daemonHandle"]);
     const [SetActivation] = useState(() => {
         return ComponentActivation;
@@ -152,7 +154,9 @@ export default function PlainSyntax(_a) {
             TextContentMapRef.current.clear();
         };
     });
-    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: `in-line-element ${isEditing ? "is-active" : ""}`, ref: WholeElementRef }), [
+    // Add component classed on top of classes that may be added to it
+    const combinedClassnames = classNames((_b = WholeElementRef === null || WholeElementRef === void 0 ? void 0 : WholeElementRef.current) === null || _b === void 0 ? void 0 : _b.className, `in-line-element`, { "is-active": isEditing });
+    return React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: combinedClassnames, ref: WholeElementRef }), [
         React.createElement('span', {
             'data-is-generated': true, //!!IMPORTANT!! custom attr for the daemon's find xp function, so that this element won't count towards to the number of sibling of the same name
             key: 'SyntaxFront',

@@ -2,7 +2,7 @@
   "name": "react-magic-draft",
   "author": "Kodewerfer",
   "main": "./dist/index.js",
-  "version": "0.6.0-beta",
+  "version": "0.6.0",
   "private": false,
   "license": "MIT",
   "peerDependencies": {
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "classnames": "^2.5.1",
     "dedent": "^1.5.3",
     "hastscript": "^9.0.0",
     "lodash": "^4.17.21",
@@ -66,5 +67,5 @@
       "last 1 safari version"
     ]
   },
-  "yalcSig": "6e275fd3c76fd61258eb6713ee71a957"
+  "yalcSig": "06e9a5d6306a25787442e5040ba4172e"
 }

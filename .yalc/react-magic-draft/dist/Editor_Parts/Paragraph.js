@@ -15,7 +15,9 @@ import { GetChildNodesAsHTMLString } from '../Utils/Helpers';
 import { RecalibrateContainer } from "../context/ParentElementContext";
 import { CompileAllTextNode, UpdateContainerAndSync } from "./Utils/CommonFunctions";
 import _ from "lodash";
+import classNames from "classnames/dedupe";
 export default function Paragraph(_a) {
+    var _b;
     var { children, tagName, isHeader, headerSyntax, daemonHandle } = _a, otherProps = __rest(_a, ["children", "tagName", "isHeader", "headerSyntax", "daemonHandle"]);
     const [SetActivation] = useState(() => {
         return ComponentActivation;
@@ -79,7 +81,9 @@ export default function Paragraph(_a) {
         if (MainElementRef.current && MainElementRef.current.parentNode)
             UpdateContainerAndSync(daemonHandle, compileAllTextNode, MainElementRef.current, tagName);
     }
-    return _jsx(RecalibrateContainer.Provider, { value: ContainerUpdate, children: React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: `line-container ${isEditing ? "is-active" : ""}`, ref: MainElementRef }), [
+    // Add component classed on top of classes that may be added to it
+    const combinedClassnames = classNames((_b = MainElementRef === null || MainElementRef === void 0 ? void 0 : MainElementRef.current) === null || _b === void 0 ? void 0 : _b.className, `line-container`, { "header-container": isHeader }, { "is-active": isEditing });
+    return _jsx(RecalibrateContainer.Provider, { value: ContainerUpdate, children: React.createElement(tagName, Object.assign(Object.assign({}, otherProps), { className: combinedClassnames, ref: MainElementRef }), [
             isHeader && React.createElement('span', {
                 'data-is-generated': true,
                 key: `HeaderSyntaxLead_${_.uniqueId()}`,
