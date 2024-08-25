@@ -196,18 +196,23 @@ function SearchBarActual(
   useEffect(() => {
     if (!SearchCallbacks) return;
 
-    if (typeof SearchCallbacks.MdList === 'function' && searchType === ESearchTypes.File) {
-      SearchCallbacks.MdList(filteredMDList);
+    if (searchType === ESearchTypes.File) {
+      if (typeof SearchCallbacks.MdList === 'function') SearchCallbacks.MdList(filteredMDList);
+      if (TagsList && typeof SearchCallbacks.TagList === 'function') SearchCallbacks.TagList(TagsList); // return the other list as is
     }
 
-    if (typeof SearchCallbacks.TagList === 'function' && searchType === ESearchTypes.Tag) {
-      SearchCallbacks.TagList(filteredTagList);
+    if (searchType === ESearchTypes.Tag) {
+      if (typeof SearchCallbacks.TagList === 'function') SearchCallbacks.TagList(filteredTagList);
+      if (MDList && typeof SearchCallbacks.MdList === 'function') SearchCallbacks.MdList(MDList); // return the other list as is
     }
 
-    if (typeof SearchCallbacks.Content === 'function' && searchType === ESearchTypes.Content) {
-      SearchCallbacks.Content(contentSearchResults);
+    if (searchType === ESearchTypes.Content) {
+      if (typeof SearchCallbacks.Content === 'function') SearchCallbacks.Content(contentSearchResults);
+      // return the two lists as-is
+      if (TagsList && typeof SearchCallbacks.TagList === 'function') SearchCallbacks.TagList(TagsList);
+      if (MDList && typeof SearchCallbacks.MdList === 'function') SearchCallbacks.MdList(MDList);
     }
-  }, [searchString, TagsList, MDList, contentSearchResults]); //FileContent is not included because it is processed in useEffect
+  }, [searchString, searchType, TagsList, MDList, contentSearchResults]); //FileContent is not included because it is processed in useEffect
 
   // close the search result when clicking other parts of the page.
   function CloseSearch(ev: HTMLElementEventMap['click']) {
@@ -348,13 +353,14 @@ function SearchBarActual(
           onClick={_ => setIsSearching(true)}
           onDoubleClick={_ => setIsSearching(true)}
           className={
-            'peer order-3 grow border-0 border-b-2 border-transparent w-full bg-transparent py-1.5 pl-2 text-gray-900' +
+            'peer order-3 w-full grow border-0 border-b-2 border-transparent bg-transparent py-1.5 pl-2 text-gray-900' +
             ' placeholder:text-gray-400 focus:border-gray-300 focus:outline-0 focus:ring-0 sm:text-sm sm:leading-6 dark:text-blue-50'
           }
         />
         <label
           htmlFor={'main-search-bar'}
           onClick={() => {
+            if (Options?.LockSearchType) return;
             const availableTypes = Object.keys(ESearchTypes);
             const oldIndex = availableTypes.findIndex(item => item === searchType);
             const newIndex = oldIndex < availableTypes.length - 1 ? oldIndex + 1 : 0;

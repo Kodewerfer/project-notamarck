@@ -38,6 +38,8 @@ function FileFrame() {
   const [MDList, setMDList] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
   const [TagList, setTagList] = useState<TTagsInMemory[] | null | undefined>(Route.useLoaderData()?.Tags);
 
+  const [filteredMDList, setfilteredMDList] = useState<TMDFile[] | null | undefined>(Route.useLoaderData()?.MD);
+
   const [ActiveFileContent, setActiveFileContent] = useState<string>('');
 
   const SearchBarDOM = useRef<HTMLElement | null>(null);
@@ -235,7 +237,7 @@ function FileFrame() {
   return (
     <div className={'Main-frame-root flex h-screen w-full max-w-full overflow-auto'}>
       {/*File listing side bar*/}
-      <div className="file-list-block z-10 h-screen w-1/3 max-w-96 border-r border-gray-200 dark:border-none dark:bg-slate-600">
+      <div className="file-list-block z-10 h-screen w-1/3 max-w-96 shrink-0 border-r border-gray-200 dark:border-none dark:bg-slate-600">
         {/*file list*/}
         <div className="flex h-full min-h-screen flex-col truncate bg-slate-100 dark:bg-slate-700 dark:text-blue-50">
           <div className={'h-20 max-h-20'}>
@@ -267,17 +269,29 @@ function FileFrame() {
               </span>
             </section>
           </div>
+          {/*  notification for search filter*/}
+          {filteredMDList?.length !== MDList?.length && (
+            <div className={'h-20 max-h-20'}>
+              <section
+                className={
+                  'group relative flex cursor-pointer justify-center bg-cyan-100/30 py-1.5 dark:bg-cyan-500/20'
+                }
+              >
+                <span>Search Filtered</span>
+              </section>
+            </div>
+          )}
           {/*File listing, context menu is bind here, so it is for the best that this is fit to content*/}
           <ul
-            className="w-full flex-grow basis-full overflow-auto px-1.5"
+            className="w-full min-w-full flex-grow basis-full overflow-auto px-1.5"
             onContextMenu={ev => {
               ev.preventDefault();
               HandleFileContextMenu();
             }}
           >
             {/*File Listings*/}
-            {MDList &&
-              MDList.map(item => {
+            {filteredMDList &&
+              filteredMDList.map(item => {
                 // when renaming
                 if (filepathToRename === item.path)
                   return (
@@ -338,6 +352,7 @@ function FileFrame() {
           TagsList={TagList}
           FileContent={ActiveFileContent}
           SearchCallbacks={{
+            MdList: result => setfilteredMDList(result),
             Content: result => IPCRenderSide.send(IPCActions.EDITOR_MD.SET_CONTENT_SEARCH_RESULT, result),
           }}
         />
