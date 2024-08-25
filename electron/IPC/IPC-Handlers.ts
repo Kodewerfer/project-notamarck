@@ -32,6 +32,7 @@ import {
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import {
+  GetTagFolderFullPath,
   ReadTagRaw,
   RenameTagKeepDup,
   ResetAndCacheTagsListAsync,
@@ -71,6 +72,12 @@ const { GET_WORK_SPACE } = IPCActions.APP;
 
 export function ReturnCurrentWorkspace() {
   return GetCurrentWorkspace();
+}
+
+const { GET_WORK_SPACE_TAGS_PATH } = IPCActions.APP;
+
+export function ReturnCurrentWorkspaceTagsPath() {
+  return GetTagFolderFullPath();
 }
 
 // Return currently active folder
@@ -238,6 +245,10 @@ export function CloseAllOpenedFiles(_Event: IpcMainInvokeEvent) {
 // --tag
 const { READ_AND_SET_TAG_AS_EDITING } = IPCActions.DATA; //receiving
 export function SetEditingTagAndPush(_Event: IpcMainInvokeEvent, tagPath: string | null) {
+  if (!tagPath) return;
+
+  tagPath = path.normalize(tagPath);
+
   if (GetEditingTag()?.tagPath === tagPath) return GetEditingTag();
 
   if (!tagPath) {
@@ -256,9 +267,16 @@ export function SetEditingTagAndPush(_Event: IpcMainInvokeEvent, tagPath: string
     return null;
   }
 
-  const tagContentRaw = ReadTagRaw(tagPath).tagContentRaw;
+  let tagContentRaw: string | undefined;
+
+  try {
+    tagContentRaw = ReadTagRaw(tagPath).tagContentRaw;
+  } catch (e) {
+    log.error(`Error Reading tag ${tagPath}`, (e as Error)?.message);
+    ShowErrorAlert(`Error Reading tag ${tagPath}`, (e as Error)?.message);
+  }
+
   if (!tagContentRaw && tagContentRaw !== '') {
-    ShowErrorAlert(`Error reading tag ${tagPath}`);
     return null;
   }
 
@@ -372,6 +390,7 @@ export function ReturnAllMDsInPath(_Event: IpcMainInvokeEvent): TMDFile[] {
 const { READ_AND_ADD_TO_OPENED_FILE } = IPCActions.FILES;
 
 export function ReadMDAndPushOpenedFiles(_Event: IpcMainInvokeEvent, targetPath: string) {
+  if (!targetPath) return;
   if (!targetPath.endsWith('.md')) throw new Error(`${targetPath} file is not MD`);
 
   try {
@@ -537,4 +556,5 @@ export const IPCHandlerMappings = [
   { trigger: CHECK_IN_OPENED_FILE, handler: CheckIfPathInOpenedFile },
   { trigger: GET_ACTIVE_FILE_CONTENT, handler: ReturnCurrentActiveFileContent },
   { trigger: GET_APP_KEY_BINDING, handler: ReturnAllKeyBindings },
+  { trigger: GET_WORK_SPACE_TAGS_PATH, handler: ReturnCurrentWorkspaceTagsPath },
 ];
