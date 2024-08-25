@@ -9,6 +9,7 @@ import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
 import FlexSearch from 'flexsearch';
 import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
+import _ from 'lodash';
 
 const { IPCRenderSide } = window;
 
@@ -119,6 +120,7 @@ function SearchBarActual(
   // each index represent a top-level child element(like p or ul) from the original content
   const [contentTextExtraction, setContentTextExtraction] = useState<string[]>([]); //since it's a state, it may cause interruption
   useEffect(() => {
+    if (searchType !== ESearchTypes.Content) return;
     // first reset the ref
     setContentTextExtraction([]);
     // convert html string to Dom elements
@@ -147,7 +149,7 @@ function SearchBarActual(
       textNodeArray.push(currentTextNodesResult);
     });
     setContentTextExtraction([...textNodeArray]);
-  }, [FileContent]); // load contentTextExtraction, convert from FileContent
+  }, [FileContent, searchType]); // load contentTextExtraction, convert from FileContent
 
   // index for each top-level element that contains the searched string
   const contentSearchResults = useMemo(() => {
@@ -160,15 +162,9 @@ function SearchBarActual(
     }
 
     const searchResult = TextContentIndexer.search(searchString);
-    return searchResult as number[];
+    const sortedSearchResult = _.sortBy(searchResult);
+    return sortedSearchResult as number[];
   }, [searchString, contentTextExtraction]);
-
-  // when content searching got results, send to main process to jump the editor to result location
-  useEffect(() => {
-    if (!contentSearchResults.length || searchType !== ESearchTypes.Content) return;
-
-    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[activeResultIndex]);
-  }, [searchString, searchType, contentSearchResults]);
 
   // the high lighted search result for list items, this is used in arrow key navigation as well as mouse hover selection
   const [activeResultIndex, setActiveResultIndex] = useState(0);
@@ -470,8 +466,8 @@ function SearchBarActual(
                 <ArrowLeftIcon
                   className={'size-4 cursor-pointer'}
                   onClick={_ => {
+                    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[activeResultIndex]);
                     const newIndex = activeResultIndex > 0 ? activeResultIndex - 1 : contentSearchResults.length - 1;
-                    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
                     setActiveResultIndex(newIndex);
                   }}
                 />
@@ -479,8 +475,8 @@ function SearchBarActual(
                 <ArrowRightIcon
                   className={'size-4 cursor-pointer'}
                   onClick={_ => {
+                    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[activeResultIndex]);
                     const newIndex = activeResultIndex < contentSearchResults.length - 1 ? activeResultIndex + 1 : 0;
-                    IPCRenderSide.send(IPCActions.EDITOR_MD.SET_JUMP_TO_LINE, contentSearchResults[newIndex]);
                     setActiveResultIndex(newIndex);
                   }}
                 />

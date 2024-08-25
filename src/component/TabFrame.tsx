@@ -25,7 +25,7 @@ export default function TabFrame() {
   // NOTE: active tab/SelectedTab is not fetched from main, when the frame init and tabs has data, SelectedTab will be the first in order and send to main
   const [SelectedTab, setSelectedTab] = useState<TTabItems | null | undefined>(null); //acts like a cache for file info, do not compare ref directly
 
-  const lastSearchResultElements = useRef<HTMLElement[] | null>(null);
+  // const lastSearchResultElements = useRef<HTMLElement[] | null>(null);
 
   const MDEditorRef = useRef<TEditorComponentRef | null>(null);
   const TabBarRef = useRef<HTMLElement | null>(null);
@@ -47,23 +47,24 @@ export default function TabFrame() {
         resultLines.push(editorDOM.children[lineNumber] as HTMLElement);
       });
 
-      // remove the result effect from last time
-      lastSearchResultElements.current?.forEach(lastResult => {
-        lastResult?.classList.remove('search-result');
-      });
-
-      lastSearchResultElements.current = [...resultLines];
+      // TODO: no need for this, remove later
+      // // remove the result effect from last time
+      // lastSearchResultElements.current?.forEach(lastResult => {
+      //   lastResult?.classList.remove('search-result');
+      // });
+      //
+      // lastSearchResultElements.current = [...resultLines];
 
       // add result effect
       resultLines.forEach(resultElement => {
         resultElement?.classList.add('search-result');
       });
-    }, 500),
-    [], // Add any dependencies here
+    }, 300),
+    [],
   );
 
   // scroll the editor to a top-level element(a line), debounced to avoid excessive function calls
-  const handleJumpToLineNum = _.debounce((lineNum: number) => {
+  const handleJumpToLineNum = _.throttle((lineNum: number) => {
     const editorDOM = MDEditorRef.current?.GetDOM()?.editor;
     if (!editorDOM || !editorDOM.children || !editorDOM.children[lineNum]) return;
 
@@ -76,9 +77,7 @@ export default function TabFrame() {
         ScrollableArea.current.scrollTop = top - divTop - tabBarHeight * 3;
       }
     }, 0);
-
-    // console.log(editorDOM.children[lineNum].getBoundingClientRect());
-  }, 450);
+  }, 500);
 
   // init component
   useEffect(() => {
