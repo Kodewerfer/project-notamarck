@@ -2,6 +2,7 @@
  * Tag related global storage
  */
 import { TTagsInMemory } from '../Types/Tags.ts';
+import _ from 'lodash';
 
 const _Tags_Map: Map<string, TTagsInMemory> = new Map(); //only an index keeping the most basic info
 
@@ -9,8 +10,19 @@ export function GetTagCache(tagFilename: string): TTagsInMemory | undefined {
   return _Tags_Map.get(tagFilename);
 }
 
-export function SetTagMap(newItem: TTagsInMemory) {
+export function SetTagMapByItem(newItem: TTagsInMemory) {
   _Tags_Map.set(newItem.tagFileName, newItem);
+}
+
+export function SetTagRawContentInMap(nameKey: string, newContent: string) {
+  const cachedTag = _Tags_Map.get(nameKey);
+  if (!cachedTag) return;
+  const newCache = _.cloneDeep(cachedTag);
+  Object.assign(newCache, {
+    tagContentRaw: newContent,
+  });
+
+  _Tags_Map.set(nameKey, newCache);
 }
 
 export function RemoveFromTagMap(tagName: string) {

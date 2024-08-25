@@ -43,6 +43,7 @@ import {
   MarkPathForRenaming,
   RenamingTagComplete,
   SetEditingTag,
+  SetTagRawContentInMap,
 } from '../Data/Tags.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { GetLastSearchTargetToken } from '../Data/Seach.ts';
@@ -50,6 +51,7 @@ import { TagFileReader } from '../Utils/TagFileConvertor.ts';
 import StartFilesWatcher from '../FSMonitor/FilesWatcher.ts';
 import StartTagsWatcher from '../FSMonitor/TagsWatcher.ts';
 import { KeyMappingConfig } from '../Utils/GlobalShortcuts.ts';
+import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 
 /************
  * - APP -
@@ -251,6 +253,15 @@ export function SetEditingTagAndPush(_Event: IpcMainInvokeEvent, tagPath: string
 
     return null;
   }
+
+  const tagContentRaw = ReadTagRaw(tagPath).tagContentRaw;
+  if (!tagContentRaw && tagContentRaw !== '') {
+    ShowErrorAlert(`Error reading tag ${tagPath}`);
+    return null;
+  }
+
+  SetTagRawContentInMap(tagNameKey, tagContentRaw);
+  cachedTag.tagContentRaw = tagContentRaw;
 
   SetEditingTag(cachedTag);
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(

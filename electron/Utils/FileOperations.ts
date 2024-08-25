@@ -5,8 +5,8 @@ import { FormatFileSize } from '../Helper.ts';
 import { TMDFile } from '../Types/Files.ts';
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
-import { ShowErrorAlert } from "electron-src/Utils/ErrorsAndPrompts.ts";
-import log from "electron-log";
+import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
+import log from 'electron-log';
 
 /**
  * Reads the contents of a Markdown file specified by the targetPath and adds the information to the opened files.
@@ -141,17 +141,17 @@ export function CheckFileRenameOnDup(FileFullName: string) {
 
 export async function ListAllMDAsync(): Promise<TMDFile[]> {
   const currentWorkspace = GetCurrentWorkspace();
-  const files = await fs.promises.readdir(currentWorkspace);
+  const files = await fs.promises.readdir(currentWorkspace, { withFileTypes: true, recursive: false });
   const MDFiles = [];
 
   for (const file of files) {
-    const filePath = path.join(currentWorkspace, file);
+    const filePath = path.join(currentWorkspace, file.name);
     const fileStats = await fs.promises.stat(filePath);
 
     // Check if it is a file and ends with .md
-    if (fileStats.isFile() && file.endsWith('.md')) {
+    if (fileStats.isFile() && file.name.endsWith('.md')) {
       MDFiles.push({
-        name: file,
+        name: file.name,
         path: filePath,
         size: FormatFileSize(fileStats.size ?? 0),
       });
@@ -165,13 +165,13 @@ export async function ResetAndCacheMDFilesListAsync() {
   // reset the list
   SetMDFilesList([]);
 
-  try{
-  const mdFiles = await ListAllMDAsync();
-  if (!mdFiles || !mdFiles.length) return;
+  try {
+    const mdFiles = await ListAllMDAsync();
+    if (!mdFiles || !mdFiles.length) return;
 
-  SetMDFilesList(mdFiles);
-  }catch (e){
-    ShowErrorAlert("Error in listing files",(e as Error).message);
+    SetMDFilesList(mdFiles);
+  } catch (e) {
+    ShowErrorAlert('Error in listing files', (e as Error).message);
     log.error(e);
   }
 

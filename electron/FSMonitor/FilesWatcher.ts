@@ -10,8 +10,9 @@ import {
 } from '../Data/Globals.ts';
 import { BrowserWindow } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
-import { ListAllMDAsync } from '../Utils/FileOperations.ts';
+import { ListAllMDAsync, ResetAndCacheMDFilesListAsync } from '../Utils/FileOperations.ts';
 import { ReassignActiveFile } from '../Utils/GlobalData.ts';
+import _ from 'lodash';
 
 let FilesWatcher: FSWatcher;
 
@@ -31,20 +32,15 @@ async function InitFilesWatcher() {
 export default async function StartFilesWatcher() {
   await InitFilesWatcher();
   FilesWatcher.on('add', () => OnNewFile());
-  FilesWatcher.on('unlink', (path: string) => OnDeleteFile(path,));
+  FilesWatcher.on('unlink', (path: string) => OnDeleteFile(path));
 }
 
 // Add and unlink will also be triggered by rename
-async function OnNewFile() {
-  const mdFiles = await ListAllMDAsync();
-  if (!mdFiles || !mdFiles.length) return;
+const OnNewFile = _.debounce(() => {
+  ResetAndCacheMDFilesListAsync();
+}, 200);
 
-  SetMDFilesList(mdFiles);
-
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.MD_LIST_CHANGED);
-}
-
-async function OnDeleteFile(deleteFilePath: string, ) {
+async function OnDeleteFile(deleteFilePath: string) {
   // deleted file is the active file
   if (GetActiveFile()?.fullPath === deleteFilePath) {
     ReassignActiveFile();

@@ -1,13 +1,14 @@
 import chokidar, { FSWatcher } from 'chokidar';
-import { GetTagFolderFullPath, ReadTagRawAsync } from '../Utils/TagOperations.ts';
+import { GetTagFolderFullPath, ReadTagRawAsync, ResetAndCacheTagsListAsync } from '../Utils/TagOperations.ts';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { Stats } from 'node:fs';
 import { BrowserWindow } from 'electron';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
-import { CheckForTagRenaming, GetEditingTag, RemoveFromTagMap, SetEditingTag, SetTagMap } from '../Data/Tags.ts';
+import { CheckForTagRenaming, GetEditingTag, RemoveFromTagMap, SetEditingTag, SetTagMapByItem } from '../Data/Tags.ts';
 import path from 'node:path';
 import { GetAppMainWindowID } from '../Data/Globals.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
+import _ from 'lodash';
 
 let TagsWatcher: FSWatcher;
 
@@ -26,24 +27,16 @@ async function InitTagsWatcher() {
 
 export default async function StartTagsWatcher() {
   await InitTagsWatcher();
-  TagsWatcher.on('add', (path, stats) => addNewTagToCache(path, stats));
+  TagsWatcher.on('add', () => debouncedAddNewTagToCache());
   TagsWatcher.on('unlink', (path: string, stats: Stats | undefined) => removeTagFromCache(path, stats));
   TagsWatcher.on('change', (path: string, stats: Stats | undefined) => ReloadTagContent(path, stats));
 }
 
 // Handlers
 // TODO: performance issue when large amount of tags add at the same time
-async function addNewTagToCache(tagPath: string, _: Stats | undefined) {
-  let NewTagData;
-  try {
-    NewTagData = await ReadTagRawAsync(tagPath);
-  } catch (e) {
-    ShowErrorAlert('File Access Error', (e as Error)?.message);
-    return;
-  }
-  SetTagMap(NewTagData);
-  BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(IPCActions.FILES.SIGNAL.TAG_LIST_CHANGED);
-}
+const debouncedAddNewTagToCache = _.debounce(() => {
+  ResetAndCacheTagsListAsync();
+}, 200);
 
 async function removeTagFromCache(tagPath: string, _: Stats | undefined) {
   const { base: TagNameKey } = path.parse(tagPath);
@@ -70,7 +63,7 @@ async function ReloadTagContent(tagPath: string, _: Stats | undefined) {
     return;
   }
 
-  SetTagMap(ChangedTag);
+  SetTagMapByItem(ChangedTag);
 
   //
   BrowserWindow.fromId(GetAppMainWindowID())?.webContents.send(

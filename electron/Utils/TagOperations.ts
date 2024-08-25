@@ -1,14 +1,14 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import { BrowserWindow } from 'electron';
 import { CheckFileRenameOnDup } from './FileOperations.ts';
 import { GetAppMainWindowID, GetCurrentWorkspace } from '../Data/Globals.ts';
-import path from 'node:path';
 import { TTagsInMemory } from '../Types/Tags.ts';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 
 import FlexSearch from 'flexsearch';
 import { Parent } from 'unist';
-import { CleanTagMap, SetTagMap } from '../Data/Tags.ts';
-import { BrowserWindow } from 'electron';
+import { CleanTagMap, SetTagMapByItem } from '../Data/Tags.ts';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
 import log from 'electron-log';
 
@@ -80,38 +80,23 @@ export function SaveTagFileOverrideOnDup(TagFileName: string, TagContent?: strin
   return tagFilePath;
 }
 
-// unused for now
-export function FetchAllTags(): TTagsInMemory[] {
-  const targetPath = GetTagFolderFullPath();
+export async function ListAllTagsAsync() {
+  const targetPath = GetTagFolderFullPath().normalize();
 
-  return fs
-    .readdirSync(targetPath)
-    .filter(file => {
-      const fileStats = fs.statSync(path.join(targetPath, file));
-      return !fileStats.isDirectory() && file.endsWith('.tag.md');
-    })
-    .map(file => {
-      return {
-        tagFileName: file,
-        tagPath: path.join(targetPath, file),
-      };
-    });
-}
+  const resolvedPath = path.resolve(targetPath);
 
-export async function FetchAllTagsAsync() {
-  const targetPath = GetTagFolderFullPath();
-
-  const dirContent = await fs.promises.readdir(targetPath);
+  await fs.promises.access(resolvedPath);
+  const dirContent = await fs.promises.readdir(resolvedPath, { recursive: false, withFileTypes: true });
   const tagList: TTagsInMemory[] = [];
 
   for (const file of dirContent) {
-    const fileStats = await fs.promises.stat(path.join(targetPath, file));
-    const tagFileContentRaw = await fs.promises.readFile(path.join(targetPath, file), 'utf8');
-    if (!fileStats.isDirectory() && file.endsWith('.tag.md')) {
+    if (file.isDirectory()) continue;
+    // const tagFileContentRaw = await fs.promises.readFile(path.join(resolvedPath, file.name), 'utf8');
+    if (file.isFile() && file.name.endsWith('.tag.md')) {
       tagList.push({
-        tagFileName: file,
-        tagPath: path.join(targetPath, file),
-        tagContentRaw: tagFileContentRaw,
+        tagFileName: file.name,
+        tagPath: path.join(resolvedPath, file.name),
+        // tagContentRaw: tagFileContentRaw,
       });
     }
   }
@@ -139,10 +124,8 @@ export function ReadTagRaw(tagPath: string): TTagsInMemory {
 
   const tagContentRaw = fs.readFileSync(tagPath, 'utf8');
 
-  const baseName = path.basename(tagPath);
-
   return {
-    tagFileName: baseName,
+    tagFileName: path.basename(tagPath),
     tagPath: tagPath,
     tagContentRaw: tagContentRaw,
   };
@@ -314,12 +297,12 @@ export function ExtractFileLinksNamesFromTagAST(tagASTArr: Parent[]) {
 export async function ResetAndCacheTagsListAsync() {
   CleanTagMap();
   try {
-    const allTags = await FetchAllTagsAsync();
+    const allTags = await ListAllTagsAsync();
 
     if (!allTags || !allTags.length) return;
 
     allTags.forEach((tag: TTagsInMemory) => {
-      SetTagMap(tag);
+      SetTagMapByItem(tag);
     });
   } catch (e) {
     ShowErrorAlert('Error in listing tags', (e as Error).message);
