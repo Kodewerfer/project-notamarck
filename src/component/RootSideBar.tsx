@@ -47,7 +47,7 @@ export function RootSideBar() {
       {bNotAtIndex && (
         <ul className="relative z-50 flex h-full w-14 flex-col align-middle">
           <li className="group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
-            <Link className="group relative block grow pl-1.5" to="/FileFrame/edit">
+            <Link className="group relative block grow pl-1.5" to="/FileFrame/edit" tabIndex={-1}>
               <WalletIcon className="size-10 group-hover:size-10" />
               <div
                 className={
@@ -59,7 +59,7 @@ export function RootSideBar() {
             </Link>
           </li>
           <li className="group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
-            <Link className="group relative block grow pl-1.5" to="/TagFrame">
+            <Link className="group relative block grow pl-1.5" to="/TagFrame" tabIndex={-1}>
               <ArchiveBoxIcon className="size-10 group-hover:size-10" />
               <div
                 className={
@@ -74,12 +74,14 @@ export function RootSideBar() {
           {editingTag && (
             <li className="group mb-1 flex justify-center py-4 font-semibold dark:text-blue-50">
               <Link
+                tabIndex={-1}
                 className="group relative block grow pl-1.5"
                 to="/TagFrame/$tagPath"
                 params={{ tagPath: editingTag.tagPath }}
               >
                 <TagIcon className="size-10 group-hover:size-10" />
                 <div
+                  tabIndex={-1}
                   className={
                     'invisible absolute left-16 top-0 z-50 w-fit text-nowrap rounded bg-gray-900 px-2 py-1 text-white group-hover:visible'
                   }
@@ -92,9 +94,10 @@ export function RootSideBar() {
 
           {/*the "setting button"*/}
           <li className="group absolute bottom-0 left-0 flex w-full justify-center py-4 font-semibold dark:text-blue-50">
-            <Link className="group relative block grow pl-1.5" to="/settings">
+            <Link className="group relative block grow pl-1.5" to="/settings" tabIndex={-1}>
               <Cog6ToothIcon className={'size-10 group-hover:size-10'} />
               <div
+                tabIndex={-1}
                 className={
                   'invisible absolute left-16 top-0 z-50 w-fit text-nowrap rounded bg-gray-900 px-2 py-1 text-white group-hover:visible'
                 }

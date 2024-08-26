@@ -6,7 +6,7 @@
 }
 
 .Editor .line-container {
-    @apply text-lg
+    @apply text-lg leading-snug
 }
 
 .Editor .file-link {

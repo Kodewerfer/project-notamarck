@@ -224,6 +224,7 @@ export default function TabFrame() {
   };
 
   const onSelectTab = async (item: TTabItems) => {
+    if (item?.fullPath === SelectedTab?.fullPath) return;
     // await SendCurrentTabContentToMain();
     // NOTE:setting the SelectedTab is not exactly required because main process will put into it after the next line.
     setSelectedTab(item);
@@ -439,7 +440,8 @@ export const Tab = ({
       exit={{ opacity: 0, y: 20, transition: { duration: 0.3 } }}
       whileDrag={{ backgroundColor: TabsDraggingColor }}
       className={`flex px-2 py-1.5 ${isSelected ? 'is-selected' : ''}`}
-      onPointerDown={onClick}
+      onMouseDown={ev => ev.preventDefault()}
+      onMouseUp={onClick}
     >
       <motion.span
         layout="position"

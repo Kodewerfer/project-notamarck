@@ -158,18 +158,27 @@ const MarkdownEditor = forwardRef(
     });
 
     return (
-      <Editor
-        SourceData={MDSource}
-        ref={EditorRef}
-        DaemonShouldLog={false}
-        EditorCallBacks={{
-          OnInit: EditorCallBacks?.OnInit,
-          OnReload: EditorCallBacks?.OnReload,
-        }}
-        ComponentCallbacks={{
-          FileLinks: FileLinks,
-        }}
-      />
+      <>
+        <Editor
+          SourceData={MDSource}
+          ref={EditorRef}
+          DaemonShouldLog={false}
+          EditorCallBacks={{
+            OnInit: EditorCallBacks?.OnInit,
+            OnReload: EditorCallBacks?.OnReload,
+          }}
+          ComponentCallbacks={{
+            FileLinks: FileLinks,
+          }}
+        />
+        {/* a screen space holding element, so that the user can scroll it up even when editing the end of a file*/}
+        <div
+          className={'h-screen select-none'}
+          tabIndex={-1}
+          onMouseDown={ev => ev.preventDefault()}
+          onMouseUp={ev => ev.preventDefault()}
+        ></div>
+      </>
     );
   },
 );
