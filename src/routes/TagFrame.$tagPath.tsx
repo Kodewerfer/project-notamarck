@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Navigate, redirect, useLayoutEffect, useLocation, useNavigate } from '@tanstack/react-router';
 import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
@@ -38,12 +38,39 @@ export const Route = createFileRoute('/TagFrame/$tagPath')({
 });
 
 function TagEdit() {
+  // get location for storing scroll info
+  const location = useLocation();
+
   // used as a reference only
   const [EditingTag, setEditingTag] = useState<TTagsInMemory | undefined | null>(Route.useLoaderData()?.tag);
+  const scrollableElementRef = useRef<HTMLElement | null>(null);
   const workspacePath = Route.useLoaderData()?.workspacePath || '';
   // AST tree's first-level children nodes
   const [TagRenderingSource, setTagRenderingSource] = useState<Parent[] | null>(null);
   const renderingSourceCache = useRef<any[] | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const scrollInfo = await IPCRenderSide.invoke(IPCActions.DATA.GET_TAG_PAGE_SCROLL_LOCATION, location.pathname);
+      if (!scrollInfo) return;
+      setTimeout(() => {
+        console.log(`restoring scroll:${scrollInfo}`);
+        scrollableElementRef?.current?.scrollTo({ top: scrollInfo, behavior: 'instant' });
+      }, 0);
+    })();
+  }, []);
+
+  useLayoutEffect(() => {
+    return () => {
+      if (scrollableElementRef?.current) {
+        IPCRenderSide.invoke(
+          IPCActions.DATA.UPDATE_TAG_PAGE_SCROLL_LOCATION,
+          location.pathname,
+          scrollableElementRef?.current.scrollTop,
+        );
+      }
+    };
+  }, []);
 
   // when editing tag changed, send the tagName to main to fetch converted content. NOTE: tagContentRaw from EditingTag is not sent directly
   useEffect(() => {
@@ -77,7 +104,7 @@ function TagEdit() {
     if (TagRenderingSource) renderingSourceCache.current = [...TagRenderingSource];
   }, [TagRenderingSource]);
 
-  // bind events
+  // bind main process events
   useEffect(() => {
     const unbindTagEditingChange = IPCRenderSide.on(
       IPCActions.DATA.PUSH.EDITING_TAG_CHANGED,
@@ -164,6 +191,7 @@ function TagEdit() {
       {TagRenderingSource && TagRenderingSource.length > 0 && (
         <Reorder.Group
           as={'div'}
+          ref={scrollableElementRef}
           onReorder={ReOrderItems}
           values={TagRenderingSource}
           className={'flex grow basis-full flex-col items-center overflow-auto scroll-smooth px-10 py-12'}

@@ -16,11 +16,13 @@ import {
   GetOpenedFiles,
   GetRecentWorkspace,
   GetSelectionStatusCache,
+  GetTagPageScrollLocation,
   MarkFileForFileChange,
   RemoveAllOpenFiles,
   RemoveOpenedFile,
   SetCurrentWorkspaceThenStore,
   SetSelectionStatusCache,
+  SetTagPageScrollLocation,
   SyncWorkspaceAndRecentsThenStore,
 } from '../Data/Globals.ts';
 import {
@@ -308,6 +310,18 @@ export function SetSelectionStatusForPath(_Event: IpcMainInvokeEvent, fullPath: 
   return SetSelectionStatusCache(fullPath, status);
 }
 
+const { GET_TAG_PAGE_SCROLL_LOCATION } = IPCActions.DATA;
+
+export function ReturnTagPageScrollLocation(_Event: IpcMainInvokeEvent, tagURL: string) {
+  return GetTagPageScrollLocation(tagURL);
+}
+
+const { UPDATE_TAG_PAGE_SCROLL_LOCATION } = IPCActions.DATA;
+
+export function UpdateTagPageScrollLocation(_Event: IpcMainInvokeEvent, tagURL: string, scrollTop: number) {
+  return SetTagPageScrollLocation(tagURL, scrollTop || 0);
+}
+
 const { GET_ACTIVE_FILE } = IPCActions.DATA;
 
 export function ReturnCurrentActiveFile(_Event: IpcMainInvokeEvent) {
@@ -557,4 +571,6 @@ export const IPCHandlerMappings = [
   { trigger: GET_ACTIVE_FILE_CONTENT, handler: ReturnCurrentActiveFileContent },
   { trigger: GET_APP_KEY_BINDING, handler: ReturnAllKeyBindings },
   { trigger: GET_WORK_SPACE_TAGS_PATH, handler: ReturnCurrentWorkspaceTagsPath },
+  { trigger: GET_TAG_PAGE_SCROLL_LOCATION, handler: ReturnTagPageScrollLocation },
+  { trigger: UPDATE_TAG_PAGE_SCROLL_LOCATION, handler: UpdateTagPageScrollLocation },
 ];

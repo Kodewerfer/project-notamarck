@@ -196,25 +196,6 @@ export function GetActiveFileContent() {
   return _Active_File_Content;
 }
 
-/**
- * Cached caret positions
- */
-
-// key:fullpath, value: selection status object or null
-let _Selection_Status_Cache = new Map<string, Object | null>();
-
-export function GetSelectionStatusCache(fullPath: string): Readonly<Object | null | undefined> {
-  return _Selection_Status_Cache.get(fullPath);
-}
-
-export function GetALLSelectionStatusCache(): Readonly<Map<string, Object | null>> {
-  return new Map(_Selection_Status_Cache);
-}
-
-export function SetSelectionStatusCache(fullPath: string, status: Object | null) {
-  _Selection_Status_Cache.set(fullPath, status);
-}
-
 // primarily used in searching
 let _MD_Files_List: TMDFile[] = [];
 
@@ -245,4 +226,37 @@ export function ConsumeFileChangeMark(tagPath: string) {
 export function CheckForFileChanging(tagPath: string) {
   const findIndex = _Renaming_or_deleted_files_path.findIndex(item => item === tagPath);
   return findIndex >= 0;
+}
+
+/**
+ * Cached caret positions
+ */
+
+// key:fullpath, value: selection status object or null
+let _Selection_Status_Cache = new Map<string, Object | null>();
+
+export function GetSelectionStatusCache(fullPath: string): Readonly<Object | null | undefined> {
+  return _Selection_Status_Cache.get(fullPath);
+}
+
+export function GetALLSelectionStatusCache(): Readonly<Map<string, Object | null>> {
+  return new Map(_Selection_Status_Cache);
+}
+
+export function SetSelectionStatusCache(fullPath: string, status: Object | null) {
+  _Selection_Status_Cache.set(fullPath, status);
+}
+
+/**
+ * Cached scroll locations
+ */
+
+let _Tag_Page_Scroll_Location = new Map<string, number | null>();
+
+export function GetTagPageScrollLocation(tagURL: string): Readonly<Object | null | undefined> {
+  return _Tag_Page_Scroll_Location.get(tagURL);
+}
+
+export function SetTagPageScrollLocation(tagURL: string, scrollTop: number) {
+  _Tag_Page_Scroll_Location.set(tagURL, scrollTop);
 }
