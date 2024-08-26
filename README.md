@@ -10,12 +10,12 @@ This app is still in development, if you decided to give it a go, **please remem
 
 ## Concept
 
-When we accumulate more and more notes, they become a nightmare to manage and keep track of all of them.
+When we accumulate more and more notes, they become a nightmare to manage and keep track of.
 
 If the notes are placed in their own folders, they become isolated; if they are placed under one folder, they become a
 mess.
 
-this app attempts to tackle the problem by providing a stronger search functionality and adding `tags` to files.
+this app attempts to tackle the problem by ditching the folder structure and replace it with a stronger search functionality and the ability to adding `tags` to files.
 
 Notes can have multiple `tags` and each `tag` displays what files are linked to it. They serve as a central hub to
 quickly navigate to related notes,
@@ -53,6 +53,6 @@ links cannot be deleted from the tag's side, they can only be removed in the not
 ## Planned features
 
 - [ ] Connection graph
-- [ ] more powerful content searching
 - [ ] Search file content in the whole workspace
+- [ ] more powerful content searching
 
