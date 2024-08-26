@@ -21,7 +21,9 @@ Notes can have multiple `tags` and each `tag` displays what files are linked to 
 quickly navigate to related notes,
 and they can be further customized by re-arranging the added connections and adding titles to mark sections.
 
-`Link` between each note is also possible so that jumping between them is easier.
+In addition,besides some custom markdown directives, there is no proprietary file type or formats.
+
+All files and even links are stored in .MD files.
 
 ## Feature Manual
 
@@ -43,6 +45,8 @@ arrow
 key+enter)
 while holding down ctrl to insert the file/tag as a link in the currently edited file.
 
+Link can be created between note files and tags, or even between note files
+
 ### Tags Editing tab
 
 You can re-order the file references by dragging and dropping, you can also add titles to the link ref while hovering
@@ -56,3 +60,6 @@ links cannot be deleted from the tag's side, they can only be removed in the not
 - [ ] Search file content in the whole workspace
 - [ ] more powerful content searching
 
+## Features under consideration
+
+- [ ] Split screen
