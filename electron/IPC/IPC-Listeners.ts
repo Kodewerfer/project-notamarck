@@ -16,7 +16,7 @@ import {
 } from '../Data/Globals.ts';
 import { BrowserWindow, Menu, Notification, shell } from 'electron';
 import IpcMainEvent = Electron.IpcMainEvent;
-import { SaveContentToFileOverrideOnDup, UnlinkFile } from '../Utils/FileOperations.ts';
+import { CleanupFileName, ReadMDFile, SaveContentToFileOverrideOnDup, UnlinkFile } from '../Utils/FileOperations.ts';
 import { ShowConfirmAlert, ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import { TFileInMemory } from '../Types/GlobalData.ts';
 import { TChangedFilesPayload } from '../Types/IPC.ts';
@@ -99,6 +99,25 @@ function ShowFileOperationMenu(_event: IpcMainEvent, selectedFilesPath: string[]
         const NewFileSearch: TSearchTarget = {
           placeHolder: 'New File',
           searchType: ESearchTypes.File,
+        };
+        SetNewSearchAndPush(_event, NewFileSearch);
+      },
+    },
+    {
+      label: 'Save as...',
+      enabled: selectedFilesPath.length === 1,
+      click: () => {
+        if (selectedFilesPath.length > 1) return;
+        const NewFileSearch: TSearchTarget = {
+          placeHolder: `Save ${path.basename(selectedFilesPath[0])} as new file`,
+          searchType: ESearchTypes.File,
+          additionalAction: [
+            {
+              text: 'Save as new file',
+              actionMappingKey: 'SaveAs',
+              actionArgs: [selectedFilesPath[0]], //send the old file's path
+            },
+          ],
         };
         SetNewSearchAndPush(_event, NewFileSearch);
       },
@@ -296,6 +315,17 @@ function InsertLinkToCurrentEditorTab(_event: IpcMainEvent, InsertDataSource: an
  ************/
 
 // --Files
+const { SAVE_AS_NEW_FILE } = IPCActions.FILES; // Receiving
+
+function SaveFileContentAsNewFile(_event: IpcMainEvent, oldPath: string, newPath: string) {
+  let FileContent = ReadMDFile(oldPath);
+
+  let cleanedFilename = CleanupFileName(newPath);
+  newPath = path.join(GetCurrentWorkspace(), cleanedFilename);
+
+  if (FileContent !== null) SaveContentToFileOverrideOnDup(newPath, FileContent, true);
+}
+
 const { CHANGE_TARGET_FILE_CONTENT } = IPCActions.FILES; // Receiving
 
 function UpdateTargetFileOverrideOnDup(_event: IpcMainEvent, FileFullPath: string, FileContent: string) {
@@ -390,4 +420,5 @@ export const IPCListenerMappings = [
   { trigger: OPEN_EXTERNAL_HTTP, listener: OpenHTTPLinkFromOutside },
   { trigger: VALIDATE_TAG_IN_LINKED_FILES, listener: ValidateTagInFiles },
   { trigger: REMOVE_FROM_RECENT_WORK_SPACES, listener: RemovePathFromRecentWorkspaces },
+  { trigger: SAVE_AS_NEW_FILE, listener: SaveFileContentAsNewFile },
 ];

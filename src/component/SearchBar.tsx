@@ -5,11 +5,12 @@ import { IPCActions } from 'electron-src/IPC/IPC-Actions.ts';
 import { TTagsInMemory } from 'electron-src/Types/Tags.ts';
 import path from 'path-browserify';
 import { TMDFile } from 'electron-src/Types/Files.ts';
-import { ESearchTypes, TSearchTarget } from 'electron-src/Types/Search.ts';
+import { ESearchTypes, TSearchBarAction, TSearchTarget } from 'electron-src/Types/Search.ts';
 import FlexSearch from 'flexsearch';
 import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { ArrowRightIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import _ from 'lodash';
+import AdditionalSearchBarActions from 'component/SeachBar_AdditionalActions';
 
 const { IPCRenderSide } = window;
 
@@ -69,6 +70,9 @@ function SearchBarActual(
   const [searchType, setSearchType] = useState<ESearchTypes | null>(
     Options.LockSearchType ? Options.LockSearchType : ESearchTypes.File,
   );
+
+  // actions besides "creating" files, replacing the default action "creating new files"
+  const [listResultActions, setListResultActions] = useState<TSearchBarAction[]>([]);
 
   // Use flex search to properly filter list datas, tokenize is set to full so that filenames can be fuzzy searched
   const FilterListData = useCallback(
@@ -170,7 +174,7 @@ function SearchBarActual(
   const [activeResultIndex, setActiveResultIndex] = useState(0);
 
   // bind to main process push BEGIN_NEW_SEARCH, happens when there is search initiated from outside(like file adding menu)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const UnbindEvent = IPCRenderSide.on(IPCActions.DATA.PUSH.BEGIN_NEW_SEARCH, (_, searchPayload) => {
       if (!searchPayload) return console.warn('Search bar: Received empty payload');
       setIsSearching(true);
@@ -183,6 +187,23 @@ function SearchBarActual(
       if (SearchInputRef.current) (SearchInputRef.current as HTMLInputElement).focus();
 
       setSearchString((searchPayload as TSearchTarget).searchText || '');
+
+      // add additional actions to replace the default
+      if (searchPayload.additionalAction && Array.isArray(searchPayload.additionalAction)) {
+        let CompletedActions: TSearchBarAction[] = [];
+        searchPayload.additionalAction.forEach((action: TSearchBarAction) => {
+          const MappedAction = AdditionalSearchBarActions.get(action.actionMappingKey);
+          if (!MappedAction) {
+            console.error(`Trying to load search bar action: ${action.actionMappingKey} has no mapped function`);
+            return;
+          }
+
+          action.callback = MappedAction;
+
+          CompletedActions.push(action);
+        });
+        setListResultActions(CompletedActions);
+      }
     });
 
     return () => {
@@ -232,10 +253,11 @@ function SearchBarActual(
     };
   }, []);
 
-  // Reset the placeholder text after closing
+  // Reset the placeholder text and actions after closing
   useEffect(() => {
     if (isSearching) return;
     setPlaceHolderText('Search');
+    setListResultActions([]);
   }, [isSearching]);
 
   // reset the index when data or state changes
@@ -392,13 +414,35 @@ function SearchBarActual(
           {/*additional actions*/}
           {Options.ShowActions && (
             <ul className={'mt-2 cursor-pointer pb-2'}>
-              <li
-                className={`min-w-fit rounded px-4 py-2 hover:bg-blue-100 dark:hover:bg-blue-400`}
-                onClick={() => CreateNewFile()}
-              >
-                <span>Create New {searchType || ''} </span>
-                <span className={'font-semibold text-blue-500'}>{searchString || ''}</span>
-              </li>
+              {/* show search spec actions */}
+              {listResultActions &&
+                listResultActions.length > 0 &&
+                listResultActions.map(actionItem => (
+                  <li
+                    key={`search_action_${actionItem.actionMappingKey}`}
+                    className={`min-w-fit rounded px-4 py-2 hover:bg-blue-100 dark:hover:bg-blue-400`}
+                    onClick={() =>
+                      typeof actionItem.callback === 'function' &&
+                      actionItem.callback(
+                        ...(Array.isArray(actionItem.actionArgs) ? actionItem.actionArgs : [actionItem.actionArgs]),
+                        searchString,
+                      )
+                    }
+                  >
+                    {actionItem.text}
+                  </li>
+                ))}
+              {/*show default action when there is nothing in the array*/}
+              {(!listResultActions || listResultActions.length < 1) && (
+                <li
+                  key={"search_action_default"}
+                  className={`min-w-fit rounded px-4 py-2 hover:bg-blue-100 dark:hover:bg-blue-400`}
+                  onClick={() => CreateNewFile()}
+                >
+                  <span>Create New {searchType || ''} </span>
+                  <span className={'font-semibold text-blue-500'}>{searchString || ''}</span>
+                </li>
+              )}
             </ul>
           )}
           {/*search result - files*/}

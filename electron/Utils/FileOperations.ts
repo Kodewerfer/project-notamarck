@@ -10,10 +10,49 @@ import {
 } from '../Data/Globals.ts';
 import { FormatFileSize } from '../Helper.ts';
 import { TMDFile } from '../Types/Files.ts';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, dialog } from 'electron';
 import { IPCActions } from '../IPC/IPC-Actions.ts';
 import { ShowErrorAlert } from '../Utils/ErrorsAndPrompts.ts';
 import log from 'electron-log';
+
+/**
+ * Cleans up the given file name.
+ *
+ * @param {string} filename - The file name to be cleaned up.
+ *
+ * @return {string} - The cleaned up file name with the extension '.md'.
+ */
+export function CleanupFileName(filename: string) {
+  // in case it contains path;
+  let { name: newFileName } = path.parse(filename);
+
+  const dotIndex = newFileName.indexOf('.');
+  if (dotIndex !== -1) {
+    newFileName = newFileName.substring(0, dotIndex);
+  }
+  return newFileName + '.md';
+}
+
+/**
+ * Reads the content of a markdown (MD) file.
+ *
+ * @param {string} targetPath - The path of the MD file to read.
+ *
+ * @return {string|null} The content of the MD file as a string, or null if there was an error reading the file.
+ */
+
+export function ReadMDFile(targetPath: string) {
+  let content = null;
+  try {
+    fs.accessSync(targetPath);
+
+    content = fs.readFileSync(targetPath, { encoding: 'utf8' });
+  } catch (e) {
+    log.error(`Error reading md file's content, ${(e as Error).message}`);
+    ShowErrorAlert(`Error reading md file's content, ${(e as Error).message}`);
+  }
+  return content;
+}
 
 /**
  * Reads the contents of a Markdown file specified by the targetPath and adds the information to the opened files.
@@ -55,22 +94,27 @@ export function SaveContentToFileRenameOnDup(FileFullName: string, FileContent?:
   }
 }
 
-/**
- * Saves content to a file and renames the file if it already exists.
- *
- * @param {string} FileFullName - The full name (including path) of the file to save the content to.
- * @param {string} [FileContent] - The content to be written to the file. If not provided, an empty string will be written.
- *
- * @throws {Error} Throws an error if there was an issue writing to the file.
- */
-export function SaveContentToFileOverrideOnDup(FileFullName: string, FileContent?: string) {
+export function SaveContentToFileOverrideOnDup(
+  FileFullName: string,
+  FileContent?: string,
+  shouldShowAlertOnDup: boolean = false,
+) {
   if (CheckForFileChanging(FileFullName)) {
     ConsumeFileChangeMark(FileFullName);
     return;
   }
 
+  if (fs.existsSync(FileFullName) && shouldShowAlertOnDup) {
+    const buttongpress = dialog.showMessageBoxSync({
+      type: 'warning',
+      message: 'Overriding existing file',
+      detail: `${path.parse(FileFullName).name} will be overridden, continue?`,
+      buttons: ['yes', 'no'],
+    });
+    if (buttongpress === 1) return;
+  }
+
   try {
-    fs.accessSync(FileFullName);
     fs.writeFileSync(FileFullName, FileContent ?? '', { encoding: 'utf8' });
   } catch (e) {
     log.error(`Error writing to file ${FileFullName}, ${e}`);
