@@ -1,7 +1,7 @@
 import { ForwardedRef, forwardRef, useLayoutEffect, useImperativeHandle, useRef, useEffect } from 'react';
 import './MarkdownEditor.css';
-import Editor, { TEditorForwardRef } from 'react-magic-draft';
-import { TSelectionStatus } from 'react-magic-draft/dist/hooks/useEditorDaemon';
+import MagicDraftEditor, { TEditorForwardRef } from 'markdown-magic-draft';
+import { TSelectionStatus } from 'markdown-magic-draft/dist/hooks/useEditorDaemon';
 
 export type TEditorComponentRef = {
   GetDOM: () => { root: HTMLElement | null; editor: HTMLElement | null; mask: HTMLElement | null } | null;
@@ -159,7 +159,7 @@ const MarkdownEditor = forwardRef(
 
     return (
       <>
-        <Editor
+        <MagicDraftEditor
           SourceData={MDSource}
           ref={EditorRef}
           DaemonShouldLog={false}

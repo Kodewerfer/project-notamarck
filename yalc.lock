@@ -1,8 +1,8 @@
 {
   "version": "v1",
   "packages": {
-    "react-magic-draft": {
-      "signature": "06e9a5d6306a25787442e5040ba4172e",
+    "markdown-magic-draft": {
+      "signature": "fca472f351116a38bf03b65ed268d447",
       "link": true
     }
   }

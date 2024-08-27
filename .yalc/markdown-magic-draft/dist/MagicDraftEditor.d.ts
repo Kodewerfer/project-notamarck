@@ -35,5 +35,5 @@ export type TEditorProps = {
     HistoryLength?: number;
     [key: string]: any;
 };
-declare const Editor: React.ForwardRefExoticComponent<Omit<TEditorProps, "ref"> & React.RefAttributes<TEditorForwardRef>>;
-export default Editor;
+declare const MagicDraftEditor: React.ForwardRefExoticComponent<Omit<TEditorProps, "ref"> & React.RefAttributes<TEditorForwardRef>>;
+export default MagicDraftEditor;

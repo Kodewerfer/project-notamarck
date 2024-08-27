@@ -1085,8 +1085,8 @@ function EditorActual(_a, ref) {
     });
     return (_jsx(_Fragment, { children: _jsxs("section", Object.assign({ className: "Editor", ref: EditorWrapperRef }, otherProps, { children: [_jsx("main", { className: 'Editor-Inner', ref: EditorElementRef, children: EditorComponents }), _jsx("div", { className: 'Editor-Mask', ref: EditorMaskRef, children: "Floating Mask To Hide Flickering" })] })) }));
 }
-const Editor = forwardRef(EditorActual);
-export default Editor;
+const MagicDraftEditor = forwardRef(EditorActual);
+export default MagicDraftEditor;
 // the fallback render for any unknown or unspecified elements
 // Needed if the like of br is to be rendered normally.
 function CommonRenderer(props) {
